@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تسجيل الدخول</title>
+
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="{{ theme_color or '#0d6efd' }}">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="My ERP">
+    <link rel="apple-touch-icon" href="/static/icon.png">
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/static/sw.js');
+            });
+        }
+    </script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --main-color: {{ theme_color or '#0d6efd' }};
+        }
+        body {
+            background-color: #f0f2f5; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            border: none;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .btn-custom {
+            background-color: var(--main-color);
+            border-color: var(--main-color);
+            color: white;
+            font-weight: bold;
+            padding: 12px;
+        }
+        .btn-custom:hover {
+            opacity: 0.9;
+            color: white;
+        }
+        /* تنسيق تعليمات الآيفون */
+        .ios-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+        .ios-icon {
+            font-size: 1.5rem;
+            color: #007aff; /* لون أزرق آيفون */
+            margin-left: 15px;
+            width: 30px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card login-card shadow p-4">
+        <div class="text-center mb-4">
+            {% if global_company_logo %}
+                <img src="{{ global_company_logo | image_url }}" style="max-height: 100px; max-width: 80%; object-fit: contain;">
+            {% else %}
+                <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="fas fa-cube fa-3x text-secondary"></i>
+                </div>
+                <h3 class="fw-bold text-dark">ERP System</h3>
+            {% endif %}
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-danger text-center p-2 mb-3 small fw-bold">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-muted">اسم المستخدم</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-user text-muted"></i></span>
+                    <input type="text" name="username" class="form-control border-start-0 ps-0" placeholder="Username" required autofocus>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label small fw-bold text-muted">كلمة المرور</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-lock text-muted"></i></span>
+                    <input type="password" name="password" class="form-control border-start-0 ps-0" placeholder="Password" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-custom w-100 rounded-pill shadow-sm">
+                تسجيل الدخول <i class="fas fa-arrow-left me-2"></i>
+            </button>
+        </form>
+
+        {% if fast_access %}
+        <hr class="my-4">
+        <h6 class="text-center fw-bold text-success mb-3"><i class="fas fa-bolt"></i> الدخول السريع (للتجربة)</h6>
+        <div class="row g-2 justify-content-center">
+            {% for u in users_list %}
+            <div class="col-6">
+                <a href="/fast_login/{{ u.id }}" class="btn btn-outline-success w-100 fw-bold small py-2" style="font-size: 0.85rem;">
+                    <i class="fas fa-user-circle"></i> {{ u.fullname }}
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="text-center mt-4 text-muted small">
+            &copy; 2025 جميع الحقوق محفوظة
+        </div>
+    </div>
+
+    <div class="modal fade" id="iosInstallModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-0 pb-0 justify-content-center">
+                    <h6 class="modal-title fw-bold text-dark">تثبيت التطبيق 📱</h6>
+                </div>
+                <div class="modal-body text-center pt-2">
+                    <p class="small text-muted mb-3">لتجربة أفضل وبدون شريط المتصفح، قم بتثبيت التطبيق الآن:</p>
+                    
+                    <div class="text-start bg-light p-3 rounded-3">
+                        <div class="ios-step">
+                            <span class="ios-icon"><i class="fas fa-share-square"></i></span>
+                            <span>1. اضغط على زر <b>المشاركة</b> في الأسفل.</span>
+                        </div>
+                        <div class="ios-step mb-0">
+                            <span class="ios-icon"><i class="far fa-plus-square"></i></span>
+                            <span>2. اختر <b>"إضافة إلى الصفحة الرئيسية"</b> (Add to Home Screen).</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-link text-decoration-none text-muted small w-100" data-bs-dismiss="modal">إغلاق والمتابعة للموقع</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // دالة لاكتشاف الآيفون (iOS)
+        const isIos = () => {
+            const userAgent = window.navigator.userAgent.toLowerCase();
+            return /iphone|ipad|ipod/.test(userAgent);
+        }
+
+        // دالة لاكتشاف هل الموقع مفتوح كتطبيق (Standalone) أم في المتصفح
+        const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone);
+
+        // إذا كان آيفون + ليس مثبتاً بعد -> اظهر التعليمات
+        if (isIos() && !isInStandaloneMode()) {
+            // ننتظر ثانية عشان الصفحة تحمل وبعدين نظهر الرسالة
+            setTimeout(() => {
+                var myModal = new bootstrap.Modal(document.getElementById('iosInstallModal'));
+                myModal.show();
+            }, 1000);
+        }
+    </script>
+
+</body>
+</html>

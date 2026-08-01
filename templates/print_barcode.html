@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>طباعة ليبل</title>
+    <style>
+        /* --- إعدادات الطباعة (ممنوع اللمس) --- */
+        @media print {
+            @page {
+                size: 38mm 22mm;
+                margin: 0 !important;
+            }
+            body { margin: 0 !important; padding: 0 !important; }
+            .no-print { display: none !important; }
+            .sticker-container {
+                page-break-after: always;
+                border: none !important;
+            }
+        }
+
+        /* تنسيق الشاشة */
+        body {
+            background-color: #eee;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+        }
+
+        .controls {
+            background: white; padding: 10px 20px; border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;
+            text-align: center; direction: rtl;
+        }
+
+        /* --- تصميم الليبل الجديد --- */
+        .sticker-container {
+            width: 38mm;
+            height: 22mm;
+            background: white;
+            box-sizing: border-box;
+
+            /* توزيع العناصر */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+
+            padding: 0 2px;
+            overflow: hidden;
+            border: 1px dashed #ccc; /* يختفي في الطباعة */
+            margin-bottom: 10px;
+            line-height: 1.1; /* تقليل المسافات بين السطور */
+        }
+
+        /* 1. التصنيف (جديد) */
+        .row-category {
+            font-size: 7 px;
+            color: #000;
+            width: 100%;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 1px;
+            border-bottom: 1px dotted #ccc;
+        }
+
+        /* 2. اسم المنتج */
+        .row-name {
+            width: 100%;
+            font-size: 7px; /* صغرنا سنة عشان التصنيف */
+            font-weight: 800;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #000;
+            margin-bottom: 1px;
+        }
+
+        /* 3. الكود */
+        .row-code {
+            font-size: 12px;
+            font-weight: bold;
+            font-family: monospace;
+            color: #000;
+            background-color: #f2f2f2;
+            padding: 0 4px;
+            border-radius: 3px;
+            margin: 1px 0;
+            display: inline-block;
+        }
+
+        /* 4. السعر */
+        .row-price {
+            font-size: 12px;
+            font-weight: 900;
+            color: #000;
+            margin-top: 1px;
+        }
+
+        .currency { font-size: 12px; font-weight: 800; }
+        .label-text { font-size: 12px; color: #000; font-weight: 800; }
+
+    </style>
+</head>
+<body>
+
+    <div class="controls no-print">
+        <label style="font-weight:bold;">عدد النسخ:</label>
+        <input type="number" id="copyCount" value="1" min="1" style="width: 60px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 4px;">
+
+        <button onclick="generateAndPrint()" style="background: #28a745; color: white; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 10px;">
+            🖨️ طباعة
+        </button>
+        <button onclick="window.close()" style="background: #dc3545; color: white; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+            إغلاق
+        </button>
+    </div>
+
+    <div id="stickers-area"></div>
+
+    <script>
+        const productName = "{{ product.model.name }}";
+        const categoryName = "{{ product.model.category.name }}"; // المتغير الجديد
+        const productPrice = "{{ product.sell_price }}";
+        const productCode = "{{ product.id }}";
+
+        function generateStickers(count) {
+            const area = document.getElementById('stickers-area');
+            area.innerHTML = '';
+
+            for (let i = 0; i < count; i++) {
+                area.innerHTML += `
+                    <div class="sticker-container">
+                        <div class="row-product"> ${productName} </div>
+                        <div class="row-category">${categoryName}</div>
+                        <div class="row-code">
+                            <span class="label-text">كود:</span> ${productCode}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function generateAndPrint() {
+            const count = document.getElementById('copyCount').value;
+            generateStickers(count);
+            setTimeout(() => { window.print(); }, 300);
+        }
+
+        window.onload = function() { generateStickers(1); };
+    </script>
+
+</body>
+</html>

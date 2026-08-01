@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>إدارة المصروفات والمسحوبات</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Cairo', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="p-4">
+
+    <div class="container">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold text-primary"><i class="fas fa-wallet"></i> المصروفات والمسحوبات</h2>
+            <a href="/dashboard" class="btn btn-outline-secondary fw-bold"><i class="fas fa-home"></i> الرئيسية</a>
+        </div>
+
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-header bg-success text-white fw-bold py-3">
+                <i class="fas fa-plus-circle"></i> تسجيل عملية جديدة
+            </div>
+            <div class="card-body bg-white">
+                <form method="POST">
+                    <input type="hidden" name="add_expense" value="1">
+
+                    <div class="row g-3 align-items-end">
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small">نظام الخصم</label>
+                            <select name="expense_type" class="form-select fw-bold" id="expenseType"
+                                onchange="togglePartnerSelect()">
+                                <option value="general" class="text-success" selected>🏢 مصروف عام للشركة</option>
+                                <option value="private_gm" class="text-primary">👤 مصروف خاص بالمدير العام</option>
+                                <option value="withdrawal" class="text-danger">💸 سحب شخصي (شريك محدد)</option>
+                                <option value="shared_50_50" class="text-dark">⚖️ مشترك (50% مدير / 50% شركاء)</option>
+                                <option value="partners_only" class="text-secondary">👥 شركاء فقط (يوزع على الشركاء)
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small">البند / التصنيف</label>
+                            <div class="input-group">
+                                <select name="category_id" class="form-select" required>
+                                    {% for cat in categories %}
+                                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
+                                    data-bs-target="#addCatModal">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small text-primary">خصم من حساب:</label>
+                            <select name="account_id" class="form-select border-primary" required>
+                                {% for acc in accounts %}
+                                <option value="{{ acc.id }}">{{ acc.name }} (رصيد: {{ acc.balance }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small">المبلغ (ج.م)</label>
+                            <input type="number" step="0.5" name="amount" class="form-control" required
+                                placeholder="0.00">
+                        </div>
+
+                        <div class="col-md-3" id="partnerDiv" style="display: none;">
+                            <label class="form-label fw-bold small text-danger">من الذي سحب؟</label>
+                            <select name="partner_id" class="form-select border-danger">
+                                {% for p in partners %}
+                                <option value="{{ p.id }}">{{ p.fullname }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-7">
+                            <label class="form-label fw-bold small">ملاحظات / وصف</label>
+                            <input type="text" name="description" class="form-control" placeholder="وصف المصروف...">
+                        </div>
+
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100 fw-bold">حفظ</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- فلتر البحث -->
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-header bg-info text-white fw-bold py-3">
+                <i class="fas fa-filter"></i> فلتر المصروفات
+            </div>
+            <div class="card-body bg-white">
+                <form action="/expenses" method="GET" class="row g-3 align-items-end">
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold small">من تاريخ</label>
+                        <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold small">إلى تاريخ</label>
+                        <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold small">البند / التصنيف</label>
+                        <select name="filter_category" class="form-select">
+                            <option value="">-- الكل --</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if filter_category==cat.id|string %}selected{% endif %}>{{
+                                cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold small">النوع</label>
+                        <select name="filter_type" class="form-select">
+                            <option value="">-- الكل --</option>
+                            <option value="general" {% if filter_type == 'general' %}selected{% endif %}>مصروف عام (للشركة)</option>
+                            <option value="private_gm" {% if filter_type == 'private_gm' %}selected{% endif %}>خاص بالمدير (م/أحمد)</option>
+                            <option value="withdrawal" {% if filter_type == 'withdrawal' %}selected{% endif %}>سحب شخصي</option>
+                            <option value="shared_50_50" {% if filter_type == 'shared_50_50' %}selected{% endif %}>مشترك (50/50)</option>
+                            <option value="partners_only" {% if filter_type == 'partners_only' %}selected{% endif %}>شركاء فقط</option>
+                            <option value="undefined" {% if filter_type == 'undefined' %}selected{% endif %}>غير محدد (نظام قديم)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold small">خزينة الصرف</label>
+                        <select name="filter_account" class="form-select">
+                            <option value="">-- الكل --</option>
+                            <option value="no_account" {% if filter_account == 'no_account' %}selected{% endif %}>⚠️ بدون خزينة</option>
+                            {% for acc in accounts %}
+                            <option value="{{ acc.id }}" {% if filter_account == acc.id|string %}selected{% endif %}>{{ acc.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-info text-white fw-bold flex-grow-1" style="height:38px;">
+                            <i class="fas fa-search"></i> بحث
+                        </button>
+                        <a href="/expenses" class="btn btn-outline-secondary fw-bold" style="height:38px;">
+                            <i class="fas fa-undo"></i> إعادة
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white fw-bold py-3 d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-history text-light"></i> العمليات المسجلة</span>
+                {% if date_from or date_to or filter_category %}
+                <span class="badge bg-primary text-white fs-6">نتائج مفلترة: {{ expenses | length }} عملية</span>
+                {% endif %}
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle mb-0 text-center">
+                    <thead class="table-light">
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>البند</th>
+                            <th>الوصف</th>
+                            <th>النوع</th>
+                            <th>المبلغ</th>
+                            <th>خزينة الصرف</th>
+                            <th>المسجل</th>
+                            <th>إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for exp in expenses %}
+                        <tr>
+                            <td>{{ exp.date.strftime('%Y-%m-%d') }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ exp.category.name }}</span></td>
+                            <td>{{ exp.description }}</td>
+                            <td>
+                                {% if exp.is_shared %}
+                                <span class="badge bg-success">مصروف عام</span>
+                                {% elif 'سحب' in exp.description %}
+                                <span class="badge bg-danger">سحب شخصي</span>
+                                {% elif 'مشترك' in exp.description %}
+                                <span class="badge bg-dark">مشترك (50/50)</span>
+                                {% elif 'خاص' in exp.description %}
+                                <span class="badge bg-primary">خاص بالمدير</span>
+                                {% elif 'شركاء فقط' in exp.description %}
+                                <span class="badge bg-secondary">شركاء فقط</span>
+                                {% else %}
+                                <span class="badge bg-light text-dark">غير محدد</span>
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold text-danger">- {{ exp.amount }} ج.م</td>
+                            <td class="small">
+                                {% if exp.account %}
+                                <span class="badge bg-info text-dark"><i class="fas fa-piggy-bank me-1"></i>{{ exp.account.name }}</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle me-1"></i>بدون خزينة</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-muted">{{ exp.created_by.fullname }}</td>
+
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-primary me-1 edit-expense-btn"
+                                    data-id="{{ exp.id }}" data-category="{{ exp.category_id }}"
+                                    data-desc="{{ exp.description | e }}" data-amount="{{ exp.amount }}"
+                                    data-account="{{ exp.account_id or '' }}"
+                                    data-type="{% if exp.is_shared %}general{% elif 'سحب' in exp.description %}withdrawal{% elif 'مشترك' in exp.description %}shared_50_50{% elif 'خاص' in exp.description %}private_gm{% elif 'شركاء فقط' in exp.description %}partners_only{% else %}general{% endif %}"
+                                    data-partner="{% if 'سحب' in exp.description %}{{ PartnerTransaction.query.filter(PartnerTransaction.description.like('%' ~ exp.description ~ '%'), PartnerTransaction.type == 'withdrawal').first().partner_id | default('', true) }}{% endif %}"
+                                    onclick="openEditModal(this)">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <a href="/expenses/delete/{{ exp.id }}" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('هل أنت متأكد؟ سيتم رد المبلغ للخزينة وإلغاء الخصم.')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">لا توجد مصروفات مسجلة</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- تقرير إجماليات المصروفات -->
+        <div class="card shadow-sm border-0 mt-4">
+            <div class="card-header bg-primary text-white fw-bold py-3 d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-chart-pie text-light"></i> تقرير إجماليات المصروفات</span>
+                <button class="btn btn-sm btn-light text-primary fw-bold" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#totalsReport">
+                    <i class="fas fa-chevron-down"></i> عرض / إخفاء
+                </button>
+            </div>
+            <div class="collapse show" id="totalsReport">
+                <div class="card-body">
+                    {% if category_totals %}
+                    <div class="row g-4">
+                        <!-- الشارت -->
+                        <div class="col-lg-5">
+                            <div class="text-center mb-3">
+                                <h5 class="fw-bold text-muted"><i class="fas fa-pie-chart"></i> توزيع المصروفات</h5>
+                            </div>
+                            <div style="position: relative; max-width: 380px; margin: 0 auto;">
+                                <canvas id="expensesChart"></canvas>
+                            </div>
+                            <div class="text-center mt-3">
+                                <span class="badge bg-dark fs-5 px-4 py-2 shadow">
+                                    إجمالي المصروفات: {{ "{:,.0f}".format(grand_total) }} ج.م
+                                </span>
+                            </div>
+                        </div>
+                        <!-- الجدول -->
+                        <div class="col-lg-7">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-dark text-center">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>البـنـد</th>
+                                            <th>عدد العمليات</th>
+                                            <th>إجمالي المبلغ</th>
+                                            <th>النسبة</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-center">
+                                        {% for ct in category_totals %}
+                                        <tr>
+                                            <td>{{ loop.index }}</td>
+                                            <td class="fw-bold">{{ ct.name }}</td>
+                                            <td><span class="badge bg-secondary">{{ ct.count }}</span></td>
+                                            <td class="fw-bold text-danger">{{ "{:,.0f}".format(ct.total) }} ج.م</td>
+                                            <td>
+                                                <div class="progress" style="height: 22px; min-width: 100px;">
+                                                    <div class="progress-bar bg-primary" role="progressbar"
+                                                        style="width: {{ (ct.total / grand_total * 100) | round(1) }}%;">
+                                                        {{ (ct.total / grand_total * 100) | round(1) }}%
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot class="table-light">
+                                        <tr class="fw-bold text-center">
+                                            <td colspan="2">الإجمالي الكلي</td>
+                                            <td><span class="badge bg-dark">{{ category_totals | length }} بند</span>
+                                            </td>
+                                            <td class="text-danger fs-5">{{ "{:,.0f}".format(grand_total) }} ج.م</td>
+                                            <td>100%</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-info-circle fa-2x mb-2"></i>
+                        <p>لا توجد مصروفات مسجلة بعد لعرض التقرير.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addCatModal" tabindex="-1">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <form method="POST" class="modal-content">
+                <input type="hidden" name="add_category" value="1">
+                <div class="modal-header border-0 pb-0">
+                    <h6 class="modal-title fw-bold">إضافة بند جديد</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" name="new_category_name" class="form-control"
+                        placeholder="اسم البند (مثال: صيانة تكييف)" required>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="submit" class="btn btn-success w-100 btn-sm">إضافة للقائمة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Expense Modal -->
+    <div class="modal fade" id="editExpenseModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <form id="editExpenseForm" method="POST" class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-edit"></i> تعديل مصروف</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">البند</label>
+                            <select name="category_id" id="edit_category_id" class="form-select" required>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">نوع المصروف</label>
+                            <select name="expense_type" id="edit_expense_type" class="form-select"
+                                onchange="toggleEditPartnerSelect()" required>
+                                <option value="general">مصروف عام للشركة</option>
+                                <option value="shared_50_50">مشترك (50% مدير + 50% شركاء)</option>
+                                <option value="partners_only">للشركاء فقط (يوزع على 4 شركاء)</option>
+                                <option value="withdrawal">سحب شخصي / سلفة لشريك</option>
+                                <option value="private_gm">مصروف خاص م/أحمد</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3" id="editPartnerDiv" style="display: none;">
+                            <label class="form-label small fw-bold">الشريك (للمسحوبات)</label>
+                            <select name="partner_id" id="edit_partner_id" class="form-select">
+                                <option value="">-- اختر شريك --</option>
+                                {% for p in partners %}
+                                <option value="{{ p.id }}">{{ p.fullname }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">خزينة الصرف</label>
+                            <select name="account_id" id="edit_account_id" class="form-select">
+                                <option value="">-- الخزينة الرئيسية --</option>
+                                {% for acc in accounts %}
+                                <option value="{{ acc.id }}">{{ acc.name }} (رصيد: {{ acc.balance }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">المبلغ (ج.م)</label>
+                            <input type="number" step="0.01" name="amount" id="edit_amount" class="form-control"
+                                required>
+                        </div>
+                        <div class="col-md-9">
+                            <label class="form-label small fw-bold">الوصف الطويل</label>
+                            <input type="text" name="description" id="edit_description" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary fw-bold">حفظ التغييرات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function togglePartnerSelect() {
+            const type = document.getElementById('expenseType').value;
+            const div = document.getElementById('partnerDiv');
+
+            if (type === 'withdrawal') {
+                div.style.display = 'block';
+                document.querySelector('[name="partner_id"]').required = true;
+            } else {
+                div.style.display = 'none';
+                document.querySelector('[name="partner_id"]').required = false;
+            }
+        }
+
+        function toggleEditPartnerSelect() {
+            const type = document.getElementById('edit_expense_type').value;
+            const div = document.getElementById('editPartnerDiv');
+            const select = document.getElementById('edit_partner_id');
+
+            if (type === 'withdrawal') {
+                div.style.display = 'block';
+                select.required = true;
+            } else {
+                div.style.display = 'none';
+                select.required = false;
+                select.value = "";
+            }
+        }
+
+        function openEditModal(buttonElement) {
+            const id = buttonElement.getAttribute('data-id');
+            const category_id = buttonElement.getAttribute('data-category');
+            const description = buttonElement.getAttribute('data-desc');
+            const amount = buttonElement.getAttribute('data-amount');
+            const account_id = buttonElement.getAttribute('data-account');
+            const expense_type = buttonElement.getAttribute('data-type');
+            const partner_id = buttonElement.getAttribute('data-partner');
+
+            // Set form action
+            document.getElementById('editExpenseForm').action = '/expenses/edit/' + id;
+
+            // Populate fields
+            document.getElementById('edit_category_id').value = category_id;
+            document.getElementById('edit_amount').value = amount;
+            document.getElementById('edit_account_id').value = account_id;
+            document.getElementById('edit_expense_type').value = expense_type;
+
+            // Clean up description if it has the prefix
+            let cleanDesc = description;
+            if (cleanDesc.includes(': ')) {
+                cleanDesc = cleanDesc.substring(cleanDesc.indexOf(': ') + 2);
+            }
+            document.getElementById('edit_description').value = cleanDesc;
+
+            toggleEditPartnerSelect();
+            if (partner_id && expense_type === 'withdrawal') {
+                document.getElementById('edit_partner_id').value = partner_id;
+            }
+
+            // Show modal
+            var editModal = new bootstrap.Modal(document.getElementById('editExpenseModal'));
+            editModal.show();
+        }
+    </script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        {% if category_totals %}
+        const ctx = document.getElementById('expensesChart');
+        if (ctx) {
+            const colors = [
+                '#0d6efd', '#dc3545', '#198754', '#ffc107', '#6f42c1',
+                '#fd7e14', '#20c997', '#d63384', '#0dcaf0', '#6610f2',
+                '#e91e63', '#00bcd4', '#ff5722', '#4caf50', '#9c27b0',
+                '#ff9800', '#3f51b5', '#009688', '#795548', '#607d8b'
+            ];
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [{% for ct in category_totals %}'{{ ct.name }}',{% endfor %}],
+        datasets: [{
+            data: [{% for ct in category_totals %}{{ ct.total }}, {% endfor %}],
+            backgroundColor: colors.slice(0, {{ category_totals | length }}),
+                borderWidth: 2,
+                    borderColor: '#fff'
+                    }]
+                },
+        options: {
+            responsive: true,
+                plugins: {
+                legend: {
+                    position: 'bottom',
+                        labels: {
+                        font: { size: 12, family: 'Cairo' },
+                        padding: 12
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            let pct = ((context.parsed / total) * 100).toFixed(1);
+                            return context.label + ': ' + context.parsed.toLocaleString() + ' ج.م (' + pct + '%)';
+                        }
+                    }
+                }
+            }
+        }
+            });
+        }
+        {% endif %}
+    </script>
+
+</body>
+
+</html>

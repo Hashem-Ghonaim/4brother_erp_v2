@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>طباعة الباركود</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; }
+        .barcode-container {
+            display: inline-block;
+            border: 1px dashed #ccc;
+            padding: 10px;
+            margin: 10px;
+            width: 200px;
+            text-align: center;
+        }
+        .price { font-size: 18px; font-weight: bold; margin-top: 5px; }
+        @media print {
+            button { display: none; }
+            .barcode-container { border: none; page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <button onclick="window.print()" style="padding: 10px 20px; font-size: 20px; margin: 20px; cursor: pointer;">🖨️ طباعة الكل</button>
+    <hr>
+    
+    {% for v in variants %}
+    <div class="barcode-container">
+        <div>{{ v.model.name }}</div>
+        <div><strong>المقاس: {{ v.size }}</strong></div>
+        <svg id="barcode{{ v.id }}"></svg>
+        <div class="price">{{ v.sell_price }} ج.م</div>
+        
+        <script>
+            JsBarcode("#barcode{{ v.id }}", "{{ v.barcode }}", {
+                format: "CODE128",
+                width: 2,
+                height: 40,
+                displayValue: true
+            });
+        </script>
+    </div>
+    {% endfor %}
+
+</body>
+</html>

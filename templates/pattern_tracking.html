@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متابعة القصات</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #eef0fd;
+            --bg: #f4f7fe;
+            --card-bg: #ffffff;
+            --text-main: #2b3674;
+            --text-muted: #8f9bba;
+            --border: #e9ecef;
+        }
+        body {
+            background: var(--bg);
+            font-family: 'Tajawal', 'Segoe UI', Tahoma, sans-serif;
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        /* NAV */
+        .top-nav {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+        }
+        .top-nav .page-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .top-nav .page-title i { color: var(--primary); }
+        .btn-back {
+            color: var(--text-muted);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 7px 16px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-back:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+
+        /* HEADER CARDS */
+        .header-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 12px rgba(67,97,238,0.05);
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between; height: 100%;
+        }
+
+        /* FILTERS */
+        .filter-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 12px rgba(67,97,238,0.05);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .form-label { font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; }
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 1.5px solid var(--border);
+            font-size: 0.9rem;
+            padding: 10px 14px;
+        }
+        .form-control:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(67,97,238,0.1); }
+
+        /* TABLE */
+        .table-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(67,97,238,0.05);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .table thead th {
+            background: var(--bg); color: var(--text-muted);
+            font-size: 0.8rem; font-weight: 700;
+            padding: 14px 16px; border: none; white-space: nowrap;
+        }
+        .table tbody td { padding: 14px 16px; border-color: var(--border); vertical-align: middle; font-size: 0.9rem; white-space: nowrap; }
+        .table tbody tr:hover { background: var(--primary-light); }
+        .table-success td { background-color: rgba(46, 167, 118, 0.05) !important; }
+
+        /* PATTERN IMG */
+        .pattern-img { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; border: 2px solid var(--border); cursor: pointer; transition: 0.3s; }
+        .pattern-img:hover { transform: scale(3.5); z-index: 1000; position: relative; box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+
+        /* BADGES */
+        .status-badge { font-size: 0.8rem; font-weight: 700; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px; }
+        .status-success { background: rgba(46, 167, 118, 0.1); color: #2ea776; }
+        .status-warning { background: rgba(247, 127, 0, 0.1); color: #f77f00; }
+        .status-danger { background: rgba(230, 57, 70, 0.1); color: #e63946; }
+        .status-info { background: rgba(67, 97, 238, 0.1); color: #4361ee; }
+
+        .action-btn { width: 34px; height: 34px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid var(--border); background: white; color: var(--text-muted); text-decoration: none; transition: 0.2s; }
+        .action-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+        .action-btn.delete:hover { background: #e63946; border-color: #e63946; }
+
+        /* MODAL */
+        .modal-content { border: none; border-radius: 18px; overflow: hidden; }
+        .modal-header { border-bottom: 1px solid var(--border); padding: 18px 22px; }
+
+        /* Mobile Optimization: Shrink table to fit without scroll */
+        @media (max-width: 768px) {
+            .table-responsive {
+                overflow-x: visible !important;
+            }
+            .table {
+                min-width: 100% !important;
+                width: 100% !important;
+            }
+            .table th,
+            .table td,
+            .table span {
+                padding: 0.1rem !important;
+                font-size: 0.25rem !important;
+                white-space: normal !important;
+                word-break: break-word !important;
+                line-height: 1 !important;
+            }
+            .status-badge {
+                font-size: 0.25rem !important;
+                padding: 0.1rem 0.2rem !important;
+            }
+            .pattern-img {
+                width: 15px !important;
+                height: 15px !important;
+                border-radius: 2px !important;
+            }
+            .action-btn {
+                width: 12px !important;
+                height: 12px !important;
+                font-size: 0.25rem !important;
+                padding: 0 !important;
+                margin: 0.5px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="top-nav">
+    <div class="page-title"><i class="fas fa-cut"></i> متابعة القصات</div>
+    <a href="/dashboard" class="btn-back"><i class="fas fa-arrow-right"></i> الرئيسية</a>
+</nav>
+
+<div class="container-fluid px-3 px-md-4 py-4">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show rounded-3 shadow-sm mb-3">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-9">
+            <div class="header-card">
+                <div>
+                    <h6 class="text-muted mb-1 fw-bold">إجمالي القصات المعروضة</h6>
+                    <h2 class="text-primary fw-bold mb-0">{{ patterns|length }}</h2>
+                </div>
+                <div style="width: 50px; height: 50px; background: var(--primary-light); border-radius: 14px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-cut text-primary fs-4"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            {% if current_user.role == 'general_manager' or current_user.has_perm('manage_patterns') %}
+            <button class="btn btn-primary w-100 h-100 fw-bold d-flex flex-column align-items-center justify-content-center gap-2" data-bs-toggle="modal" data-bs-target="#newPatternModal" style="border-radius: 16px; background: linear-gradient(135deg, #4361ee, #7b5ea7); border: none;">
+                <i class="fas fa-plus fs-3"></i> <span>إضافة قصة جديدة</span>
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filter-card">
+        <form method="GET" action="/patterns" class="row g-3 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label">حالة القصة</label>
+                <select name="status" class="form-select">
+                    <option value="">-- الكل --</option>
+                    <option value="تم التسليم للمصنع" {% if status_filter=='تم التسليم للمصنع' %}selected{% endif %}>تم التسليم للمصنع</option>
+                    <option value="جاري التجهيز" {% if status_filter=='جاري التجهيز' %}selected{% endif %}>جاري التجهيز</option>
+                    <option value="معطلة" {% if status_filter=='معطلة' %}selected{% endif %}>معطلة</option>
+                    <option value="ملغية" {% if status_filter=='ملغية' %}selected{% endif %}>ملغية</option>
+                    <option value="تم الإستلام" {% if status_filter=='تم الإستلام' %}selected{% endif %}>تم الإستلام</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">المصنع</label>
+                <input type="text" name="factory" class="form-control" value="{{ factory_filter }}" placeholder="اسم المصنع...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">العميل</label>
+                <select name="customer_id" class="form-select">
+                    <option value="">-- الكل --</option>
+                    {% for c in customers %}
+                    <option value="{{ c.id }}" {% if customer_filter|string==c.id|string %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">المسؤول</label>
+                <select name="responsible_id" class="form-select">
+                    <option value="">-- الكل --</option>
+                    {% for u in users %}
+                    <option value="{{ u.id }}" {% if responsible_filter|string==u.id|string %}selected{% endif %}>{{ u.fullname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">من تاريخ دخول</label>
+                <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">إلى تاريخ</label>
+                <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+            </div>
+            <div class="col-12 mt-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary fw-bold px-4 rounded-3"><i class="fas fa-search me-1"></i> بحث</button>
+                <a href="/patterns" class="btn btn-light fw-bold px-4 rounded-3 border"><i class="fas fa-undo me-1"></i> إعادة ضبط</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 text-center">
+                <thead>
+                    <tr>
+                        <th>الموديل</th>
+                        <th>الصورة</th>
+                        <th>تاريخ الدخول</th>
+                        <th>الاستلام المتفق</th>
+                        <th>المصنع</th>
+                        <th>العميل</th>
+                        <th>المسؤول</th>
+                        <th>التكلفة</th>
+                        {% if current_user.username == 'gm_ahmed' %}
+                        <th class="text-info">سعر الاستلام</th>
+                        {% endif %}
+                        <th>سعر البيع</th>
+                        <th>العدد / الألوان</th>
+                        <th>الحالة</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in patterns %}
+                    <tr class="{% if p.status == 'تم الإستلام' %}table-success{% endif %}">
+                        <td class="fw-bold text-primary">{{ p.serial_number }}</td>
+                        <td>
+                            {% if p.image %}
+                            <img src="{{ p.image | image_url }}" class="pattern-img">
+                            {% else %}
+                            <div style="width:44px; height:44px; background:#f0f0f0; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#ccc;">
+                                <i class="fas fa-image"></i>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td><span class="text-muted small">{{ p.entry_date.strftime('%Y-%m-%d') if p.entry_date else '-' }}</span></td>
+                        <td><span class="text-danger fw-bold small"><i class="far fa-clock me-1"></i> {{ p.delivery_date.strftime('%Y-%m-%d') if p.delivery_date else 'غير محدد' }}</span></td>
+                        <td class="fw-bold">{{ p.factory_name }}</td>
+                        <td><a href="/customers/{{ p.customer_id }}" class="text-dark fw-bold text-decoration-none">{{ p.customer.name }}</a></td>
+                        <td><span style="font-size: 0.8rem; background: #eee; padding: 4px 8px; border-radius: 6px;">{{ p.responsible.fullname }}</span></td>
+                        <td class="fw-bold">{{ p.cost }}</td>
+                        {% if current_user.username == 'gm_ahmed' %}
+                        <td class="fw-bold text-info">{{ p.receiving_price }}</td>
+                        {% endif %}
+                        <td class="fw-bold text-success">{{ p.selling_price }}</td>
+                        <td>
+                            <div class="fw-bold">{{ p.quantity or 0 }} قطعة</div>
+                            <div class="small text-muted">{{ p.colors or '-' }}</div>
+                        </td>
+                        <td>
+                            {% if p.status == 'تم الإستلام' %}
+                            <span class="status-badge status-success"><i class="fas fa-check-circle"></i> {{ p.status }}</span>
+                            {% elif p.status == 'جاري التجهيز' %}
+                            <span class="status-badge status-warning"><i class="fas fa-spinner fa-spin"></i> {{ p.status }}</span>
+                            {% elif p.status in ['معطلة', 'ملغية'] %}
+                            <span class="status-badge status-danger"><i class="fas fa-times-circle"></i> {{ p.status }}</span>
+                            {% else %}
+                            <span class="status-badge status-info">{{ p.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if current_user.role == 'general_manager' or current_user.has_perm('manage_patterns') %}
+                            <div class="d-flex gap-1 justify-content-center">
+                                <button class="action-btn" onclick='openEditModal({{ p.id }}, {{ p.serial_number|tojson }}, "{{ p.entry_date }}", "{{ p.delivery_date or "" }}", {{ p.factory_name|tojson }}, {{ p.customer_id }}, {{ p.responsible_id }}, {{ p.cost }}, {{ p.receiving_price|default(0, true) }}, {{ p.selling_price }}, "{{ p.status }}", {{ p.quantity or 0 }}, {{ (p.colors or "")|tojson }})'><i class="fas fa-pen"></i></button>
+                                <a href="/patterns/delete/{{ p.id }}" class="action-btn delete" onclick="return confirm('تأكيد الحذف؟')"><i class="fas fa-trash"></i></a>
+                            </div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="13" class="py-5 text-muted"><i class="fas fa-box-open fs-1 mb-3 d-block opacity-25"></i> لا توجد قصات مطابقة للبحث</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ADD MODAL -->
+<div class="modal fade" id="newPatternModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form action="/patterns/new" method="POST" enctype="multipart/form-data" class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold text-dark"><i class="fas fa-plus-circle text-primary me-2"></i> إضافة قصة جديدة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">رقم الموديل / التسلسل *</label>
+                    <input type="text" name="serial_number" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">صورة القصة (اختياري)</label>
+                    <input type="file" name="image" class="form-control" accept="image/*">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">تاريخ الدخول *</label>
+                    <input type="date" name="entry_date" class="form-control" value="{{ now().strftime('%Y-%m-%d') }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">تاريخ الاستلام المتفق عليه</label>
+                    <input type="date" name="delivery_date" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">المصنع *</label>
+                    <input type="text" name="factory_name" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">العميل *</label>
+                    <select name="customer_id" class="form-select" required>
+                        <option value="">-- اختر العميل --</option>
+                        {% for c in customers %}
+                        <option value="{{ c.id }}">{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">المسؤول *</label>
+                    <select name="responsible_id" class="form-select" required>
+                        <option value="">-- اختر المسؤول --</option>
+                        {% for u in users %}
+                        <option value="{{ u.id }}">{{ u.fullname }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">التكلفة</label>
+                    <input type="number" step="0.01" name="cost" class="form-control" value="0">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">سعر البيع</label>
+                    <input type="number" step="0.01" name="selling_price" class="form-control" value="0">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">العدد</label>
+                    <input type="number" name="quantity" class="form-control" value="0">
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">الألوان</label>
+                    <input type="text" name="colors" class="form-control" placeholder="أسود - أبيض - أحمر">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">الحالة</label>
+                    <select name="status" class="form-select">
+                        <option value="تم التسليم للمصنع">تم التسليم للمصنع</option>
+                        <option value="جاري التجهيز" selected>جاري التجهيز</option>
+                        <option value="معطلة">معطلة</option>
+                        <option value="ملغية">ملغية</option>
+                        <option value="تم الإستلام">تم الإستلام</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer bg-light p-3">
+                <button type="button" class="btn btn-secondary px-4 rounded-3" data-bs-dismiss="modal">إلغاء</button>
+                <button type="submit" class="btn btn-primary px-4 fw-bold rounded-3">إضافة القصة</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal fade" id="editPatternModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form id="editPatternForm" method="POST" enctype="multipart/form-data" class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold text-dark"><i class="fas fa-pen text-primary me-2"></i> تعديل القصة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">رقم الموديل / التسلسل *</label>
+                    <input type="text" name="serial_number" id="edit_serial" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">صورة (اتركها فارغة للاحتفاظ بالقديمة)</label>
+                    <input type="file" name="image" class="form-control" accept="image/*">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">تاريخ الدخول *</label>
+                    <input type="date" name="entry_date" id="edit_entry_date" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">تاريخ الاستلام</label>
+                    <input type="date" name="delivery_date" id="edit_delivery_date" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">المصنع *</label>
+                    <input type="text" name="factory_name" id="edit_factory" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">العميل *</label>
+                    <select name="customer_id" id="edit_customer" class="form-select" required>
+                        {% for c in customers %}
+                        <option value="{{ c.id }}">{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">المسؤول *</label>
+                    <select name="responsible_id" id="edit_responsible" class="form-select" required>
+                        {% for u in users %}
+                        <option value="{{ u.id }}">{{ u.fullname }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">التكلفة</label>
+                    <input type="number" step="0.01" name="cost" id="edit_cost" class="form-control">
+                </div>
+                {% if current_user.username == 'gm_ahmed' %}
+                <div class="col-md-3">
+                    <label class="form-label text-info">سعر الاستلام</label>
+                    <input type="number" step="0.01" name="receiving_price" id="edit_receiving_price" class="form-control">
+                </div>
+                {% endif %}
+                <div class="col-md-3">
+                    <label class="form-label">سعر البيع</label>
+                    <input type="number" step="0.01" name="selling_price" id="edit_selling_price" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">العدد</label>
+                    <input type="number" name="quantity" id="edit_quantity" class="form-control">
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">الألوان</label>
+                    <input type="text" name="colors" id="edit_colors" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">الحالة</label>
+                    <select name="status" id="edit_status" class="form-select fw-bold">
+                        <option value="تم التسليم للمصنع">تم التسليم للمصنع</option>
+                        <option value="جاري التجهيز">جاري التجهيز</option>
+                        <option value="معطلة">معطلة</option>
+                        <option value="ملغية">ملغية</option>
+                        <option value="تم الإستلام">تم الإستلام</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer bg-light p-3">
+                <button type="button" class="btn btn-secondary px-4 rounded-3" data-bs-dismiss="modal">إلغاء</button>
+                <button type="submit" class="btn btn-primary px-4 fw-bold rounded-3">حفظ التعديلات</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function openEditModal(id, serial, entryDate, deliveryDate, factory, customerId, responsibleId, cost, receivingPrice, sellingPrice, status, quantity, colors) {
+        document.getElementById('editPatternForm').action = '/patterns/edit/' + id;
+        document.getElementById('edit_serial').value = serial;
+        document.getElementById('edit_entry_date').value = entryDate;
+        document.getElementById('edit_delivery_date').value = deliveryDate !== 'None' ? deliveryDate : '';
+        document.getElementById('edit_factory').value = factory;
+        document.getElementById('edit_customer').value = customerId;
+        document.getElementById('edit_responsible').value = responsibleId;
+        document.getElementById('edit_cost').value = cost;
+        if (document.getElementById('edit_receiving_price')) {
+             document.getElementById('edit_receiving_price').value = receivingPrice;
+        }
+        document.getElementById('edit_selling_price').value = sellingPrice;
+        document.getElementById('edit_status').value = status;
+        document.getElementById('edit_quantity').value = quantity || 0;
+        document.getElementById('edit_colors').value = colors || '';
+
+        new bootstrap.Modal(document.getElementById('editPatternModal')).show();
+    }
+</script>
+</body>
+</html>

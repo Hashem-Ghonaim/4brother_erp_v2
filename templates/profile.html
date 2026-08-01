@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الملف الشخصي | {{ user.fullname }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            height: 100%;
+            text-align: center;
+            border-bottom: 4px solid transparent;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .card-income {
+            border-color: #198754;
+        }
+
+        .card-expense {
+            border-color: #dc3545;
+        }
+
+        .card-net {
+            background: linear-gradient(135deg, #198754, #0f5132);
+            color: white;
+        }
+
+        .emp-header {
+            background: linear-gradient(135deg, #2c3e50, #4ca1af);
+            color: white;
+            padding: 40px 20px;
+            text-align: right;
+            border-radius: 0 0 30px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .avatar-circle {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 0 0 20px;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-light bg-white shadow-sm px-3 mb-0">
+        <div class="container-fluid">
+            <a href="/dashboard" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-right"></i> عودة
+                للرئيسية</a>
+            <span class="fw-bold">حسابي المالي</span>
+        </div>
+    </nav>
+
+    <div class="emp-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-7 d-flex align-items-center mb-3 mb-md-0">
+                    <div class="avatar-circle fw-bold">{{ user.fullname[0] }}</div>
+                    <div>
+                        <h2 class="fw-bold m-0">{{ user.fullname }}</h2>
+                        <p class="opacity-75 mb-2">{{ user.role }}</p>
+                        <span class="badge bg-light text-dark fw-bold px-3 py-2 rounded-pill shadow-sm"><i class="fas fa-id-badge text-primary me-1"></i> الكود: {{ user.emp_code }}</span>
+                    </div>
+                </div>
+                <div class="col-md-5 text-md-end text-center">
+                    <button class="btn btn-light fw-bold shadow-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#passwordModal">
+                        <i class="fas fa-lock me-2 text-primary"></i> تغيير كلمة المرور
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container pb-5">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show text-center">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <!-- Filter Form -->
+        <div class="card shadow-sm border-0 mb-4 py-3 px-4">
+            <form method="GET" action="{{ url_for('profile') }}" class="row g-2 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label text-muted small mb-1">من تاريخ</label>
+                    <input type="date" name="start_date" class="form-control" value="{{ start_date }}" required>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label text-muted small mb-1">إلى تاريخ</label>
+                    <input type="date" name="end_date" class="form-control" value="{{ end_date }}" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i>
+                        تصفية</button>
+                </div>
+            </form>
+        </div>
+
+        {% if user.role in ['manager', 'general_manager'] %}
+
+        {% if mgr.is_gm %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-dark text-white shadow-sm border-0 text-center py-3">
+                    <h5 class="mb-0">🏢 لوحة تحكم الإدارة العليا</h5>
+                    <small>نظرة عامة على أداء الشركة هذا الشهر</small>
+                    <div class="mt-3">
+                        <a href="/partners/report" class="btn btn-warning btn-sm fw-bold px-4 text-dark rounded-pill shadow-sm">
+                            <i class="fas fa-crown me-1"></i> تصفية حسابات الشركاء الإجمالية
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <!-- 1. إجمالي المبيعات -->
+            <div class="col-md-6">
+                <div class="stat-card card-income drilldown-cell" style="cursor:pointer" data-name="{{ user.fullname }}"
+                    data-label="إجمالي مبيعات الشركة (صافي)"
+                    data-details="{{ mgr.sales_details | tojson | forceescape }}">
+                    <div class="stat-label">إجمالي مبيعات الشركة (صافي) <i
+                            class="fas fa-search-plus ms-1 opacity-50"></i></div>
+                    <div class="stat-value text-success">+{{ mgr.total_sales }}</div>
+                </div>
+            </div>
+            <!-- 2. التكلفة الكلية -->
+            <div class="col-md-6">
+                <div class="stat-card card-expense drilldown-cell" style="cursor:pointer"
+                    data-name="{{ user.fullname }}" data-label="التكلفة الكلية للمبيعات"
+                    data-details="{{ mgr.cost_details | tojson | forceescape }}">
+                    <div class="stat-label">التكلفة الكلية للمبيعات <i class="fas fa-search-plus ms-1 opacity-50"></i>
+                    </div>
+                    <div class="stat-value text-danger">-{{ mgr.total_cost }}</div>
+                </div>
+            </div>
+            <!-- 3. صافي الربح الأولي -->
+            <div class="col-12">
+                <div class="stat-card bg-light border-primary border-bottom drilldown-formula" style="cursor:pointer"
+                    data-name="{{ user.fullname }}" data-label="صافي الربح الأولي" data-formula='[
+                {"label":"إجمالي المبيعات (صافي)","value":{{ mgr.total_sales }}},
+                {"label":"التكلفة الكلية لحين البيع","value":-{{ mgr.total_cost }}}
+            ]' data-result="{{ mgr.initial_profit }}">
+                    <div class="stat-label text-primary">صافي الربح الأولي (مبيعات - تكلفة) <i
+                            class="fas fa-calculator ms-1 opacity-50"></i></div>
+                    <div class="stat-value text-primary">{{ mgr.initial_profit }} ج.م</div>
+                </div>
+            </div>
+        </div>
+
+        <h5 class="fw-bold mb-4 text-primary border-bottom pb-2"><i class="fas fa-chart-pie me-2"></i> استقطاعات الشراكة
+            والإدارة</h5>
+        <div class="row g-3 mb-4">
+            <!-- 4. إجمالي العمولات -->
+            <div class="col-md-4">
+                <div class="stat-card card-expense drilldown-cell" style="cursor:pointer"
+                    data-name="{{ user.fullname }}" data-label="إجمالي عمولات الشركة العام"
+                    data-details="{{ mgr.comm_details | tojson | forceescape }}">
+                    <div class="stat-label">عمولات الشركة العامة <i
+                            class="fas fa-search-plus ms-1 opacity-50"></i></div>
+                    <div class="stat-value text-danger">-{{ mgr.total_commissions }}</div>
+                </div>
+            </div>
+            <!-- 5. مصاريف الشركة العامة -->
+            <div class="col-md-4">
+                <div class="stat-card card-expense drilldown-cell" style="cursor:pointer"
+                    data-name="{{ user.fullname }}" data-label="مصاريف الشركة العامة"
+                    data-details="{{ mgr.gm_expenses_details | tojson | forceescape }}">
+                    <div class="stat-label">مصاريف الشركة (تشغيل) <i
+                            class="fas fa-search-plus ms-1 opacity-50"></i></div>
+                    <div class="stat-value text-danger">-{{ mgr.gm_expenses }}</div>
+                </div>
+            </div>
+            <!-- 6. المصاريف الثابتة والشخصية لأحمد -->
+            <div class="col-md-4">
+                <div class="stat-card card-expense drilldown-cell" style="cursor:pointer"
+                    data-name="{{ user.fullname }}" data-label="المصاريف الثابتة والعمولات (م/أحمد)"
+                    data-details="{{ mgr.gm_personal_details | tojson | forceescape }}">
+                    <div class="stat-label">مصاريف ثابتة وعمولات <i
+                            class="fas fa-search-plus ms-1 opacity-50"></i></div>
+                    <div class="stat-value text-danger">-{{ mgr.gm_personal_deductions }}</div>
+                </div>
+            </div>
+            
+            <!-- 7. صافي الربح النهائي -->
+            <div class="col-12">
+                <div class="stat-card card-net drilldown-formula" style="cursor:pointer" data-name="{{ user.fullname }}"
+                    data-label="صافي الربح النهائي للشركة" data-formula='[
+                {"label":"صافي الربح الأولي","value":{{ mgr.initial_profit }}},
+                {"label":"عمولات الشركة العامة","value":-{{ mgr.total_commissions }}},
+                {"label":"مصاريف الشركة (تشغيل)","value":-{{ mgr.gm_expenses }}},
+                {"label":"المصاريف الثابتة وعمولاتي","value":-{{ mgr.gm_personal_deductions }}}
+            ]' data-result="{{ mgr.net_profit }}">
+                    <div class="stat-label text-white-50">صافي الربح النهائي لحساب الإدارة <i
+                            class="fas fa-calculator ms-1 opacity-50"></i></div>
+                    <div class="stat-value text-white">{{ mgr.net_profit }} ج.م</div>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-primary text-white shadow-sm border-0 text-center py-3">
+                    <h5 class="mb-0">📦 إجمالي قطع الفريق (أنا + الموظفين)</h5>
+                    <h1 class="fw-bold display-4 my-2">{{ mgr.team_items_count }}</h1>
+                    <small>قطعة مباعة هذا الشهر</small>
+                    <div class="mt-3">
+                        <a href="/partners/report" class="btn btn-light btn-sm fw-bold px-4 text-primary rounded-pill shadow-sm">
+                            <i class="fas fa-crown me-1"></i> عرض تصفية حسابات الشركاء
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h5 class="fw-bold mb-4 text-primary border-bottom pb-2"><i class="fas fa-chart-pie me-2"></i> تقرير الشراكة
+            المالي</h5>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="stat-card card-income drilldown-cell" style="cursor:pointer" data-name="{{ user.fullname }}"
+                    data-label="العمولة الكلية (13ج)"
+                    data-details="{{ mgr.gross_comm_details | tojson | forceescape }}">
+                    <div class="stat-label">العمولة الكلية (13ج) <i class="fas fa-search-plus ms-1 opacity-50"></i>
+                    </div>
+                    <div class="stat-value text-success">+{{ mgr.gross_comm }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card card-expense drilldown-cell" style="cursor:pointer"
+                    data-name="{{ user.fullname }}" data-label="عمولات السيلز"
+                    data-details="{{ mgr.sales_comm_details | tojson | forceescape }}">
+                    <div class="stat-label">عمولات السيلز <i class="fas fa-search-plus ms-1 opacity-50"></i></div>
+                    <div class="stat-value text-danger">-{{ mgr.girls_comm }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card card-expense drilldown-cell" style="cursor:pointer"
+                    data-name="{{ user.fullname }}" data-label="خصومات ومصاريف"
+                    data-details="{{ mgr.deductions_details | tojson | forceescape }}">
+                    <div class="stat-label">خصومات ومصاريف <i class="fas fa-search-plus ms-1 opacity-50"></i></div>
+                    <div class="stat-value text-danger">-{{ mgr.discounts + mgr.returns + mgr.expenses + mgr.staff_costs
+                        + mgr.withdrawals }}</div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="stat-card card-net drilldown-formula" style="cursor:pointer" data-name="{{ user.fullname }}"
+                    data-label="صافي أرباح فريقي" data-formula='[
+                {"label":"العمولة الكلية (+13ج)","value":{{ mgr.gross_comm }}},
+                {"label":"عمولات السيلز","value":-{{ mgr.girls_comm }}},
+                {"label":"خصومات ومصاريف","value":-{{ mgr.discounts + mgr.returns + mgr.expenses + mgr.staff_costs + mgr.withdrawals }}}
+            ]' data-result="{{ mgr.net_profit }}">
+                    <div class="stat-label text-white-50">صافي أرباح فريقي <i
+                            class="fas fa-calculator ms-1 opacity-50"></i></div>
+                    <div class="stat-value text-white">{{ mgr.net_profit }} ج.م</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-info text-white shadow-sm border-0 text-center py-3">
+                    <h5 class="mb-0">📦 إجمالي مبيعاتي (عدد القطع)</h5>
+                    <h1 class="fw-bold display-4 my-2">{{ emp.total_items }}</h1>
+                    <small>قطعة مباعة هذا الشهر (إجمالي: {{ emp.debug_gross }} - مرتجع: {{ emp.debug_returns }})</small>
+                </div>
+            </div>
+        </div>
+
+        <h5 class="fw-bold mb-4 text-primary border-bottom pb-2"><i class="fas fa-wallet me-2"></i> تفاصيل الراتب الشهري</h5>
+        <div class="row g-3 mb-4">
+            <!-- الراتب الأساسي -->
+            <div class="col-6 col-md-4">
+                <div class="stat-card" style="border-color: #6c757d;">
+                    <div class="stat-label"><i class="fas fa-money-bill-wave me-1"></i> الراتب الأساسي</div>
+                    <div class="stat-value text-secondary">{{ user.base_salary }}</div>
+                </div>
+            </div>
+            <!-- العمولات -->
+            <div class="col-6 col-md-4">
+                <div class="stat-card card-income">
+                    <div class="stat-label"><i class="fas fa-coins me-1"></i> العمولات
+                        <span class="badge bg-success rounded-pill" style="font-size: 0.7em;">{{ emp.total_items }} قطعة</span>
+                    </div>
+                    <div class="stat-value text-success">+{{ emp.commission }}</div>
+                </div>
+            </div>
+            <!-- مكافآت -->
+            <div class="col-6 col-md-4">
+                <div class="stat-card card-income">
+                    <div class="stat-label"><i class="fas fa-gift me-1"></i> مكافآت وحوافز</div>
+                    <div class="stat-value text-success">+{{ emp.bonuses }}</div>
+                </div>
+            </div>
+            <!-- جزاء حضور -->
+            <div class="col-6 col-md-4">
+                <div class="stat-card card-expense emp-att-drilldown" style="cursor:pointer"
+                    data-details="{{ emp.attendance_details | tojson | forceescape }}">
+                    <div class="stat-label"><i class="fas fa-clock me-1"></i> جزاء حضور
+                        {% if emp.attendance_deduction > 0 %}<i class="fas fa-search-plus ms-1 opacity-50"></i>{% endif %}
+                    </div>
+                    <div class="stat-value text-danger">-{{ emp.attendance_deduction }}</div>
+                </div>
+            </div>
+            <!-- خصومات إدارية -->
+            <div class="col-6 col-md-4">
+                <div class="stat-card card-expense">
+                    <div class="stat-label"><i class="fas fa-exclamation-triangle me-1"></i> خصومات إدارية</div>
+                    <div class="stat-value text-danger">-{{ emp.deductions }}</div>
+                </div>
+            </div>
+            <!-- سلف -->
+            <div class="col-6 col-md-4">
+                <div class="stat-card card-expense">
+                    <div class="stat-label"><i class="fas fa-hand-holding-usd me-1"></i> سلف</div>
+                    <div class="stat-value text-danger">-{{ emp.advances }}</div>
+                </div>
+            </div>
+            <!-- صافي الراتب -->
+            <div class="col-12">
+                <div class="stat-card card-net py-3 drilldown-formula" style="cursor:pointer"
+                    data-name="{{ user.fullname }}"
+                    data-label="تفصيل صافي الراتب"
+                    data-formula='[
+                        {"label":"الراتب الأساسي","value":{{ user.base_salary or 0 }}},
+                        {"label":"العمولات المكتسبة","value":{{ emp.commission }}},
+                        {"label":"المكافآت والحوافز","value":{{ emp.bonuses }}},
+                        {"label":"جزاء الحضور والانصراف","value":-{{ emp.attendance_deduction }}},
+                        {"label":"خصومات إدارية","value":-{{ emp.deductions }}},
+                        {"label":"سلف مستقطعة","value":-{{ emp.advances }}}
+                    ]'
+                    data-result="{{ emp.net_salary }}">
+                    <div class="stat-label text-white-50"><i class="fas fa-calculator me-1"></i> صافي الراتب المتوقع <i class="fas fa-search-plus ms-1 opacity-50"></i></div>
+                    <div class="stat-value text-white">{{ emp.net_salary }} ج.م</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+
+
+    </div>
+
+    <!-- Password Modal -->
+    <div class="modal fade" id="passwordModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-lock me-2 text-primary"></i> تغيير كلمة المرور</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form method="POST">
+                        <div class="form-floating mb-3">
+                            <input type="password" name="old_password" class="form-control border-secondary" id="old_pass" placeholder="كلمة المرور الحالية" required>
+                            <label for="old_pass">كلمة المرور الحالية</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="password" name="new_password" class="form-control border-primary" id="new_pass" placeholder="كلمة المرور الجديدة" required minlength="4">
+                            <label for="new_pass" class="text-primary fw-bold">كلمة المرور الجديدة</label>
+                        </div>
+                        <div class="form-floating mb-4">
+                            <input type="password" name="confirm_password" class="form-control border-primary" id="conf_pass" placeholder="تأكيد كلمة المرور" required>
+                            <label for="conf_pass" class="text-primary fw-bold">تأكيد كلمة المرور</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 fw-bold py-2 rounded-pill shadow-sm"><i class="fas fa-check-circle me-1"></i> حفظ التغيير</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unified Drill-Down Modal -->
+    <div class="modal fade" id="drilldownModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg" style="background-color: white;">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold" id="drilldown_title">تفاصيل</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0" id="drilldown_body">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Unified drill-down system
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // 1) Transaction details cells
+            document.body.addEventListener('click', function (e) {
+                const cell = e.target.closest('.drilldown-cell');
+                if (!cell) return;
+
+                const name = cell.getAttribute('data-name');
+                const label = cell.getAttribute('data-label');
+                const detailsJson = cell.getAttribute('data-details');
+
+                try {
+                    const details = JSON.parse(detailsJson);
+                    showTransactionDetails(name, label, details);
+                } catch (err) {
+                    console.error('Error parsing details:', err);
+                }
+            });
+
+            // 2) Formula breakdown cells
+            document.body.addEventListener('click', function (e) {
+                const cell = e.target.closest('.drilldown-formula');
+                if (!cell) return;
+
+                const name = cell.getAttribute('data-name');
+                const label = cell.getAttribute('data-label');
+                const formulaJson = cell.getAttribute('data-formula');
+                const result = parseFloat(cell.getAttribute('data-result'));
+
+                try {
+                    const formula = JSON.parse(formulaJson);
+                    showFormulaBreakdown(name, label, formula, result);
+                } catch (err) {
+                    console.error('Error parsing formula:', err);
+                }
+            });
+
+            // 3) Employee attendance penalty drilldown
+            document.body.addEventListener('click', function (e) {
+                const cell = e.target.closest('.emp-att-drilldown');
+                if (!cell) return;
+                const detailsJson = cell.getAttribute('data-details');
+                try {
+                    const details = JSON.parse(detailsJson);
+                    const title = document.getElementById('drilldown_title');
+                    const body = document.getElementById('drilldown_body');
+                    title.innerText = 'تفاصيل جزاءات الحضور';
+                    if (!details || details.length === 0) {
+                        body.innerHTML = '<div class="text-center text-success p-4 fs-5"><i class="fas fa-check-circle me-2"></i>لا توجد جزاءات حضور ✅</div>';
+                    } else {
+                        let total = 0;
+                        let rows = '';
+                        details.forEach((d, i) => {
+                            total += d.deduction;
+                            rows += `<tr>
+                                <td class="text-muted small">${i+1}</td>
+                                <td class="fw-bold">${d.date}</td>
+                                <td class="text-start small">${d.reason}</td>
+                                <td class="text-danger fw-bold">${d.deduction.toFixed(2)}</td>
+                            </tr>`;
+                        });
+                        body.innerHTML = `
+                        <table class="table table-striped table-hover mb-0 text-center align-middle">
+                            <thead class="table-dark">
+                                <tr><th>#</th><th>التاريخ</th><th class="text-start">السبب</th><th>الخصم</th></tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                            <tfoot class="table-light">
+                                <tr class="fw-bold fs-6">
+                                    <td colspan="3" class="text-end px-3">إجمالي الجزاءات (${details.length} يوم):</td>
+                                    <td class="text-danger">${total.toFixed(2)}</td>
+                                </tr>
+                            </tfoot>
+                        </table>`;
+                    }
+                    new bootstrap.Modal(document.getElementById('drilldownModal')).show();
+                } catch (err) { console.error('Error:', err); }
+            });
+        });
+
+        function showTransactionDetails(name, label, details) {
+            const title = document.getElementById('drilldown_title');
+            const body = document.getElementById('drilldown_body');
+
+            title.innerText = `${label} — ${name}`;
+
+            if (!details || details.length === 0) {
+                body.innerHTML = '<div class="text-center text-muted p-4 fs-5">لا توجد حركات لهذا البند في الفترة المحددة</div>';
+            } else {
+                let total = 0;
+                let rows = '';
+                details.forEach((d, i) => {
+                    total += d.amount;
+                    let invoiceLink = d.invoice_label;
+                    if (d.order_id) {
+                        invoiceLink = `<a href="/invoice/print/${d.order_id}" target="_blank" class="text-decoration-none fw-bold"><i class="fas fa-file-invoice small me-1"></i>${d.invoice_label}</a>`;
+                    }
+                    const isExpense = ['-', 'خصم'].some(x => label.includes(x)) || label.includes('مصاريف') || label.includes('سيلز');
+                    const displayClass = (d.amount > 0 && !isExpense) ? 'text-success' : 'text-danger';
+
+                    rows += `
+                <tr>
+                    <td class="text-muted small">${i + 1}</td>
+                    <td>${d.date}</td>
+                    <td>${invoiceLink}</td>
+                    <td class="text-start small">${d.desc}</td>
+                    <td class="fw-bold ${displayClass}">${Math.abs(d.amount).toFixed(2)}</td>
+                </tr>`;
+                });
+
+                body.innerHTML = `
+            <table class="table table-striped table-hover mb-0 text-center align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th width="5%">#</th>
+                        <th width="15%">التاريخ</th>
+                        <th width="15%">الفاتورة</th>
+                        <th class="text-start" width="45%">البيان</th>
+                        <th width="20%">المبلغ</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+                <tfoot class="table-light">
+                    <tr class="fw-bold fs-6">
+                        <td colspan="4" class="text-end px-3">الإجمالي (${details.length} حركة):</td>
+                        <td class="${total < 0 ? 'text-danger' : 'text-success'}">${Math.abs(total).toFixed(2)}</td>
+                    </tr>
+                </tfoot>
+            </table>`;
+            }
+
+            new bootstrap.Modal(document.getElementById('drilldownModal')).show();
+        }
+
+        function showFormulaBreakdown(name, label, formula, result) {
+            const title = document.getElementById('drilldown_title');
+            const body = document.getElementById('drilldown_body');
+
+            title.innerText = `${label} — ${name}`;
+
+            let rows = '';
+            formula.forEach((item, i) => {
+                const sign = item.value >= 0 ? '+' : '';
+                const colorClass = item.value >= 0 ? 'text-success' : 'text-danger';
+                rows += `
+            <tr>
+                <td class="text-end fw-bold pe-3">${item.label}</td>
+                <td class="fs-5 ${colorClass} fw-bold">${sign}${item.value.toFixed(2)}</td>
+            </tr>`;
+            });
+
+            const resultColor = result >= 0 ? 'text-success' : 'text-danger';
+
+            body.innerHTML = `
+        <div class="p-3">
+            <table class="table table-bordered mb-0 text-center" style="max-width: 500px; margin: auto;">
+                <thead class="table-secondary">
+                    <tr>
+                        <th width="60%">البند</th>
+                        <th width="40%">القيمة</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+                <tfoot>
+                    <tr class="table-dark">
+                        <td class="text-end fw-bold pe-3 fs-5">الناتج =</td>
+                        <td class="fs-4 ${resultColor} fw-bold">${result.toFixed(2)} ج.م</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>`;
+
+            new bootstrap.Modal(document.getElementById('drilldownModal')).show();
+        }
+    </script>
+</body>
+
+</html>

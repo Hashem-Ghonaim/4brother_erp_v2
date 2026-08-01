@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تقرير تحصيلات الشحن</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f8f9fa; font-family: Tahoma, sans-serif; }
+        .report-header { border-bottom: 3px solid #0d6efd; padding-bottom: 15px; margin-bottom: 20px; }
+        .table thead th { background-color: #0d6efd; color: white; vertical-align: middle; }
+        .totals-row td { background-color: #e9ecef; font-weight: bold; font-size: 1.1em; }
+        
+        @media print {
+            .no-print { display: none !important; }
+            body { background-color: white; }
+            .card { border: none; box-shadow: none !important; }
+            .report-header { border-bottom: 2px solid black; }
+            .table thead th { background-color: #ddd !important; color: black !important; -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body class="p-4">
+
+<div class="container">
+    <div class="card p-3 mb-4 shadow-sm no-print">
+        <form class="row g-3 align-items-center">
+            <div class="col-auto"><label class="fw-bold">من تاريخ:</label></div>
+            <div class="col-auto">
+                <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+            </div>
+            <div class="col-auto"><label class="fw-bold">إلى تاريخ:</label></div>
+            <div class="col-auto">
+                <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary fw-bold px-4">عرض</button>
+            </div>
+            <div class="col-auto ms-auto">
+                <button type="button" onclick="window.print()" class="btn btn-dark">
+                    <i class="fas fa-print"></i> طباعة
+                </button>
+                <a href="/shipping/orders" class="btn btn-secondary">عودة</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card p-4">
+        <div class="report-header d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="fw-bold m-0">تقرير تحصيلات الشحن</h2>
+                <p class="text-muted m-0 mt-1">الفترة من: <b>{{ start_date }}</b> إلى: <b>{{ end_date }}</b></p>
+            </div>
+            <div class="text-center">
+                <h4 class="fw-bold text-primary">{{ global_company_logo if global_company_logo else 'My ERP' }}</h4>
+                <small>قسم الحسابات والشحن</small>
+            </div>
+        </div>
+
+        <table class="table table-bordered text-center align-middle">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>تاريخ الفاتورة</th>
+                    <th>تاريخ التحصيل</th>
+                    <th>رقم البوليصة</th>
+                    <th>اسم العميل</th>
+                    <th>المبلغ المحصل</th>
+                    <th>خصم الشحن</th>
+                    <th>الصافي (للخزينة)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in orders %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td class="text-muted"><small dir="ltr">{{ item.invoice_date }}</small></td>
+                    <td><span class="text-primary fw-bold" dir="ltr">{{ item.date }}</span></td>
+                    <td class="fw-bold">{{ item.waybill }}</td>
+                    <td>{{ item.customer }}</td>
+                    <td>{{ item.collected }}</td>
+                    <td class="text-danger">{{ item.fee }}</td>
+                    <td class="fw-bold text-success">{{ item.net }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="py-4 text-muted">لا توجد تحصيلات في هذه الفترة</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            {% if orders %}
+            <tfoot>
+                <tr class="totals-row">
+                    <td colspan="4" class="text-end pe-3">الإجمالي النهائي:</td>
+                    <td>{{ totals.total_collected }} ج.م</td>
+                    <td class="text-danger">{{ totals.total_fees }} ج.م</td>
+                    <td class="text-success">{{ totals.total_net }} ج.م</td>
+                </tr>
+            </tfoot>
+            {% endif %}
+        </table>
+
+        <div class="row mt-5 no-print">
+            <div class="col-12 text-center text-muted small">
+                تم استخراج التقرير بتاريخ {{ end_date }}
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

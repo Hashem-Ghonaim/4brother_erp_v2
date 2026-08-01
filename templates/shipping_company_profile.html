@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ملف شركة: {{ company.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-light">
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold"><i class="fas fa-truck"></i> {{ company.name }}</h3>
+                <div class="d-flex gap-2 mt-2">
+                    <span class="badge bg-white border text-dark p-2"><i class="fas fa-phone"></i> {{ company.phone
+                        }}</span>
+                    <span class="badge bg-primary p-2">تكلفة الـ 1000 الأولى: {{ company.fee_first_1k }} ج.م</span>
+                    <span class="badge bg-info text-dark p-2">تكلفة الألف الزيادة: {{ company.fee_extra_1k }} ج.م</span>
+                </div>
+            </div>
+            <a href="/shipping/companies" class="btn btn-secondary">رجوع</a>
+        </div>
+
+        <div class="row g-3 mb-4 text-center">
+            <div class="col-md-4">
+                <div class="card p-3 border-0 shadow-sm"><small class="text-muted fw-bold">إجمالي الشحنات</small>
+                    <h3 class="fw-bold text-dark">{{ total_orders }}</h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-3 border-0 shadow-sm bg-warning bg-opacity-10"><small
+                        class="text-muted fw-bold">مستحقات طرفهم</small>
+                    <h3 class="fw-bold text-danger">{{ pending_money }} ج.م</h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-3 border-0 shadow-sm bg-success bg-opacity-10"><small class="text-muted fw-bold">تم
+                        تحصيله</small>
+                    <h3 class="fw-bold text-success">{{ collected_money }} ج.م</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0 fs-6">سجل الشحنات</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle text-center mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>فاتورة</th>
+                            <th>العميل</th>
+                            <th>التاريخ</th>
+                            <th>البوليصة</th>
+                            <th>المبلغ (COD)</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr class="{% if order.shipping_status == 'settled' %}table-success{% endif %}">
+                            <td><a href="/invoice/print/{{ order.id }}" target="_blank" class="fw-bold">#{{ order.id
+                                    }}</a></td>
+                            <td><a href="/customers/{{ order.customer_id }}" class="text-decoration-none fw-bold">{{
+                                    order.customer.name }}</a><br><small class="text-muted">{{ order.customer.phone
+                                    }}</small></td>
+                            <td>{{ order.date.strftime('%Y-%m-%d') }}</td>
+                            <td class="fw-bold text-primary">{{ order.waybill_no or '---' }}</td>
+                            <td class="fw-bold">{{ order.amount_due }} ج.م</td>
+                            <td>
+                                {% if order.shipping_status == 'pending' %}<span
+                                    class="badge bg-warning text-dark">انتظار</span>
+                                {% elif order.shipping_status == 'shipped' %}<span class="badge bg-info">في
+                                    الطريق</span>
+                                {% elif order.shipping_status == 'delivered' %}<span class="badge bg-primary">تم
+                                    التسليم</span>
+                                {% elif order.shipping_status == 'settled' %}<span class="badge bg-success">تم
+                                    التحصيل</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="py-4 text-muted">لا توجد بيانات.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المخطط الهيكلي للموظفين</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f4f7fe;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .tree ul {
+            padding-top: 20px; position: relative;
+            display: flex;
+            justify-content: center;
+            flex-wrap: nowrap; /* Prevent wrapping which breaks lines */
+            padding-left: 0;
+            margin: 0;
+            transition: all 0.5s;
+            -webkit-transition: all 0.5s;
+            -moz-transition: all 0.5s;
+        }
+        .tree li {
+            text-align: center;
+            list-style-type: none;
+            position: relative;
+            padding: 20px 5px 0 5px;
+            transition: all 0.5s;
+            -webkit-transition: all 0.5s;
+            -moz-transition: all 0.5s;
+        }
+        .tree li::before, .tree li::after{
+            content: '';
+            position: absolute; top: 0; right: 50%;
+            border-top: 2px solid #ccc;
+            width: 50%; height: 20px;
+        }
+        .tree li::after{
+            right: auto; left: 50%;
+            border-left: 2px solid #ccc;
+        }
+        .tree li:only-child::after, .tree li:only-child::before {
+            display: none;
+        }
+        .tree li:only-child{ padding-top: 0;}
+        .tree li:first-child::before, .tree li:last-child::after{
+            border: 0 none;
+        }
+        .tree li:last-child::before{
+            border-right: 2px solid #ccc;
+            border-radius: 0 5px 0 0;
+            -webkit-border-radius: 0 5px 0 0;
+            -moz-border-radius: 0 5px 0 0;
+        }
+        .tree li:first-child::after{
+            border-radius: 5px 0 0 0;
+            -webkit-border-radius: 5px 0 0 0;
+            -moz-border-radius: 5px 0 0 0;
+        }
+        .tree ul ul::before{
+            content: '';
+            position: absolute; top: 0; left: 50%;
+            border-left: 2px solid #ccc;
+            width: 0; height: 20px;
+        }
+        .tree li a {
+            border: 2px solid #ccc;
+            padding: 8px 10px;
+            text-decoration: none;
+            color: #333;
+            font-family: arial, verdana, tahoma;
+            font-size: 13px;
+            display: inline-block;
+            border-radius: 10px;
+            -webkit-border-radius: 10px;
+            -moz-border-radius: 10px;
+            transition: all 0.5s;
+            -webkit-transition: all 0.5s;
+            -moz-transition: all 0.5s;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            min-width: 110px;
+        }
+        .tree li a:hover, .tree li a:hover+ul li a {
+            background: #4361ee; color: white; border: 2px solid #4361ee;
+        }
+        .tree li a:hover+ul li::after, 
+        .tree li a:hover+ul li::before, 
+        .tree li a:hover+ul::before, 
+        .tree li a:hover+ul ul::before{
+            border-color: #4361ee;
+        }
+        
+        .role-badge {
+            display: block;
+            font-size: 0.75rem;
+            margin-top: 5px;
+            color: #888;
+        }
+        .tree li a:hover .role-badge {
+            color: #ddd;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="container-fluid p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold m-0" style="color: #2b3674;">
+                <i class="fas fa-sitemap text-primary me-2"></i> المخطط الهيكلي للموظفين
+            </h2>
+            <a href="/dashboard" class="btn btn-light rounded-pill px-4 fw-bold text-secondary shadow-sm">
+                الرئيسية
+            </a>
+        </div>
+        
+        <div class="bg-white rounded-4 shadow-sm p-4 overflow-auto" style="min-height: 80vh;">
+            <div class="tree d-flex justify-content-center" dir="ltr">
+                {% macro render_tree(node) %}
+                <li>
+                    <a href="/employee/{{ node.id }}">
+                        <div class="fw-bold">{{ node.fullname }}</div>
+                        <span class="role-badge">
+                            {% if node.role == 'general_manager' %}مدير عام
+                            {% elif node.role == 'manager' %}مدير / شريك
+                            {% elif node.role == 'sales' %}مبيعات
+                            {% elif node.role == 'worker' %}عامل / مخزن
+                            {% else %}{{ node.role }}{% endif %}
+                        </span>
+                    </a>
+                    {% if node.children %}
+                    <ul>
+                        {# عرض المديرين بشكل طبيعي (أفقياً) لأنهم يمتلكون فروع خاصة بهم #}
+                        {% for child in node.children if child.role in ['manager', 'general_manager'] %}
+                            {{ render_tree(child) }}
+                        {% endfor %}
+
+                        {# تجميع باقي الموظفين (المبيعات والعمال) تحت بعضهم رأسياً #}
+                        {% set non_managers = node.children | rejectattr('role', 'in', ['manager', 'general_manager']) | list %}
+                        {% if non_managers %}
+                            {% set grouped = non_managers | groupby('role') %}
+                            {% for role, items in grouped %}
+                            <li>
+                                <div class="d-flex flex-column gap-2 align-items-center" style="padding-top: 5px;">
+                                    <div class="badge bg-secondary opacity-75 mb-1 text-wrap" style="font-size: 0.7rem; max-width: 120px;">
+                                        {% if role == 'sales' %}فريق المبيعات
+                                        {% elif role == 'worker' %}العمال والمخزن
+                                        {% else %}{{ role }}{% endif %}
+                                        ({{ items|length }})
+                                    </div>
+                                    {% for item in items %}
+                                    <a href="/employee/{{ item.id }}" class="w-100" style="margin: 0; border-color: {% if role == 'sales' %}#4CAF50{% elif role == 'worker' %}#FF9800{% else %}#ccc{% endif %};">
+                                        <div class="fw-bold">{{ item.fullname }}</div>
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </li>
+                            {% endfor %}
+                        {% endif %}
+                    </ul>
+                    {% endif %}
+                </li>
+                {% endmacro %}
+                
+                <ul>
+                    {% for root in root_users %}
+                        {{ render_tree(root) }}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

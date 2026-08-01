@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>تقرير تصفية حسابات الشركاء</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+        }
+
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-top: 10px;
+        }
+
+        .summary-label {
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .table thead th {
+            background-color: #2c3e50;
+            color: white;
+            vertical-align: middle;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 12px;
+        }
+
+        .table tbody td {
+            vertical-align: middle;
+            font-weight: 500;
+            padding: 12px;
+        }
+
+        .val-neg {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .val-pos {
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        .val-neutral {
+            color: #7f8c8d;
+        }
+
+        .profit-positive {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%) !important;
+            color: #1b5e20;
+            font-weight: 700;
+        }
+        .profit-negative {
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%) !important;
+            color: #b71c1c;
+            font-weight: 700;
+        }
+
+        .grand-total {
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%) !important;
+            border-top: 3px solid #d4a017;
+        }
+        .grand-total td {
+            font-weight: 700;
+            color: #5d4037;
+        }
+
+        .sold-badge {
+            font-size: 0.85rem;
+            padding: 4px 14px;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            color: #0d47a1;
+            border-radius: 20px;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(13,71,161,0.15);
+            transition: all 0.2s;
+        }
+        .sold-badge:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(13,71,161,0.25);
+        }
+
+        /* ===== MAIN TABLE THEME ===== */
+        #report-table {
+            border-collapse: separate;
+            border-spacing: 0 2px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        #report-table td, #report-table th {
+            text-rendering: optimizeLegibility;
+        }
+
+        /* Row cards — each row is a floating card */
+        #report-table tbody tr {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            transition: all 0.2s ease;
+        }
+        #report-table tbody tr:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+        #report-table tbody td {
+            border: none;
+            padding: 14px 10px;
+            background: white;
+        }
+        #report-table tbody td:first-child {
+            border-radius: 12px 0 0 12px;
+        }
+        #report-table tbody td:last-child {
+            border-radius: 0 12px 12px 0;
+        }
+
+        /* Column tints — soft accent bar on the left edge */
+        #report-table tbody td:nth-child(2),
+        #report-table tbody td:nth-child(3),
+        #report-table tbody td:nth-child(4),
+        #report-table tbody td:nth-child(5),
+        #report-table tbody td:nth-child(6) {
+            background: linear-gradient(90deg, rgba(39,174,96,0.06) 0%, white 8%);
+        }
+        #report-table tbody td:nth-child(7),
+        #report-table tbody td:nth-child(8),
+        #report-table tbody td:nth-child(9),
+        #report-table tbody td:nth-child(10),
+        #report-table tbody td:nth-child(11),
+        #report-table tbody td:nth-child(12),
+        #report-table tbody td:nth-child(13) {
+            background: linear-gradient(90deg, rgba(231,76,60,0.06) 0%, white 8%);
+        }
+
+        /* Number styling */
+        #report-table tbody td:not(:first-child),
+        #report-table tfoot td:not(:first-child) {
+            text-align: right !important;
+            direction: ltr;
+            font-family: 'Inter', 'Segoe UI', 'Courier New', monospace;
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
+        }
+
+        /* Name column */
+        #report-table tbody td:first-child {
+            text-align: start !important;
+            direction: rtl;
+            font-weight: 700;
+            color: #1a237e;
+        }
+
+        /* Thead styling */
+        #report-table thead th {
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 14px 10px;
+            border: none;
+        }
+        #report-table thead tr:first-child th {
+            border-bottom: 3px solid rgba(0,0,0,0.08);
+        }
+
+        /* Row hover — lift with deeper accent */
+        #report-table.table-hover tbody tr:hover td {
+            background: white !important;
+        }
+        #report-table.table-hover tbody tr:hover td:nth-child(2),
+        #report-table.table-hover tbody tr:hover td:nth-child(3),
+        #report-table.table-hover tbody tr:hover td:nth-child(4),
+        #report-table.table-hover tbody tr:hover td:nth-child(5),
+        #report-table.table-hover tbody tr:hover td:nth-child(6) {
+            background: linear-gradient(90deg, rgba(39,174,96,0.12) 0%, #f5f6fa 8%) !important;
+        }
+        #report-table.table-hover tbody tr:hover td:nth-child(7),
+        #report-table.table-hover tbody tr:hover td:nth-child(8),
+        #report-table.table-hover tbody tr:hover td:nth-child(9),
+        #report-table.table-hover tbody tr:hover td:nth-child(10),
+        #report-table.table-hover tbody tr:hover td:nth-child(11),
+        #report-table.table-hover tbody tr:hover td:nth-child(12),
+        #report-table.table-hover tbody tr:hover td:nth-child(13) {
+            background: linear-gradient(90deg, rgba(231,76,60,0.12) 0%, #f5f6fa 8%) !important;
+        }
+        #report-table.table-hover tbody tr:hover td.profit-positive {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9) !important;
+        }
+        #report-table.table-hover tbody tr:hover td.profit-negative {
+            background: linear-gradient(135deg, #fce4ec, #f8bbd0) !important;
+        }
+
+        .balance-cell {
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+
+        .btn-action {
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body class="p-4">
+
+    <div class="container-fluid">
+
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold text-dark mb-1"><i class="fas fa-chart-line text-primary me-2"></i> تقرير تصفية
+                    حسابات الشركاء</h3>
+                <p class="text-muted small mb-0">تحليل الأداء المالي، العمولات، والمسحوبات</p>
+            </div>
+            <div class="d-flex gap-2">
+                {% if current_user.role == 'general_manager' %}
+                <button class="btn btn-dark fw-bold shadow-sm" onclick="openBulkSettleModal()">
+                    <i class="fas fa-coins me-2"></i> تصفية شاملة (لكل الشركاء)
+                </button>
+                {% endif %}
+                <a href="/reports" class="btn btn-outline-secondary fw-bold">التقارير</a>
+                <a href="/dashboard" class="btn btn-outline-primary fw-bold">الرئيسية</a>
+            </div>
+        </div>
+
+        <!-- Filter -->
+        <div class="card mb-4">
+            <div class="card-body py-3">
+                <form method="GET" class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="fw-bold small mb-1 text-muted">من تاريخ</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0"><i class="far fa-calendar-alt"></i></span>
+                            <input type="date" name="start_date" class="form-control bg-light border-0 fw-bold"
+                                value="{{ start_date }}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="fw-bold small mb-1 text-muted">إلى تاريخ</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0"><i class="far fa-calendar-alt"></i></span>
+                            <input type="date" name="end_date" class="form-control bg-light border-0 fw-bold"
+                                value="{{ end_date }}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm">
+                            <i class="fas fa-filter me-2"></i> تحديث التقرير
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if current_user.role == 'general_manager' %}
+        <!-- Recalculate Commissions -->
+        <div class="card mb-4 border-0 shadow-sm" style="background: #fff3e0;">
+            <div class="card-body py-2">
+                <form method="POST" action="/partners/recalculate-commissions" class="row g-2 align-items-end">
+                    <div class="col-auto">
+                        <label class="small fw-bold text-muted mb-1">إعادة حساب عمولات شهر</label>
+                        <input type="month" name="target_month" class="form-control form-control-sm border-0 bg-white" required>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-warning fw-bold shadow-sm">
+                            <i class="fas fa-sync-alt me-1"></i> إعادة الحساب
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Main Table -->
+        <div class="card shadow-sm border-0 mb-5">
+            <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold m-0 text-dark"><i class="fas fa-list me-2 text-warning"></i> تفاصيل النشاط (الفترة
+                    المحددة)</h5>
+                <span class="badge bg-info text-dark">صافي الربح = الإيراد - المصروفات</span>
+            </div>
+            <div class="table-responsive">
+                <table id="report-table" class="table table-hover mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" class="text-start ps-4">الشريك</th>
+                            <th colspan="5" class="bg-success bg-opacity-75">الإيرادات (Dues)</th>
+                            <th colspan="7" class="bg-danger bg-opacity-75">الخصومات (Deductions)</th>
+                            <th rowspan="2" class="bg-secondary bg-opacity-50">المسحوبات<br><small>(Withdrawals)</small>
+                            </th>
+                            <th rowspan="2" class="bg-dark text-warning">صافي الربح المستحق<br><small>(له /
+                                    عليه)</small></th>
+                        </tr>
+                        <tr>
+                            <th class="small">القطع المباعة</th>
+                            <th class="small">عمولة الشريك (+13ج)</th>
+                            <th class="small">عمولات مستردة</th>
+                            <th class="small">مكافآت مستحقة</th>
+                            <th class="small">جزاءات مستردة</th>
+                            <th class="small">عمولات مبيعات</th>
+                            <th class="small">مرتجعـات</th>
+                            <th class="small">جزاءات عالشريك</th>
+                            <th class="small">مكافآت مدفوعة</th>
+                            <th class="small">خصم فواتير</th>
+                            <th class="small">مصاريف طاقم</th>
+                            <th class="small">مصاريف أخرى</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in report %}
+                        <tr>
+                            <td class="text-start ps-4 fw-bold text-dark">{{ row.name }}</td>
+
+                            <!-- Revenue -->
+                            <td class="drilldown-cell " style="cursor:pointer" data-name="{{ row.name }}"
+                                data-sold='{{ row.sold_details | tojson | forceescape }}'>
+                                <span class="sold-badge">{{ row.sold_items }} قطعة</span>
+                                <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                            </td>
+                            <td class="val-pos " style="cursor:pointer" data-name="{{ row.name }}"
+                                data-gross-details='{{ row.gross_comm_details_display | tojson | forceescape }}'
+                                data-total-qty="{{ row.sold_details.total_sold }}"
+                                data-total-amount="{{ row.gross_comm_display }}">
+                               {{ row.gross_comm_display }}
+                                <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                            </td>
+                            <td class="val-pos " style="cursor:pointer" data-name="{{ row.name }}"
+                                data-reversed-comm-details='{{ row.sales_comm_reversed_details | tojson | forceescape }}'>
+                               {{ row.sales_rep_comm_reversed_display }}
+                                <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                            </td>
+                            <td class="drilldown-cell val-pos " style="cursor:pointer" data-name="{{ row.name }}"
+                                data-label="مكافآت مستحقة"
+                                data-details="{{ row.admin_bonus_earned_details | tojson | forceescape }}">
+                               {{ row.admin_bonus_earned }}
+                                <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                            </td>
+                            <td class="drilldown-cell val-pos " style="cursor:pointer" data-name="{{ row.name }}"
+                                data-label="جزاءات مستردة"
+                                data-details="{{ row.admin_penalty_recovered_details | tojson | forceescape }}">
+                               {{ row.admin_penalty_recovered }}
+                                <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                            </td>
+
+                            <!-- Deductions -->
+                            <td class="{{ 'val-neg' if row.sales_rep_comm < 0 else 'val-neutral' }}"
+                                style="cursor:pointer; text-decoration:underline" data-name="{{ row.name }}"
+                                data-sales-comm-details='{{ row.sales_comm_details | tojson | forceescape }}'>
+                               {{ row.sales_rep_comm }}
+                                <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                            </td>
+                            <td class="{{ 'val-neg' if row.returns < 0 else 'val-neutral' }}"
+                                style="cursor:pointer" data-name="{{ row.name }}"
+                                data-returns-details='{{ row.returns_details | tojson | forceescape }}'>
+                               {{ row.returns }}
+                                <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                            </td>
+                            <td class="drilldown-cell {{ 'val-neg' if row.admin_penalty_deducted < 0 else 'val-neutral' }}"
+                                style="cursor:pointer" data-name="{{ row.name }}" data-label="جزاءات عالشريك"
+                                data-details="{{ row.admin_penalty_deducted_details | tojson | forceescape }}">
+                               {{ row.admin_penalty_deducted }}
+                                <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                            </td>
+                            <td class="drilldown-cell {{ 'val-neg' if row.admin_bonus_paid < 0 else 'val-neutral' }}"
+                                style="cursor:pointer" data-name="{{ row.name }}" data-label="مكافآت مدفوعة"
+                                data-details="{{ row.admin_bonus_paid_details | tojson | forceescape }}">
+                               {{ row.admin_bonus_paid }}
+                                <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                            </td>
+                            <td class="drilldown-cell {{ 'val-neg' if row.discounts < 0 else 'val-neutral' }}"
+                                style="cursor:pointer" data-name="{{ row.name }}" data-label="خصم فواتير"
+                                data-details="{{ row.discounts_details | tojson | forceescape }}">
+                               {{ row.discounts }}
+                                <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                            </td>
+                            <td class="drilldown-cell {{ 'val-neg' if row.staff_costs < 0 else 'val-neutral' }}"
+                                style="cursor:pointer" data-name="{{ row.name }}" data-label="مصاريف طاقم"
+                                data-details="{{ row.staff_costs_details | tojson | forceescape }}">
+                               {{ row.staff_costs }}
+                                <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                            </td>
+                            <td class="drilldown-cell {{ 'val-neg' if row.expenses < 0 else 'val-neutral' }}"
+                                style="cursor:pointer" data-name="{{ row.name }}" data-label="مصاريف أخرى"
+                                data-details="{{ row.expenses_details | tojson | forceescape }}">
+                               {{ row.expenses }}
+                                <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                            </td>
+
+                            <!-- Withdrawals -->
+                            <td class="text-danger fw-bold bg-light drilldown-cell" style="cursor:pointer"
+                                data-name="{{ row.name }}" data-label="المسحوبات"
+                                data-details="{{ row.withdrawals_details | tojson | forceescape }}">
+                               {{ row.withdrawals_period }}
+                                <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                            </td>
+
+                            <!-- Net = revenue - deductions - withdrawals -->
+                            <td class="{{ 'profit-positive' if row.period_net_cash >= 0 else 'profit-negative' }} drilldown-formula" style="cursor:pointer"
+                                data-name="{{ row.name }}" data-label="صافي الربح المستحق (المعادلة)" data-formula='[
+                                    {"label":"عمولة الشريك (+13ج)","value":{{ row.gross_comm_display }}},
+                                    {"label":"عمولات مستردة","value":{{ row.sales_rep_comm_reversed }}},
+                                    {"label":"مكافآت مستحقة","value":{{ row.admin_bonus_earned }}},
+                                    {"label":"جزاءات مستردة","value":{{ row.admin_penalty_recovered }}},
+                                    {"label":"عمولات مبيعات","value":{{ row.sales_rep_comm }}},
+                                    {"label":"مرتجعات","value":{{ row.returns }}},
+                                    {"label":"جزاءات عالشريك","value":{{ row.admin_penalty_deducted }}},
+                                    {"label":"مكافآت مدفوعة","value":{{ row.admin_bonus_paid }}},
+                                    {"label":"خصم فواتير","value":{{ row.discounts }}},
+                                    {"label":"مصاريف طاقم","value":{{ row.staff_costs }}},
+                                    {"label":"مصاريف أخرى","value":{{ row.expenses }}},
+                                    {"label":"المسحوبات","value":-{{ row.withdrawals_period }}}
+                                ]' data-result="{{ row.period_net_cash }}">
+                               {{ row.period_net_cash }} ج.م
+                                <i class="fas fa-calculator small ms-1 text-muted"></i>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="grand-total">
+                            <td class="text-center fw-bold fs-5">الإجمالي</td>
+                            <td class="fw-bold text-center"><span class="sold-badge">{{ totals.sold_items }} قطعة</span></td>
+                            <td class="fw-bold">{{ totals.gross_comm_display }}</td>
+                            <td class="fw-bold">{{ totals.sales_rep_comm_reversed_display }}</td>
+                            <td class="fw-bold">{{ totals.admin_bonus_earned }}</td>
+                            <td class="fw-bold">{{ totals.admin_penalty_recovered }}</td>
+                            <td class="fw-bold">{{ totals.sales_rep_comm }}</td>
+                            <td class="fw-bold">{{ totals.returns }}</td>
+                            <td class="fw-bold">{{ totals.admin_penalty_deducted }}</td>
+                            <td class="fw-bold">{{ totals.admin_bonus_paid }}</td>
+                            <td class="fw-bold">{{ totals.discounts }}</td>
+                            <td class="fw-bold">{{ totals.staff_costs }}</td>
+                            <td class="fw-bold">{{ totals.expenses }}</td>
+                            <td class="fw-bold">{{ totals.withdrawals_period }}</td>
+                            <td class="fw-bold fs-4 {{ 'text-success' if totals.period_net_cash >= 0 else 'text-danger' }}">{{ totals.period_net_cash }} ج.م</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Accounts Summary & Action -->
+        <div class="row g-4">
+            {% for p in report %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 {{ 'border-success' if p.period_net_cash >= 0 else 'border-danger' }} border-2">
+                    <div class="card-body text-center p-4">
+                        <div class="avatar-circle mb-3 mx-auto bg-dark text-white rounded-circle d-flex align-items-center justify-content-center"
+                            style="width: 60px; height: 60px; font-size: 1.5rem;">
+                           {{ p.name[0] }}
+                        </div>
+                        <h5 class="fw-bold mb-1">{{ p.name }}</h5>
+                        <p class="text-muted small">شريك / مدير</p>
+
+                        <hr class="my-3 opacity-25">
+
+                        <div class="row text-center mb-3">
+                            <div class="col-6 border-end">
+                                <small class="text-muted d-block">صافي ربح الفترة</small>
+                                <span class="text-success fw-bold">{{ p.period_net_profit }}</span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">مسحوبات الفترة</small>
+                                <span class="text-danger fw-bold">{{ p.withdrawals_period }}</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-light rounded p-3 mb-3">
+                            <small class="text-muted d-block fw-bold mb-1">صافي المستحق للفترة</small>
+                            <h2
+                                class="balance-cell mb-0 {{ 'text-success' if p.period_net_cash >= 0 else 'text-danger' }}">
+                               {{ p.period_net_cash }} ج.م
+                            </h2>
+                        </div>
+
+                        {% if current_user.role == 'general_manager' %}
+                        <button class="btn btn-dark w-100 fw-bold shadow-sm"
+                            onclick="openSettleModal('{{ p.id }}', '{{ p.name }}', '{{ p.period_net_cash }}')">
+                            <i class="fas fa-money-bill-wave me-2"></i> تصفية الحساب
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+    <!-- Bulk Settle Modal -->
+    <div class="modal fade" id="bulkSettleModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <form action="/partners/settle_all" method="POST" class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-calculator me-2"></i> تصفية شاملة (تصفير الحسابات)
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <p class="text-muted mb-2">المبلغ الصافي المطلوب لعمل تصفية كاملة لجميع الشركاء:</p>
+                    <h2 class="fw-bold text-success mb-4" id="bulk_total_display">0.00 ج.م</h2>
+
+                    <div class="alert alert-info small text-start">
+                        <i class="fas fa-info-circle me-1"></i> سيتم تسوية المبالغ الدائنة والمدينة، والصرف يمثل الصافي
+                        فقط.
+                    </div>
+
+                    <div class="text-start">
+                        <label class="form-label fw-bold small">خزينة الصرف:</label>
+                        <select name="account_id" class="form-select" required>
+                            <option value="" disabled selected>-- اختر الخزينة --</option>
+                            {% for acc in accounts %}
+                            <option value="{{ acc.id }}">{{ acc.name }} ({{ acc.balance }} ج.م)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-dark fw-bold px-4">تأكيد التصفية</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Individual Settle Modal -->
+    <div class="modal fade" id="settleModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <form action="/partners/settle" method="POST" class="modal-content border-0 shadow-lg">
+                <input type="hidden" name="partner_id" id="modal_partner_id">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">تسجيل تصفية / سحب</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="text-center mb-4">
+                        <h5 class="fw-bold mb-1" id="modal_partner_name">Partner Name</h5>
+                        <div class="badge bg-light text-dark border p-2">الرصيد الحالي: <span
+                                id="modal_balance">0</span> ج.م</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">المبلغ (ج.م)</label>
+                        <input type="number" step="0.01" name="amount"
+                            class="form-control fw-bold form-control-lg text-center" placeholder="0.00" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">الخزينة</label>
+                        <select name="account_id" class="form-select bg-light" required>
+                            {% for acc in accounts %}
+                            <option value="{{ acc.id }}">{{ acc.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label fw-bold small">ملاحظات</label>
+                        <input type="text" name="notes" class="form-control" placeholder="مثال: دفعة تحت الحساب">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="submit" class="btn btn-primary w-100 fw-bold">تأكيد العملية</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Unified Drill-Down Modal -->
+    <div class="modal fade" id="drilldownModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold" id="drilldown_title">تفاصيل</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0" id="drilldown_body">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function openSettleModal(id, name, balance) {
+            document.getElementById('modal_partner_id').value = id;
+            document.getElementById('modal_partner_name').innerText = name;
+            document.getElementById('modal_balance').innerText = balance;
+            new bootstrap.Modal(document.getElementById('settleModal')).show();
+        }
+
+        function openBulkSettleModal() {
+            let netTotal = 0;
+            const balances = document.querySelectorAll('.balance-cell');
+            balances.forEach(el => {
+                let val = parseFloat(el.innerText.replace(' ج.م', '').replace(/,/g, ''));
+                if (!isNaN(val)) netTotal += val;
+            });
+
+            const display = document.getElementById('bulk_total_display');
+            display.innerText = netTotal.toLocaleString('en-US', { minimumFractionDigits: 2 }) + ' ج.م';
+
+            if (netTotal < 0) {
+                display.classList.remove('text-success');
+                display.classList.add('text-danger');
+                display.innerHTML += ' <small class="text-muted fs-6">(على الشركة للشركاء)</small>';
+            } else {
+                display.classList.remove('text-danger');
+                display.classList.add('text-success');
+            }
+
+            new bootstrap.Modal(document.getElementById('bulkSettleModal')).show();
+        }
+
+        // Unified drill-down system
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // 1) Transaction details cells (lists of invoices/transactions)
+            document.body.addEventListener('click', function (e) {
+                const cell = e.target.closest('.drilldown-cell');
+                if (!cell) return;
+
+                const name = cell.getAttribute('data-name');
+                const label = cell.getAttribute('data-label');
+                const detailsJson = cell.getAttribute('data-details');
+
+                try {
+                    const details = JSON.parse(detailsJson);
+                    showTransactionDetails(name, label, details);
+                } catch (err) {
+                    console.error('Error parsing details:', err);
+                }
+            });
+
+            // 2) Formula breakdown cells (calculated fields)
+            document.body.addEventListener('click', function (e) {
+                const cell = e.target.closest('.drilldown-formula');
+                if (!cell) return;
+
+                const name = cell.getAttribute('data-name');
+                const label = cell.getAttribute('data-label');
+                const formulaJson = cell.getAttribute('data-formula');
+                const result = parseFloat(cell.getAttribute('data-result'));
+
+                try {
+                    const formula = JSON.parse(formulaJson);
+                    showFormulaBreakdown(name, label, formula, result);
+                } catch (err) {
+                    console.error('Error parsing formula:', err);
+                }
+            });
+
+            // 3) Sold details cells (قطعة المباعة breakdown)
+            document.body.addEventListener('click', function (e) {
+                const cell = e.target.closest('td[data-sold]');
+                if (!cell) return;
+
+                const name = cell.getAttribute('data-name');
+                const data = JSON.parse(cell.getAttribute('data-sold'));
+
+                document.getElementById('drilldown_title').innerText = `تفاصيل المبيعات — ${name}`;
+                document.getElementById('drilldown_body').innerHTML = `
+                    <div class="p-4 text-center">
+                        <div class="mb-3">
+                            <span class="text-muted">إجمالي المبيعات (الشهر الحالي)</span><br>
+                            <h4 class="text-success fw-bold">${data.total_sold} قطعة</h4>
+                        </div>
+                        <div class="mb-3">
+                            <span class="text-muted">مرتجعات من مبيعات نفس الشهر</span><br>
+                            <h4 class="text-danger fw-bold">${data.same_month_returns} قطعة</h4>
+                        </div>
+                        <div class="mb-3">
+                            <span class="text-muted">مرتجعات من أشهر سابقة</span><br>
+                            <h4 class="text-danger fw-bold">${data.cross_month_returns} قطعة</h4>
+                        </div>
+                        <hr>
+                        <div>
+                            <span class="text-muted">صافي القطع (بعد مرتجعات مبيعات الشهر الحالي)</span><br>
+                            <h4 class="text-primary fw-bold">${data.net_pieces} قطعة</h4>
+                        </div>
+                    </div>`;
+                new bootstrap.Modal(document.getElementById('drilldownModal')).show();
+            });
+
+            // 4) Gross commission details (table with qty + money columns)
+            document.body.addEventListener('click', function (e) {
+                const cell = e.target.closest('td[data-gross-details]');
+                if (!cell) return;
+
+                const name = cell.getAttribute('data-name');
+                const details = JSON.parse(cell.getAttribute('data-gross-details'));
+                const totalQty = parseInt(cell.getAttribute('data-total-qty'));
+                const totalAmount = parseFloat(cell.getAttribute('data-total-amount'));
+
+                document.getElementById('drilldown_title').innerText = `عمولة الشريك (+13ج) — ${name}`;
+
+                if (!details || details.length === 0) {
+                    document.getElementById('drilldown_body').innerHTML = '<div class="text-center text-muted p-4 fs-5">لا توجد فواتير في الفترة المحددة</div>';
+                } else {
+                    const groups = {};
+                    details.forEach(d => {
+                        const key = d.user_name || '---';
+                        if (!groups[key]) groups[key] = [];
+                        groups[key].push(d);
+                    });
+                    let allRows = '';
+                    let grandGrossQty = 0;
+                    let grandReturnedQty = 0;
+                    let grandAmount = 0;
+                    let idx = 0;
+                    const orderedKeys = Object.keys(groups);
+                    orderedKeys.forEach((userName) => {
+                        const items = groups[userName];
+                        let userGrossQty = 0;
+                        let userReturnedQty = 0;
+                        let userAmount = 0;
+                        items.forEach(d => {
+                            idx++;
+                            userGrossQty += d.gross_qty;
+                            userReturnedQty += d.returned_qty;
+                            userAmount += d.amount;
+                            const invoiceLink = d.order_id
+                                ? `<a href="/invoice/print/${d.order_id}" target="_blank" class="text-decoration-none fw-bold"><i class="fas fa-file-invoice small me-1"></i>${d.invoice_label}</a>`
+                                : d.invoice_label;
+                            allRows += `<tr>
+                                <td class="text-muted small">${idx}</td>
+                                <td>${d.user_name}</td>
+                                <td>${d.date}</td>
+                                <td>${invoiceLink}</td>
+                                <td class="text-start small">${d.desc}</td>
+                                <td class="fw-bold">${d.gross_qty}</td>
+                                <td class="fw-bold text-danger">${d.returned_qty}</td>
+                                <td class="fw-bold text-success">${d.amount.toFixed(2)}</td>
+                            </tr>`;
+                        });
+                        allRows += `<tr class="table-secondary fw-bold">
+                            <td colspan="5" class="text-start ps-4">إجمالي ${userName}</td>
+                            <td>${userGrossQty}</td>
+                            <td>${userReturnedQty}</td>
+                            <td class="text-success">${userAmount.toFixed(2)}</td>
+                        </tr>`;
+                        grandGrossQty += userGrossQty;
+                        grandReturnedQty += userReturnedQty;
+                        grandAmount += userAmount;
+                    });
+                    document.getElementById('drilldown_body').innerHTML = `
+                        <table class="table table-sm table-bordered text-center mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>#</th>
+                                    <th>المستخدم</th>
+                                    <th>التاريخ</th>
+                                    <th>الفاتورة</th>
+                                    <th>البيان</th>
+                                    <th>عدد قطع الفاتورة</th>
+                                    <th>عدد القطع المرتجعة</th>
+                                    <th>القيمة</th>
+                                </tr>
+                            </thead>
+                            <tbody>${allRows}</tbody>
+                            <tfoot class="table-light fw-bold">
+                                <tr>
+                                    <td colspan="5" class="text-start fs-5">الإجمالي الكلي</td>
+                                    <td class="fs-5">${grandGrossQty}</td>
+                                    <td class="fs-5 text-danger">${grandReturnedQty}</td>
+                                    <td class="text-success fs-5">${grandAmount.toFixed(2)}</td>
+                                </tr>
+                            </tfoot>
+                        </table>`;
+                }
+                new bootstrap.Modal(document.getElementById('drilldownModal')).show();
+            });
+
+            // 5) Reversed commissions (grouped by user)
+            document.body.addEventListener('click', function (e) {
+                const cell = e.target.closest('td[data-reversed-comm-details]');
+                if (!cell) return;
+
+                const name = cell.getAttribute('data-name');
+                const details = JSON.parse(cell.getAttribute('data-reversed-comm-details'));
+
+                document.getElementById('drilldown_title').innerText = `عمولات مستردة — ${name}`;
+
+                if (!details || details.length === 0) {
+                    document.getElementById('drilldown_body').innerHTML = '<div class="text-center text-muted p-4 fs-5">لا توجد عمولات مستردة في الفترة المحددة</div>';
+                    new bootstrap.Modal(document.getElementById('drilldownModal')).show();
+                    return;
+                }
+
+                // group by user_name
+                const groups = {};
+                details.forEach(d => {
+                    const key = d.user_name || '---';
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push(d);
+                });
+
+                let allRows = '';
+                let grandTotal = 0;
+                let idx = 0;
+                const orderedKeys = Object.keys(groups);
+
+                orderedKeys.forEach((userName, gi) => {
+                    const items = groups[userName];
+                    let userSubtotal = 0;
+
+                    items.forEach(d => {
+                        idx++;
+                        userSubtotal += d.amount;
+                        const invoiceLink = d.order_id
+                            ? `<a href="/invoice/print/${d.order_id}" target="_blank" class="text-decoration-none fw-bold"><i class="fas fa-file-invoice small me-1"></i>${d.invoice_label}</a>`
+                            : d.invoice_label;
+                        allRows += `<tr>
+                            <td class="text-muted small">${idx}</td>
+                            <td>${d.user_name}</td>
+                            <td>${d.date}</td>
+                            <td>${invoiceLink}</td>
+                            <td class="text-start small">${d.desc}</td>
+                            <td class="fw-bold text-danger">${d.amount.toFixed(2)}</td>
+                        </tr>`;
+                    });
+
+                    // user subtotal row
+                    allRows += `<tr class="table-secondary fw-bold">
+                        <td colspan="5" class="text-start ps-4">إجمالي ${userName}</td>
+                        <td class="text-danger">${userSubtotal.toFixed(2)}</td>
+                    </tr>`;
+                    grandTotal += userSubtotal;
+                });
+
+                document.getElementById('drilldown_body').innerHTML = `
+                    <table class="table table-sm table-bordered text-center mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>المستخدم</th>
+                                <th>التاريخ</th>
+                                <th>الفاتورة</th>
+                                <th>البيان</th>
+                                <th>القيمة</th>
+                            </tr>
+                        </thead>
+                        <tbody>${allRows}</tbody>
+                        <tfoot class="table-light fw-bold">
+                            <tr>
+                                <td colspan="5" class="text-start fs-5">الإجمالي الكلي</td>
+                                <td class="text-danger fs-5">${grandTotal.toFixed(2)}</td>
+                            </tr>
+                        </tfoot>
+                    </table>`;
+
+                new bootstrap.Modal(document.getElementById('drilldownModal')).show();
+            });
+
+            // 6) Sales commissions (grouped by user)
+            document.body.addEventListener('click', function (e) {
+                const cell = e.target.closest('td[data-sales-comm-details]');
+                if (!cell) return;
+
+                const name = cell.getAttribute('data-name');
+                const details = JSON.parse(cell.getAttribute('data-sales-comm-details'));
+
+                document.getElementById('drilldown_title').innerText = `عمولات مبيعات — ${name}`;
+
+                if (!details || details.length === 0) {
+                    document.getElementById('drilldown_body').innerHTML = '<div class="text-center text-muted p-4 fs-5">لا توجد حركات في الفترة المحددة</div>';
+                    new bootstrap.Modal(document.getElementById('drilldownModal')).show();
+                    return;
+                }
+
+                const groups = {};
+                details.forEach(d => {
+                    const key = d.user_name || '---';
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push(d);
+                });
+
+                let allRows = '';
+                let grandTotal = 0;
+                let idx = 0;
+                const orderedKeys = Object.keys(groups);
+                orderedKeys.forEach((userName) => {
+                    const items = groups[userName];
+                    let userSubtotal = 0;
+                    items.forEach(d => {
+                        idx++;
+                        userSubtotal += d.amount;
+                        const invoiceLink = d.order_id
+                            ? `<a href="/invoice/print/${d.order_id}" target="_blank" class="text-decoration-none fw-bold"><i class="fas fa-file-invoice small me-1"></i>${d.invoice_label}</a>`
+                            : d.invoice_label;
+                        allRows += `<tr>
+                            <td class="text-muted small">${idx}</td>
+                            <td>${d.user_name}</td>
+                            <td>${d.date}</td>
+                            <td>${invoiceLink}</td>
+                            <td class="text-start small">${d.desc}</td>
+                            <td class="fw-bold">${d.gross_qty}</td>
+                            <td class="fw-bold text-danger">${d.returned_qty}</td>
+                            <td class="fw-bold text-danger">${d.amount.toFixed(2)}</td>
+                        </tr>`;
+                    });
+                    allRows += `<tr class="table-secondary fw-bold">
+                        <td colspan="7" class="text-start ps-4">إجمالي ${userName}</td>
+                        <td class="text-danger">${userSubtotal.toFixed(2)}</td>
+                    </tr>`;
+                    grandTotal += userSubtotal;
+                });
+
+                document.getElementById('drilldown_body').innerHTML = `
+                    <table class="table table-sm table-bordered text-center mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>المستخدم</th>
+                                <th>التاريخ</th>
+                                <th>الفاتورة</th>
+                                <th>البيان</th>
+                                <th>عدد قطع الفاتورة</th>
+                                <th>عدد القطع المرتجعة</th>
+                                <th>القيمة</th>
+                            </tr>
+                        </thead>
+                        <tbody>${allRows}</tbody>
+                        <tfoot class="table-light fw-bold">
+                            <tr>
+                                <td colspan="7" class="text-start fs-5">الإجمالي الكلي</td>
+                                <td class="text-danger fs-5">${grandTotal.toFixed(2)}</td>
+                            </tr>
+                        </tfoot>
+                    </table>`;
+
+                new bootstrap.Modal(document.getElementById('drilldownModal')).show();
+            });
+
+            // 7) Returns details (cross-month returns + تحمل خسائر مرتجع, grouped by user)
+            document.body.addEventListener('click', function (e) {
+                const cell = e.target.closest('td[data-returns-details]');
+                if (!cell) return;
+
+                const name = cell.getAttribute('data-name');
+                const details = JSON.parse(cell.getAttribute('data-returns-details'));
+
+                document.getElementById('drilldown_title').innerText = `مرتجعات — ${name}`;
+
+                if (!details || details.length === 0) {
+                    document.getElementById('drilldown_body').innerHTML = '<div class="text-center text-muted p-4 fs-5">لا توجد حركات في الفترة المحددة</div>';
+                    new bootstrap.Modal(document.getElementById('drilldownModal')).show();
+                    return;
+                }
+
+                const groups = {};
+                details.forEach(d => {
+                    const key = d.user_name || '---';
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push(d);
+                });
+
+                let allRows = '';
+                let grandTotal = 0;
+                let grandReturnedQty = 0;
+                let idx = 0;
+                const orderedKeys = Object.keys(groups);
+                orderedKeys.forEach((userName) => {
+                    const items = groups[userName];
+                    let userSubtotal = 0;
+                    let userReturnedQty = 0;
+                    items.forEach(d => {
+                        idx++;
+                        userSubtotal += d.amount;
+                        const retQty = d.returned_qty != null ? d.returned_qty : null;
+                        if (retQty != null) userReturnedQty += retQty;
+                        const invoiceLink = d.order_id
+                            ? `<a href="/invoice/print/${d.order_id}" target="_blank" class="text-decoration-none fw-bold"><i class="fas fa-file-invoice small me-1"></i>${d.invoice_label}</a>`
+                            : d.invoice_label;
+                        const qtyDisplay = retQty != null ? retQty : '—';
+                        allRows += `<tr>
+                            <td class="text-muted small">${idx}</td>
+                            <td>${d.user_name}</td>
+                            <td>${d.date}</td>
+                            <td>${invoiceLink}</td>
+                            <td class="text-start small">${d.desc}</td>
+                            <td class="fw-bold">${qtyDisplay}</td>
+                            <td class="fw-bold text-danger">${d.amount.toFixed(2)}</td>
+                        </tr>`;
+                    });
+                    allRows += `<tr class="table-secondary fw-bold">
+                        <td colspan="5" class="text-start ps-4">إجمالي ${userName}</td>
+                        <td>${userReturnedQty || '—'}</td>
+                        <td class="text-danger">${userSubtotal.toFixed(2)}</td>
+                    </tr>`;
+                    grandTotal += userSubtotal;
+                    grandReturnedQty += userReturnedQty;
+                });
+
+                document.getElementById('drilldown_body').innerHTML = `
+                    <table class="table table-sm table-bordered text-center mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>المستخدم</th>
+                                <th>التاريخ</th>
+                                <th>الفاتورة</th>
+                                <th>البيان</th>
+                                <th>عدد القطع المرتجعة</th>
+                                <th>القيمة</th>
+                            </tr>
+                        </thead>
+                        <tbody>${allRows}</tbody>
+                        <tfoot class="table-light fw-bold">
+                            <tr>
+                                <td colspan="5" class="text-start fs-5">الإجمالي الكلي</td>
+                                <td class="fs-5">${grandReturnedQty || '—'}</td>
+                                <td class="text-danger fs-5">${grandTotal.toFixed(2)}</td>
+                            </tr>
+                        </tfoot>
+                    </table>`;
+
+                new bootstrap.Modal(document.getElementById('drilldownModal')).show();
+            });
+        });
+
+        function showTransactionDetails(name, label, details) {
+            const title = document.getElementById('drilldown_title');
+            const body = document.getElementById('drilldown_body');
+
+            title.innerText = `${label} — ${name}`;
+
+            if (!details || details.length === 0) {
+                body.innerHTML = '<div class="text-center text-muted p-4 fs-5">لا توجد حركات لهذا البند في الفترة المحددة</div>';
+            } else {
+                let total = 0;
+                let rows = '';
+                
+                // تحديد لو البيانات فيها أعمدة إضافية (زي مصاريف الطاقم)
+                const hasExtra = details.length > 0 && details[0].op_type;
+
+                details.forEach((d, i) => {
+                    total += d.amount;
+                    let invoiceLink = d.invoice_label;
+                    if (d.order_id) {
+                        invoiceLink = `<a href="/invoice/print/${d.order_id}" target="_blank" class="text-decoration-none fw-bold"><i class="fas fa-file-invoice small me-1"></i>${d.invoice_label}</a>`;
+                    }
+                    
+                    let extraCols = '';
+                    if (hasExtra) {
+                        const shareBadge = d.share_type === 'مشترك (50/50)' ? 'bg-info' : 'bg-warning text-dark';
+                        extraCols = `
+                            <td><span class="badge bg-secondary">${d.op_type}</span></td>
+                            <td><span class="badge ${shareBadge}">${d.share_type}</span></td>
+                        `;
+                    }
+
+                    rows += `
+                    <tr>
+                        <td class="text-muted small">${i + 1}</td>
+                        <td>${d.date}</td>
+                        ${hasExtra ? extraCols : `<td>${invoiceLink}</td>`}
+                        <td class="text-start small" style="white-space: pre-wrap; min-width:250px;">${d.desc}</td>
+                        <td class="fw-bold ${d.amount < 0 ? 'text-danger' : 'text-success'}">${d.amount.toFixed(2)}</td>
+                    </tr>`;
+                });
+
+                body.innerHTML = `
+                <table class="table table-striped table-hover mb-0 text-center align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th width="5%">#</th>
+                            <th width="15%">التاريخ</th>
+                            ${hasExtra ? '<th width="10%">النوع</th><th width="15%">التحمل</th>' : '<th width="15%">الفاتورة</th>'}
+                            <th class="text-start" width="${hasExtra ? '40%' : '45%'}">البيان</th>
+                            <th width="15%">المبلغ</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                    <tfoot class="table-light">
+                        <tr class="fw-bold fs-6">
+                            <td colspan="${hasExtra ? 4 : 4}" class="text-end px-3">الإجمالي (${details.length} حركة):</td>
+                            <td class="${total < 0 ? 'text-danger' : 'text-success'}">${total.toFixed(2)}</td>
+                        </tr>
+                    </tfoot>
+                </table>`;
+            }
+
+            new bootstrap.Modal(document.getElementById('drilldownModal')).show();
+        }
+
+        function showFormulaBreakdown(name, label, formula, result) {
+            const title = document.getElementById('drilldown_title');
+            const body = document.getElementById('drilldown_body');
+
+            title.innerText = `${label} — ${name}`;
+
+            let rows = '';
+            formula.forEach((item, i) => {
+                const sign = item.value >= 0 ? '+' : '';
+                const colorClass = item.value >= 0 ? 'text-success' : 'text-danger';
+                rows += `
+                <tr>
+                    <td class="text-end fw-bold pe-3">${item.label}</td>
+                    <td class="fs-5 ${colorClass} fw-bold">${sign}${item.value.toFixed(2)}</td>
+                </tr>`;
+            });
+
+            const resultColor = result >= 0 ? 'text-success' : 'text-danger';
+
+            body.innerHTML = `
+            <div class="p-3">
+                <table class="table table-bordered mb-0 text-center" style="max-width: 500px; margin: auto;">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th width="60%">البند</th>
+                            <th width="40%">القيمة</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                    <tfoot>
+                        <tr class="table-dark">
+                            <td class="text-end fw-bold pe-3 fs-5">الناتج =</td>
+                            <td class="fs-4 ${resultColor} fw-bold">${result.toFixed(2)} ج.م</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>`;
+
+            new bootstrap.Modal(document.getElementById('drilldownModal')).show();
+        }
+    </script>
+
+</html>

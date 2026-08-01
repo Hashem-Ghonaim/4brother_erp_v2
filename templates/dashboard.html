@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>لوحة القيادة</title>
+
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="{{ theme_color or '#0d6efd' }}">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="My ERP">
+    <link rel="apple-touch-icon" href="/static/icon.png">
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/static/sw.js').then(function (registration) {
+                    console.log('ServiceWorker registration successful');
+                }, function (err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --main-color: {
+                    {
+                    theme_color or '#0d6efd'
+                }
+            }
+
+            ;
+            --sidebar-bg: #1a1d20;
+            --sidebar-width: 260px;
+            --text-muted: #adb5bd;
+            --bg-body: #f4f6f9;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* 1. التخطيط العام */
+        .dashboard-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* 2. القائمة الجانبية */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-bg);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            flex-shrink: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1050;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            padding: 12px 20px;
+            margin: 4px 12px;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            text-decoration: none;
+        }
+
+        .nav-link i {
+            width: 25px;
+            text-align: center;
+            margin-left: 10px;
+            font-size: 1.1rem;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background-color: var(--main-color);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transform: translateX(-5px);
+        }
+
+        .section-header {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6c757d;
+            margin: 25px 20px 10px;
+            font-weight: 700;
+            opacity: 0.7;
+        }
+
+        /* 3. الموبايل */
+        @media (max-width: 991.98px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                right: calc(var(--sidebar-width) * -1);
+                height: 100%;
+                box-shadow: -5px 0 25px rgba(0, 0, 0, 0.2);
+            }
+
+            .sidebar.active {
+                right: 0;
+            }
+
+            .overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.4);
+                backdrop-filter: blur(3px);
+                z-index: 1040;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s;
+            }
+
+            .overlay.active {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .main-content {
+                padding: 15px;
+            }
+        }
+
+        /* 4. الهيدر في الموبايل */
+        .mobile-header {
+            display: none;
+            background: white;
+            padding: 10px 15px;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 15px;
+            border-radius: 12px;
+        }
+
+        @media (max-width: 991.98px) {
+            .mobile-header {
+                display: flex;
+            }
+        }
+
+        /* 5. تأثيرات الـ GPS */
+        .gps-pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(25, 135, 84, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(25, 135, 84, 0);
+            }
+        }
+
+        /* المخطط الهيكلي */
+        .tree ul {
+            padding-top: 20px;
+            position: relative;
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            flex-wrap: nowrap;
+            padding-left: 0;
+            margin: 0;
+            transition: all 0.5s;
+        }
+
+        .tree li {
+            text-align: center;
+            list-style-type: none;
+            position: relative;
+            padding: 20px 5px 0 5px;
+            transition: all 0.5s;
+        }
+
+        .tree li::before,
+        .tree li::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 50%;
+            border-top: 2px solid #ccc;
+            width: 50%;
+            height: 20px;
+        }
+
+        .tree li::after {
+            right: auto;
+            left: 50%;
+            border-left: 2px solid #ccc;
+        }
+
+        .tree li:only-child::after,
+        .tree li:only-child::before {
+            display: none;
+        }
+
+        .tree li:only-child {
+            padding-top: 0;
+        }
+
+        .tree li:first-child::before,
+        .tree li:last-child::after {
+            border: 0 none;
+        }
+
+        .tree li:last-child::before {
+            border-right: 2px solid #ccc;
+            border-radius: 0 5px 0 0;
+        }
+
+        .tree li:first-child::after {
+            border-radius: 5px 0 0 0;
+        }
+
+        .tree ul ul::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            border-left: 2px solid #ccc;
+            width: 0;
+            height: 20px;
+        }
+
+        .tree li a {
+            border: 2px solid #ccc;
+            padding: 8px 10px;
+            text-decoration: none;
+            color: #333;
+            font-size: 13px;
+            display: inline-block;
+            border-radius: 10px;
+            transition: all 0.5s;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            min-width: 110px;
+        }
+
+        .tree li a:hover,
+        .tree li a:hover+ul li a {
+            background: #4361ee;
+            color: white;
+            border: 2px solid #4361ee;
+        }
+
+        .tree li a:hover+ul li::after,
+        .tree li a:hover+ul li::before,
+        .tree li a:hover+ul::before,
+        .tree li a:hover+ul ul::before {
+            border-color: #4361ee;
+        }
+
+        .role-badge {
+            display: block;
+            font-size: 0.75rem;
+            margin-top: 5px;
+            color: #888;
+        }
+
+        .tree li a:hover .role-badge {
+            color: #ddd;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="overlay" onclick="toggleSidebar()"></div>
+
+    <div class="dashboard-container">
+
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                {% if global_company_logo %}
+                <img src="{{ global_company_logo | image_url }}" class="bg-white rounded p-1 mb-2"
+                    style="width: 70px; height: 70px; object-fit: contain;">
+                {% elif company_logo %}
+                <img src="{{ company_logo | image_url }}" class="bg-white rounded p-1 mb-2"
+                    style="width: 70px; height: 70px; object-fit: contain;">
+                {% else %}
+                <div class="bg-light text-dark rounded-circle d-inline-flex align-items-center justify-content-center mb-2"
+                    style="width: 60px; height: 60px; font-size: 1.5rem; font-weight: bold;">
+                    {{ user.fullname[0] }}
+                </div>
+                {% endif %}
+
+                <h6 class="fw-bold mb-0 mt-2">{{ user.fullname }}</h6>
+                <small class="text-white-50" style="font-size: 0.8rem;">
+                    {{ 'مدير عام' if user.role == 'general_manager' else 'موظف' }}
+                </small>
+            </div>
+
+            <div class="p-3">
+                <a href="/profile" class="nav-link text-warning mb-2"><i class="fas fa-id-card"></i> ملفي الشخصي</a>
+
+                <div class="nav flex-column">
+                    <a href="/" class="nav-link active"><i class="fas fa-home"></i> الرئيسية</a>
+
+                    {% if user.has_perm('view_pos') or user.has_perm('view_invoices') %}
+                    <div class="section-header">المبيعات</div>
+                    {% endif %}
+
+                    {% if user.has_perm('view_pos') %}
+                    <a href="/pos" class="nav-link"><i class="fas fa-cash-register"></i> نقطة البيع (POS)</a>
+                    {% endif %}
+
+                    {% if user.has_perm('view_invoices') %}
+                    <a href="/invoices" class="nav-link"><i class="fas fa-file-invoice"></i> سجل الفواتير</a>
+                    {% endif %}
+
+                    {% if user.has_perm('view_customers') %}
+                    <a href="/customers" class="nav-link"><i class="fas fa-users"></i> العملاء</a>
+                    {% endif %}
+
+                    {% if user.has_perm('view_inventory') or user.has_perm('view_shipping') %}
+                    <div class="section-header">العمليات</div>
+                    {% endif %}
+
+                    {% if user.has_perm('view_inventory') %}
+                    <a href="/inventory" class="nav-link"><i class="fas fa-boxes"></i> المنتجات والمخزن</a>
+                    <a href="/product/tracking" class="nav-link"><i class="fas fa-route"></i> تتبع المنتجات</a>
+                    {% if user.username == 'gm_ahmed' %}
+                    <a href="/purchases/new" class="nav-link"><i class="fas fa-cart-plus"></i> مشتريات</a>
+                    {% endif %}
+                    <a href="/suppliers" class="nav-link"><i class="fas fa-truck-field"></i> الموردين</a>
+                    {% endif %}
+
+                    {% if user.has_perm('view_patterns') %}
+                    <a href="/patterns" class="nav-link"><i class="fas fa-cut"></i> متابعة القصات</a>
+                    {% endif %}
+
+                    {% if user.has_perm('view_shipping') %}
+                    <a href="/shipping/orders" class="nav-link"><i class="fas fa-truck-fast"></i> متابعة الشحن</a>
+                    {% endif %}
+                    {% if user.has_perm('manage_shipping') %}
+                    <a href="/shipping/companies" class="nav-link"><i class="fas fa-building"></i> شركات الشحن</a>
+                    {% endif %}
+
+                    {% if user.has_perm('view_treasury') or user.role == 'general_manager' %}
+                    <div class="section-header">المالية والإدارة</div>
+                    {% endif %}
+
+                    {% if user.has_perm('view_treasury') %}
+                    <a href="/treasury" class="nav-link text-warning"><i class="fas fa-coins"></i> الخزينة والحسابات</a>
+                    <a href="/expenses" class="nav-link text-danger"><i class="fas fa-hand-holding-usd"></i> المصروفات
+                        والمسحوبات</a>
+                    {% endif %}
+
+                    {% if user.role in ['general_manager', 'manager'] %}
+                    <a href="/reports" class="nav-link"><i class="fas fa-chart-pie"></i> التقارير</a>
+                    {% endif %}
+
+
+                    {% if user.role == 'general_manager' %}
+                    <a href="/owner-settlement" class="nav-link text-warning fw-bold"><i class="fas fa-crown"></i>
+                        تصفية صاحب المشروع</a>
+                    {% endif %}
+
+                    {% if user.role == 'general_manager' %}
+                    <a href="/hr/payroll" class="nav-link"><i class="fas fa-hand-holding-usd"></i> الرواتب</a>
+                    <a href="/permissions" class="nav-link"><i class="fas fa-user-shield"></i> الصلاحيات</a>
+                    <a href="/settings" class="nav-link"><i class="fas fa-cogs"></i> الإعدادات</a>
+                    {% endif %}
+
+                    <div class="mt-5 pt-3 border-top border-secondary">
+                        <a href="/logout" class="nav-link text-danger fw-bold"><i class="fas fa-sign-out-alt"></i> تسجيل
+                            خروج</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="mobile-header d-lg-none">
+                <h5 class="m-0 fw-bold text-dark">لوحة التحكم</h5>
+                <button class="btn btn-outline-dark border-0" onclick="toggleSidebar()">
+                    <i class="fas fa-bars fa-lg"></i>
+                </button>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm border-0 mb-4 rounded-3">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="card shadow-sm border-0 mb-4 bg-white rounded-4 overflow-hidden">
+                <div class="card-body p-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div>
+                        <h4 class="fw-bold m-0 text-dark">أهلاً، {{ (user.fullname or 'مستخدم').split()[0] }} 👋</h4>
+                        <div class="text-muted small mt-1">أتمنى لك يوماً إنتاجياً رائعاً!</div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-3 bg-light p-2 rounded-4 border">
+                        <div class="text-center px-2">
+                            <i class="fas fa-location-dot text-danger fs-5 mb-1"></i>
+                            <div class="small fw-bold" style="font-size: 0.7rem;">GPS</div>
+                        </div>
+                        <div class="vr"></div>
+                        <div>
+                            {% if attendance and attendance.check_in %}
+                            {% if attendance.check_out %}
+                            <div class="badge bg-secondary mb-1">تم الانصراف</div>
+                            <div class="small fw-bold">{{ attendance.check_out.strftime('%I:%M %p') }}</div>
+                            {% else %}
+                            <div class="small text-success fw-bold mb-1">حضور: {{ attendance.check_in.strftime('%I:%M
+                                %p') }}</div>
+                            <button onclick="handleAttendance('check_out')"
+                                class="btn btn-sm btn-outline-danger fw-bold w-100 rounded-pill">تسجيل انصراف</button>
+                            {% endif %}
+                            {% else %}
+                            <button onclick="handleAttendance('check_in')"
+                                class="btn btn-success btn-sm fw-bold gps-pulse w-100 rounded-pill">
+                                تسجيل حضور
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-2 mb-4">
+                <div class="col-6">
+                    <button
+                        class="btn btn-dark w-100 p-3 fw-bold shadow-sm rounded-4 d-flex align-items-center justify-content-center"
+                        data-bs-toggle="modal" data-bs-target="#dashboardCatalogModal">
+                        <i class="fas fa-file-pdf fa-lg me-2"></i> إنشاء PDF
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button onclick="copyCatalogLink()"
+                        class="btn btn-primary w-100 p-3 fw-bold shadow-sm rounded-4 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-share-nodes fa-lg me-2"></i> رابط الكتالوج
+                    </button>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-lg-6">
+                    <div class="card shadow-sm border-0 rounded-4 h-100">
+                        <div
+                            class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 fw-bold"><i class="fas fa-clock text-primary me-2"></i> أحدث العمليات</h6>
+                            <a href="/invoices" class="btn btn-sm btn-light rounded-pill">عرض الكل</a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0 text-center">
+                                <thead class="table-light small text-muted">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>العميل</th>
+                                        <th>القيمة</th>
+                                        <th>الحالة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in latest_orders %}
+                                    <tr>
+                                        <td><a href="/invoice/print/{{ order.id }}" target="_blank"
+                                                class="fw-bold text-decoration-none text-dark bg-light px-2 py-1 rounded">#{{
+                                                order.id }}</a></td>
+                                        <td>
+                                            <div class="text-truncate" style="max-width: 100px;">{{ order.customer.name
+                                                }}</div>
+                                        </td>
+                                        <td class="fw-bold text-primary">{{ order.final_total }}</td>
+                                        <td>
+                                            {% if order.is_shipping %}
+                                            <span class="badge bg-info bg-opacity-10 text-info border border-info"
+                                                style="font-size: 0.7em;">شحن</span>
+                                            {% else %}
+                                            <span
+                                                class="badge bg-success bg-opacity-10 text-success border border-success"
+                                                style="font-size: 0.7em;">مباشر</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-muted py-4">لا توجد عمليات حديثة</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                {% if user.role in ['general_manager', 'manager'] %}
+                <div class="col-lg-6">
+                    <div class="card shadow-sm border-0 rounded-4 h-100">
+                        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center"
+                            data-bs-toggle="collapse" data-bs-target="#teamCollapse" style="cursor: pointer;">
+                            <h6 class="m-0 fw-bold"><i class="fas fa-user-tie text-primary me-2"></i> فريقي <small
+                                    class="text-muted ms-2">(اضغط للطي)</small></h6>
+                            <button class="btn btn-sm btn-primary rounded-circle" data-bs-toggle="modal"
+                                data-bs-target="#addMemberModal" onclick="event.stopPropagation();"><i
+                                    class="fas fa-plus"></i></button>
+                        </div>
+                        <div id="teamCollapse" class="collapse show">
+                            <div class="card-body p-0">
+                                <div class="tree overflow-auto p-4 border-bottom bg-light" dir="ltr"
+                                    style="display: flex; justify-content: flex-start;">
+                                    {% macro render_tree(node) %}
+                                    <li>
+                                        <a href="/employee/{{ node.id }}">
+                                            <div class="fw-bold">{{ node.fullname }}</div>
+                                            <span class="role-badge">
+                                                {% if node.role == 'general_manager' %}مدير عام
+                                                {% elif node.role == 'manager' %}مدير / شريك
+                                                {% elif node.role == 'sales' %}مبيعات
+                                                {% elif node.role == 'worker' %}عامل / مخزن
+                                                {% else %}{{ node.role }}{% endif %}
+                                            </span>
+                                        </a>
+                                        {% if node.children %}
+                                        <ul>
+                                            {% for child in node.children if child.role in ['manager',
+                                            'general_manager'] %}
+                                            {{ render_tree(child) }}
+                                            {% endfor %}
+                                            {% set non_managers = node.children | rejectattr('role', 'in', ['manager',
+                                            'general_manager']) | list %}
+                                            {% if non_managers %}
+                                            {% set grouped = non_managers | groupby('role') %}
+                                            {% for role, items in grouped %}
+                                            <li>
+                                                <div class="d-flex flex-column gap-2 align-items-center"
+                                                    style="padding-top: 5px;">
+                                                    <div class="badge bg-secondary opacity-75 mb-1 text-wrap"
+                                                        style="font-size: 0.7rem; max-width: 120px;">
+                                                        {% if role == 'sales' %}فريق المبيعات
+                                                        {% elif role == 'worker' %}العمال والمخزن
+                                                        {% else %}{{ role }}{% endif %}
+                                                        ({{ items|length }})
+                                                    </div>
+                                                    {% for item in items %}
+                                                    <a href="/employee/{{ item.id }}" class="w-100"
+                                                        style="margin: 0; border-color: {% if role == 'sales' %}#4CAF50{% elif role == 'worker' %}#FF9800{% else %}#ccc{% endif %};">
+                                                        <div class="fw-bold">{{ item.fullname }}</div>
+                                                    </a>
+                                                    {% endfor %}
+                                                </div>
+                                            </li>
+                                            {% endfor %}
+                                            {% endif %}
+                                        </ul>
+                                        {% endif %}
+                                    </li>
+                                    {% endmacro %}
+                                    <ul>
+                                        {% for root in root_users %}
+                                        {{ render_tree(root) }}
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal fade" id="dashboardCatalogModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">تحميل كتالوج المنتجات</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="/inventory/print_catalog" method="GET" target="_blank">
+                    <div class="modal-body">
+                        <p class="text-muted small mb-3">سيتم إنشاء ملف PDF يحتوي على المنتجات المتوفرة فقط (المخزون
+                            أكبر من صفر).</p>
+                        <label class="form-label fw-bold">اختر القسم:</label>
+                        <select name="category_id" class="form-select">
+                            <option value="all">-- كل الأقسام (الكل) --</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-dark w-100 fw-bold">
+                            <i class="fas fa-file-pdf me-2"></i> عرض وتحميل PDF
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addMemberModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-dark text-white">
+                    <h6 class="modal-title">إضافة موظف جديد</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="/team/add_member" method="POST">
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">الاسم بالكامل</label>
+                                <input type="text" name="fullname" class="form-control" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">رقم الهاتف</label>
+                                <input type="text" name="phone" class="form-control" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">اسم المستخدم (Login)</label>
+                                <input type="text" name="username" class="form-control" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">كلمة المرور</label>
+                                <input type="password" name="password" class="form-control" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold">الدور الوظيفي</label>
+                                <select name="role" class="form-select">
+                                    <option value="sales">مبيعات (Sales)</option>
+                                    <option value="worker">عامل / مخزن</option>
+                                    <option value="manager">مدير فريق</option>
+                                </select>
+                            </div>
+                            <div class="col-12 mt-2">
+                                <label class="form-label small fw-bold text-primary"><i class="fas fa-sitemap me-1"></i>
+                                    المدير المباشر (المسؤول)</label>
+                                <select name="manager_id" class="form-select border-primary bg-light">
+                                    <option value="">-- اختيار الشريك أو تركها لتسجل باسمك تلقائياً --</option>
+                                    {% for mgr in all_managers %}
+                                    <option value="{{ mgr.id }}">{{ mgr.fullname }} ({{ 'مدير عام' if mgr.role ==
+                                        'general_manager' else 'شريك' }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">الراتب الأساسي</label>
+                                <input type="number" name="base_salary" class="form-control" placeholder="0.00">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">نظام القبض</label>
+                                <select name="job_type" class="form-select">
+                                    <option value="fixed">راتب ثابت</option>
+                                    <option value="tiered_sales">راتب + تارجت</option>
+                                    <option value="commission_only">عمولة فقط</option>
+                                </select>
+                            </div>
+                            <div class="col-12 mt-2">
+                                <div
+                                    class="form-check form-switch p-0 d-flex align-items-center justify-content-between border rounded px-3 py-2 bg-light mb-2">
+                                    <label class="form-check-label fw-bold mb-0 text-dark" for="is_shared_salary_new">
+                                        موظف مشترك (راتب مقسم)
+                                    </label>
+                                    <input class="form-check-input m-0 float-none" type="checkbox" role="switch"
+                                        id="is_shared_salary_new" name="is_shared_salary">
+                                </div>
+                                <div
+                                    class="form-check form-switch p-0 d-flex align-items-center justify-content-between border rounded px-3 py-2 bg-light">
+                                    <label class="form-check-label fw-bold mb-0 text-success"
+                                        for="has_flexible_hours_new">
+                                        <i class="fas fa-clock fs-5 text-success me-2"></i> مواعيد عمل مرنة (لا يتم
+                                        الخصم على التأخير)
+                                    </label>
+                                    <input class="form-check-input m-0 float-none" type="checkbox" role="switch"
+                                        id="has_flexible_hours_new" name="has_flexible_hours">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="submit" class="btn btn-primary w-100 fw-bold">حفظ البيانات</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.querySelector('.overlay').classList.toggle('active');
+        }
+
+        function copyCatalogLink() {
+            // Construct the URL combining base url and user phone
+            const url = `${window.location.origin}/public/catalog?ref={{ user.phone }}`;
+
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('✅ تم نسخ رابط الكتالوج بنجاح!\n' + url);
+                }).catch(err => {
+                    prompt('حدث خطأ في النسخ التلقائي، يرجى نسخ الرابط يدوياً:', url);
+                });
+            } else {
+                prompt('يرجى نسخ الرابط يدوياً:', url);
+            }
+        }
+
+        function handleAttendance(action) {
+            if (!navigator.geolocation) return alert("المتصفح لا يدعم GPS");
+
+            const btn = event.target.closest('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تحديد الموقع...';
+            btn.disabled = true;
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    fetch('/api/attendance', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            lat: pos.coords.latitude,
+                            lng: pos.coords.longitude,
+                            action: action
+                        })
+                    }).then(r => r.json()).then(d => {
+                        if (d.error) alert(d.error);
+                        else location.reload();
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    });
+                },
+                () => {
+                    alert("يرجى تفعيل الـ GPS والسماح للموقع بالوصول");
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                },
+                { enableHighAccuracy: true }
+            );
+        }
+    </script>
+
+</body>
+
+</html>

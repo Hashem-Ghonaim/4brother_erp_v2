@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>إدارة المخزن</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* تنسيق خاص لجعل الصورة قابلة للنقر وتظهر عليها علامة تغيير */
+        .img-editable {
+            position: relative;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .img-editable img {
+            transition: 0.3s;
+        }
+
+        .img-editable:hover img {
+            opacity: 0.7;
+        }
+
+        .img-editable:hover::after {
+            content: '\f030';
+            /* أيقونة كاميرا */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #0d6efd;
+            font-size: 1.2rem;
+        }
+
+        /* تنسيق الخلايا النصية القابلة للتعديل */
+        .editable {
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+        }
+
+        .editable:hover {
+            background-color: #f8f9fa;
+            box-shadow: inset 0 0 0 1px #dee2e6;
+        }
+
+        .editable:hover::after {
+            content: '\f303';
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.7rem;
+            color: #adb5bd;
+        }
+
+        .edit-input {
+            width: 100%;
+            text-align: center;
+            border: 2px solid #0d6efd;
+            border-radius: 5px;
+            padding: 2px;
+        }
+
+        .cat-badge {
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .cat-badge:hover {
+            transform: scale(1.05);
+        }
+        .cat-badge.active {
+            outline: 3px solid #0d6efd;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-light bg-white shadow-sm px-3 mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <a href="/dashboard" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-right"></i>
+                الرئيسية</a>
+            <h5 class="m-0 fw-bold">📦 المخزن والمنتجات</h5>
+        </div>
+        <div class="d-flex gap-2">
+            <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="بحث..."
+                onkeyup="filterTable()">
+            {% if user.username == 'gm_ahmed' %}
+            <a href="/purchases/new" class="btn btn-success btn-sm fw-bold"><i class="fas fa-plus"></i> شراء بضاعة</a>
+            {% endif %}
+        </div>
+        <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#printCatalogModal">
+            <i class="fas fa-file-pdf"></i> طباعة الكتالوج
+        </button>
+    </nav>
+
+    <div class="container">
+        <!-- شريط إحصائيات المخزون بالأقسام -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card shadow-sm border-0 bg-white">
+                    <div class="card-body py-2 d-flex flex-wrap gap-2 align-items-center">
+                        <span class="text-muted fw-bold small me-2"><i class="fas fa-boxes"></i> كميات المخزون:</span>
+                        
+                        {% set total_stock = products|sum(attribute='stock') %}
+                        <span class="badge bg-primary fs-6 py-2 px-3 shadow-sm border border-primary cat-badge" onclick="toggleCategoryFilter(this, 'الكل')">
+                            الإجمالي: <span class="fw-bold fs-5">{{ total_stock }}</span>
+                        </span>
+
+                        {% set cat_counts = namespace(data={}) %}
+                        {% for p in products %}
+                            {% set cat_name = p.model.category.name %}
+                            {% if cat_name not in cat_counts.data %}
+                                {% set _ = cat_counts.data.update({cat_name: p.stock}) %}
+                            {% else %}
+                                {% set _ = cat_counts.data.update({cat_name: cat_counts.data[cat_name] + p.stock}) %}
+                            {% endif %}
+                        {% endfor %}
+
+                        {% for cat, count in cat_counts.data.items() %}
+                        <span class="badge bg-light text-dark fs-6 py-2 px-3 shadow-sm border cat-badge" onclick="toggleCategoryFilter(this, '{{ cat }}')">
+                            {{ cat }}: <span class="fw-bold fs-5 text-success">{{ count }}</span>
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 text-center">
+                        <thead class="bg-dark text-white">
+                            <tr>
+                                <th>كود (ID)</th>
+                                <th>الصورة</th>
+                                <th>اسم المنتج</th>
+                                <th>التصنيف</th>
+                                <th>الموسم</th>
+                                {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
+                                <th>التكلفة</th>
+                                {% endif %}
+                                <th>سعر البيع</th>
+                                {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
+                                <th>هامش الربح</th>
+                                {% endif %}
+                                <th>المخزون</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
+                            <tr class="table-warning fw-bold fs-6">
+                                <td colspan="5" class="text-end">الإجماليات (الكمية × السعر):</td>
+                                <td id="total_cost_agg" class="text-danger">0</td>
+                                <td id="total_sell_agg" class="text-success">0</td>
+                                <td id="total_profit_agg" class="text-primary">0</td>
+                                <td id="total_stock_agg">0</td>
+                                <td></td>
+                            </tr>
+                            {% endif %}
+                            {% for p in products %}
+                            <tr id="row_{{ p.id }}" class="product-row" data-category="{{ p.model.category.name }}" data-cost="{{ p.cost_price }}" data-sell="{{ p.sell_price }}" data-stock="{{ p.stock }}">
+                                <td class="fw-bold text-muted">{{ p.id }}</td>
+
+                                <td>
+                                    {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
+                                    <label class="img-editable" title="اضغط لتغيير الصورة">
+                                        <img id="img_preview_{{ p.id }}" src="{{ p.model.image | image_url }}"
+                                            class="rounded border"
+                                            style="width: 50px; height: 50px; object-fit: contain;">
+                                        <input type="file" class="d-none"
+                                            onchange="uploadProductImage({{ p.id }}, this)" accept="image/*">
+                                    </label>
+                                    {% else %}
+                                    <img src="{{ p.model.image | image_url }}" class="rounded border"
+                                        style="width: 50px; height: 50px; object-fit: contain;">
+                                    {% endif %}
+                                </td>
+
+                                {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
+                                <td class="editable fw-bold" data-id="{{ p.id }}" data-field="name">{{ p.model.name }}</td>
+                                {% else %}
+                                <td class="fw-bold">{{ p.model.name }}</td>
+                                {% endif %}
+
+                                <td><span class="badge bg-light text-dark border">{{ p.model.category.name }}</span>
+                                </td>
+
+                                {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
+                                <td class="editable" data-id="{{ p.id }}" data-field="season"><span class="badge bg-info text-dark border">{{ p.model.season }}</span></td>
+                                {% else %}
+                                <td><span class="badge bg-info text-dark border">{{ p.model.season }}</span></td>
+                                {% endif %}
+
+                                {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
+                                <td class="editable fw-bold text-secondary" data-id="{{ p.id }}" data-field="cost">{{
+                                    p.cost_price }}</td>
+                                {% endif %}
+
+                                {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
+                                <td class="editable fw-bold text-success" data-id="{{ p.id }}" data-field="sell">{{
+                                    p.sell_price }}</td>
+                                {% else %}
+                                <td class="fw-bold text-success">{{ p.sell_price }}</td>
+                                {% endif %}
+
+                                {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
+                                <td class="fw-bold text-primary profit-margin-cell">{{ (p.sell_price - p.cost_price)|round(2) }}</td>
+                                {% endif %}
+
+                                {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
+                                <td class="editable" data-id="{{ p.id }}" data-field="stock">
+                                    <span class="badge {{ 'bg-success' if p.stock > 0 else 'bg-danger' }} fs-6">
+                                        {{ p.stock }}
+                                    </span>
+                                </td>
+                                {% else %}
+                                <td>
+                                    <span class="badge {{ 'bg-success' if p.stock > 0 else 'bg-danger' }} fs-6">
+                                        {{ p.stock }}
+                                    </span>
+                                </td>
+                                {% endif %}
+
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/print_barcode/{{ p.id }}" class="btn btn-dark" target="_blank"
+                                            title="طباعة باركود">
+                                            <i class="fas fa-barcode"></i>
+                                        </a>
+                                        {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
+                                        <a href="/product/delete/{{ p.id }}" class="btn btn-danger"
+                                            onclick="return confirm('حذف نهائي؟')" title="حذف">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="8" class="py-5 text-muted">المخزن فارغ</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="printCatalogModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">خيارات طباعة الكتالوج</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="/inventory/print_catalog" method="GET" target="_blank">
+                    <div class="modal-body">
+                        <label class="form-label fw-bold">اختر التصنيف المراد طباعته:</label>
+                        <select name="category_id" class="form-select">
+                            <option value="all">-- كل المنتجات (الكل) --</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary w-100 fw-bold">
+                            <i class="fas fa-print"></i> عرض وطباعة
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. دالة رفع الصورة وتحديثها فورياً
+        function uploadProductImage(id, inputElement) {
+            const file = inputElement.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('id', id);
+
+            // تغيير شكل الصورة مؤقتاً لـ Loading
+            const imgElement = document.getElementById('img_preview_' + id);
+            const originalSrc = imgElement.src;
+            imgElement.style.opacity = '0.3';
+
+            fetch('/api/update_product_image', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // تحديث الصورة بالرابط الجديد (نضيف وقت عشوائي عشان المتصفح مياخدش الكاش القديم)
+                        imgElement.src = data.new_image_url + '?t=' + new Date().getTime();
+                        imgElement.style.opacity = '1';
+                        // ومضة خضراء
+                        imgElement.style.border = '2px solid green';
+                        setTimeout(() => imgElement.style.border = '', 1000);
+                    } else {
+                        alert('فشل الرفع: ' + data.message);
+                        imgElement.src = originalSrc;
+                        imgElement.style.opacity = '1';
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('حدث خطأ في الاتصال');
+                    imgElement.src = originalSrc;
+                    imgElement.style.opacity = '1';
+                });
+        }
+
+        // 2. كود تعديل النصوص (الاسم، السعر، المخزون)
+        document.addEventListener('DOMContentLoaded', function () {
+            const editableCells = document.querySelectorAll('.editable');
+
+            editableCells.forEach(cell => {
+                cell.addEventListener('dblclick', function () {
+                    if (this.querySelector('input')) return;
+
+                    const originalContent = this.innerText.trim();
+                    const field = this.dataset.field;
+                    const id = this.dataset.id;
+
+                    const input = document.createElement('input');
+                    input.type = (field === 'name' || field === 'season') ? 'text' : 'number';
+                    input.value = originalContent;
+                    input.className = 'edit-input';
+
+                    const originalHTML = this.innerHTML;
+                    this.innerHTML = '';
+                    this.appendChild(input);
+                    input.focus();
+
+                    const save = () => {
+                        const newValue = input.value.trim();
+                        if (newValue === originalContent) {
+                            this.innerHTML = originalHTML;
+                            return;
+                        }
+
+                        fetch('/api/quick_update_product', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: id, field: field, value: newValue })
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    if (field === 'stock') {
+                                        const badgeClass = (parseInt(newValue) > 0) ? 'bg-success' : 'bg-danger';
+                                        this.innerHTML = `<span class="badge ${badgeClass} fs-6">${newValue}</span>`;
+                                        cell.closest('tr').setAttribute('data-stock', newValue);
+                                    } else if (field === 'season') {
+                                        this.innerHTML = `<span class="badge bg-info text-dark border">${newValue}</span>`;
+                                    } else {
+                                        this.innerText = newValue;
+                                        if (field === 'cost' || field === 'sell') {
+                                            cell.closest('tr').setAttribute('data-' + field, newValue);
+                                            var r = cell.closest('tr');
+                                            var c = parseFloat(r.getAttribute('data-cost')) || 0;
+                                            var s = parseFloat(r.getAttribute('data-sell')) || 0;
+                                            var profitCell = r.querySelector('.profit-margin-cell');
+                                            if (profitCell) profitCell.innerText = (s - c).toFixed(2);
+                                        }
+                                    }
+                                    this.style.backgroundColor = '#d1e7dd';
+                                    setTimeout(() => this.style.backgroundColor = '', 500);
+                                    applyFilters();
+                                } else {
+                                    alert('خطأ: ' + data.message);
+                                    this.innerHTML = originalHTML;
+                                }
+                            })
+                            .catch(err => {
+                                this.innerHTML = originalHTML;
+                            });
+                    };
+
+                    input.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter') this.blur();
+                        else if (e.key === 'Escape') cell.innerHTML = originalHTML;
+                    });
+                    input.addEventListener('blur', save);
+                });
+            });
+        });
+
+        // فلتر الأقسام
+        var activeCategories = new Set(); // فارغ = عرض الكل
+
+        function toggleCategoryFilter(badge, catName) {
+            if (catName === 'الكل') {
+                // دوس على الإجمالي = إزالة كل الفلاتر
+                activeCategories.clear();
+                document.querySelectorAll('.cat-badge').forEach(b => b.classList.remove('active'));
+            } else {
+                if (activeCategories.has(catName)) {
+                    activeCategories.delete(catName);
+                    badge.classList.remove('active');
+                } else {
+                    activeCategories.add(catName);
+                    badge.classList.add('active');
+                }
+            }
+            applyFilters();
+        }
+
+        function applyFilters() {
+            var input = document.getElementById("searchInput");
+            var filter = input.value.toUpperCase();
+            var table = document.querySelector("table tbody");
+            var tr = table.getElementsByClassName("product-row");
+
+            var totalCost = 0;
+            var totalSell = 0;
+            var totalProfit = 0;
+            var totalStock = 0;
+
+            for (var i = 0; i < tr.length; i++) {
+                var row = tr[i];
+                var tdId = row.getElementsByTagName("td")[0];
+                var tdName = row.getElementsByTagName("td")[2];
+                if (!tdId || !tdName) continue;
+
+                // فلتر البحث
+                var txtValueId = tdId.textContent || tdId.innerText;
+                var txtValueName = tdName.textContent || tdName.innerText;
+                var matchesSearch = (filter === '') ||
+                    txtValueId.toUpperCase().indexOf(filter) > -1 ||
+                    txtValueName.toUpperCase().indexOf(filter) > -1;
+
+                // فلتر الأقسام
+                var rowCat = row.getAttribute('data-category');
+                var matchesCategory = (activeCategories.size === 0) || activeCategories.has(rowCat);
+
+                var isVisible = (matchesSearch && matchesCategory);
+                row.style.display = isVisible ? '' : 'none';
+
+                if (isVisible) {
+                    var cost = parseFloat(row.getAttribute('data-cost')) || 0;
+                    var sell = parseFloat(row.getAttribute('data-sell')) || 0;
+                    var stock = parseInt(row.getAttribute('data-stock')) || 0;
+                    
+                    totalCost += (cost * stock);
+                    totalSell += (sell * stock);
+                    totalProfit += ((sell - cost) * stock);
+                    totalStock += stock;
+                }
+            }
+
+            if (document.getElementById('total_cost_agg')) {
+                document.getElementById('total_cost_agg').innerText = totalCost.toFixed(2);
+                document.getElementById('total_sell_agg').innerText = totalSell.toFixed(2);
+                document.getElementById('total_profit_agg').innerText = totalProfit.toFixed(2);
+                document.getElementById('total_stock_agg').innerText = totalStock;
+            }
+        }
+
+        // دالة الفلتر (بحث)
+        function filterTable() {
+            applyFilters();
+        }
+
+        // حساب الإجماليات عند تحميل الصفحة لأول مرة
+        document.addEventListener('DOMContentLoaded', function () {
+            applyFilters();
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

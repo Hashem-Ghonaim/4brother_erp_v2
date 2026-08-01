@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تصفية صاحب المشروع</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: #0f1117;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 30px 0 20px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .page-header h3 {
+            color: #ffd700;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .filter-bar {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .filter-bar label {
+            color: #adb5bd;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .filter-bar .form-control {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border-radius: 10px;
+        }
+
+        .filter-bar .form-control:focus {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: #ffd700;
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.15);
+            color: #fff;
+        }
+
+        .filter-bar .btn-filter {
+            background: linear-gradient(135deg, #ffd700, #f0c000);
+            color: #1a1a2e;
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 25px;
+            transition: all 0.3s;
+        }
+
+        .filter-bar .btn-filter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 28px 22px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .metric-card.revenue::before {
+            background: linear-gradient(90deg, #00c853, #69f0ae);
+        }
+
+        .metric-card.cost::before {
+            background: linear-gradient(90deg, #ff5252, #ff8a80);
+        }
+
+        .metric-card.profit::before {
+            background: linear-gradient(90deg, #ffd700, #ffe57f);
+        }
+
+        .metric-card.partner::before {
+            background: linear-gradient(90deg, #e040fb, #ea80fc);
+        }
+
+        .metric-card.expense::before {
+            background: linear-gradient(90deg, #ff6d00, #ffab40);
+        }
+
+        .metric-card.staff::before {
+            background: linear-gradient(90deg, #00b0ff, #80d8ff);
+        }
+
+        .metric-card.withdrawal::before {
+            background: linear-gradient(90deg, #f44336, #ef9a9a);
+        }
+
+        .metric-label {
+            color: #8e99a4;
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .metric-card.revenue .metric-value {
+            color: #69f0ae;
+        }
+
+        .metric-card.cost .metric-value {
+            color: #ff8a80;
+        }
+
+        .metric-card.profit .metric-value {
+            color: #ffd700;
+        }
+
+        .metric-card.partner .metric-value {
+            color: #ea80fc;
+        }
+
+        .metric-card.expense .metric-value {
+            color: #ffab40;
+        }
+
+        .metric-card.staff .metric-value {
+            color: #80d8ff;
+        }
+
+        .metric-card.withdrawal .metric-value {
+            color: #ef9a9a;
+        }
+
+        .metric-sub {
+            color: #6c757d;
+            font-size: 0.75rem;
+        }
+
+        .profit-hero {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.03) 100%);
+            border: 2px solid rgba(255, 215, 0, 0.25);
+            border-radius: 24px;
+            padding: 35px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profit-hero::after {
+            content: '💎';
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            font-size: 2rem;
+            opacity: 0.2;
+        }
+
+        .profit-hero .metric-label {
+            color: #ffd700;
+            font-size: 1rem;
+        }
+
+        .profit-hero .metric-value {
+            font-size: 2.8rem;
+            color: #ffd700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .final-hero {
+            background: linear-gradient(135deg, rgba(0, 200, 83, 0.12) 0%, rgba(0, 200, 83, 0.03) 100%);
+            border: 2px solid rgba(0, 200, 83, 0.3);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .final-hero.negative {
+            background: linear-gradient(135deg, rgba(244, 67, 54, 0.12) 0%, rgba(244, 67, 54, 0.03) 100%);
+            border-color: rgba(244, 67, 54, 0.3);
+        }
+
+        .final-hero::after {
+            content: '👑';
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            font-size: 2.5rem;
+            opacity: 0.2;
+        }
+
+        .final-hero .metric-label {
+            color: #69f0ae;
+            font-size: 1.1rem;
+        }
+
+        .final-hero.negative .metric-label {
+            color: #ef9a9a;
+        }
+
+        .final-hero .metric-value {
+            font-size: 3rem;
+            color: #69f0ae;
+            text-shadow: 0 0 30px rgba(0, 200, 83, 0.3);
+        }
+
+        .final-hero.negative .metric-value {
+            color: #ef9a9a;
+            text-shadow: 0 0 30px rgba(244, 67, 54, 0.3);
+        }
+
+        .section-divider {
+            border-color: rgba(255, 255, 255, 0.08);
+            margin: 30px 0;
+        }
+
+        .section-title {
+            color: #adb5bd;
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            padding-right: 5px;
+        }
+
+        .deduction-formula {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            color: #adb5bd;
+            font-size: 0.85rem;
+            line-height: 2;
+        }
+
+        .deduction-formula .line {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+        }
+
+        .deduction-formula .line.total {
+            border-top: 2px solid rgba(255, 215, 0, 0.3);
+            padding-top: 10px;
+            margin-top: 8px;
+        }
+
+        /* Modal */
+        .modal-content {
+            background: #1a1d25;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .modal-header .modal-title {
+            color: #ffd700;
+        }
+
+        .table-dark-custom {
+            --bs-table-bg: transparent;
+            --bs-table-color: #dee2e6;
+            --bs-table-border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .table-dark-custom thead {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .table-dark-custom thead th {
+            color: #adb5bd;
+            font-weight: 600;
+            font-size: 0.78rem;
+            letter-spacing: 0.3px;
+        }
+
+        .table-dark-custom tbody tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .btn-back {
+            color: #adb5bd;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 8px 16px;
+            transition: all 0.2s;
+        }
+
+        .btn-back:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .badge-shared {
+            background: rgba(0, 176, 255, 0.2);
+            color: #80d8ff;
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        .badge-full {
+            background: rgba(255, 109, 0, 0.2);
+            color: #ffab40;
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        .formula-note {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(100, 200, 255, 0.12);
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-top: 8px;
+            color: #8e99a4;
+            font-size: 0.78rem;
+            line-height: 1.7;
+        }
+
+        .formula-note strong {
+            color: #b0bec5;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="page-header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-1"><i class="fas fa-crown me-2"></i>تصفية صاحب المشروع</h3>
+                    <div class="text-white-50 small">ملخص الأداء المالي الشامل لأحمد عبد الفتاح</div>
+                </div>
+                <a href="/dashboard" class="btn btn-back"><i class="fas fa-arrow-right me-1"></i> عودة</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container pb-5">
+
+        <!-- فلتر التاريخ -->
+        <div class="filter-bar">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="mb-1"><i class="fas fa-calendar-alt me-1"></i> من تاريخ</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ date_from }}" min="2026-05-01">
+                </div>
+                <div class="col-md-4">
+                    <label class="mb-1"><i class="fas fa-calendar-check me-1"></i> إلى تاريخ</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ date_to }}" min="2026-05-01">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-filter w-100">
+                        <i class="fas fa-filter me-1"></i> تصفية
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ===== البند 1: المبيعات والتكلفة ===== -->
+        <div class="section-title"><i class="fas fa-layer-group me-1"></i> البند الأول: المبيعات والتكلفة</div>
+        <div class="row g-3 mb-4">
+            <!-- الإجمالي بدون خصم -->
+            <div class="col-md-4">
+                <div class="metric-card bg-dark border border-secondary border-opacity-25 h-100" style="padding:15px;">
+                    <div class="metric-label text-light"><i class="fas fa-file-invoice-dollar me-1"></i> الإجمالي بدون
+                        خصم</div>
+                    <div class="metric-value text-white fs-4">{{ "{:,.2f}".format(total_gross_sales) }}</div>
+                </div>
+            </div>
+            <!-- المرتجعات -->
+            <div class="col-md-4">
+                <div class="metric-card bg-dark border border-danger border-opacity-25 h-100" style="padding:15px;">
+                    <div class="metric-label text-danger"><i class="fas fa-undo me-1"></i> إجمالي المرتجعات</div>
+                    <div class="metric-value text-danger fs-4">{{ "{:,.2f}".format(total_returns_value) }}</div>
+                </div>
+            </div>
+            <!-- خصومات الشركة -->
+            <div class="col-md-4">
+                <div class="metric-card bg-dark border border-warning border-opacity-25 h-100" style="padding:15px;">
+                    <div class="metric-label text-warning"><i class="fas fa-percentage me-1"></i> خصومات تحملتها الشركة
+                    </div>
+                    <div class="metric-value text-warning fs-4">{{ "{:,.2f}".format(total_company_discounts) }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="metric-card revenue"
+                    onclick="showSalesDetails('إجمالي المبيعات (صافي من المرتجعات)', 'revenue')">
+                    <div class="metric-label"><i class="fas fa-chart-line me-1"></i> إجمالي المبيعات (بعد الخصومات)
+                    </div>
+                    <div class="metric-value">{{ "{:,.2f}".format(total_revenue) }}</div>
+                    <div class="metric-sub"><i class="fas fa-search-plus me-1"></i> اضغط للتفاصيل</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-card cost" onclick="showSalesDetails('إجمالي تكلفة البضاعة المباعة', 'cost')">
+                    <div class="metric-label"><i class="fas fa-tags me-1"></i> إجمالي التكلفة (COGS)</div>
+                    <div class="metric-value">{{ "{:,.2f}".format(total_cost) }}</div>
+                    <div class="metric-sub"><i class="fas fa-search-plus me-1"></i> اضغط للتفاصيل</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-card bg-dark border border-info border-opacity-25"
+                    style="padding: 24px; text-align: center; border-radius: 16px; cursor: pointer;"
+                    onclick="showSalesDetails('إجمالي الشحن', 'shipping')">
+                    <div class="metric-label text-info"><i class="fas fa-truck me-1"></i> إجمالي الشحن</div>
+                    <div class="metric-value text-info fs-3">{{ "{:,.2f}".format(total_shipping) }}</div>
+                    <div class="metric-sub text-info opacity-75 mt-2"><i class="fas fa-search-plus me-1"></i> اضغط
+                        للتفاصيل</div>
+                </div>
+            </div>
+        <div class="row g-4 mb-4">
+            <!-- عمولات الفريق -->
+            <div class="col-md-6">
+                <div class="metric-card staff h-100" onclick="showTeamComm()">
+                    <div class="metric-label"><i class="fas fa-users me-1"></i> عمولات الفريق</div>
+                    <div class="metric-value">{{ "{:,.2f}".format(total_team_comm) }}</div>
+                    <div class="metric-sub"><i class="fas fa-search-plus me-1"></i> اضغط للتفاصيل</div>
+                </div>
+            </div>
+            
+            <!-- عمولات الشركاء -->
+            <div class="col-md-6">
+                <div class="metric-card partner h-100" onclick="showPartnerCommInvoices()">
+                    <div class="metric-label"><i class="fas fa-handshake me-1"></i> عمولات الشركاء</div>
+                    <div class="metric-value">{{ "{:,.2f}".format(total_partner_net_comm) }}</div>
+                    <div class="metric-sub"><i class="fas fa-search-plus me-1"></i> اضغط للتفاصيل</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profit-hero">
+            <div class="metric-label"><i class="fas fa-gem me-2"></i> صافي الربح الأولي (مبيعات − التكلفة − الشحن - العمولات)</div>
+            <div class="metric-value">{{ "{:,.2f}".format(initial_profit) }} <span style="font-size: 1.2rem;">ج.م</span>
+            </div>
+            <div style="color:rgba(255,215,0,0.6); font-size:0.8rem; margin-top:8px;">
+                إيراد البضاعة ({{ "{:,.2f}".format(total_revenue) }}) − تكلفة البضاعة ({{ "{:,.2f}".format(total_cost) }}) − الشحن ({{ "{:,.2f}".format(total_shipping) }}) − العمولات ({{ "{:,.2f}".format(total_all_commissions) }})
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- ===== البنود المخصومة ===== -->
+        <div class="section-title"><i class="fas fa-minus-circle me-1"></i> الخصومات من صافي الربح الأولي</div>
+
+            <!-- المصاريف العامة -->
+            <div class="col-md-4">
+                <div class="metric-card expense h-100" onclick="showGeneralExpenses()">
+                    <div class="metric-label"><i class="fas fa-file-invoice-dollar me-1"></i> مصاريف عامة وتأسيس</div>
+                    <div class="metric-value">{{ "{:,.2f}".format(general_expenses_total) }}</div>
+                    <div class="metric-sub"><i class="fas fa-search-plus me-1"></i> اضغط للتفاصيل</div>
+                </div>
+            </div>
+
+            <!-- رواتب موظفين -->
+            <div class="col-md-4">
+                <div class="metric-card staff h-100" onclick="showSharedStaff()">
+                    <div class="metric-label"><i class="fas fa-user-tie me-1"></i> رواتب الموظفين (نصيب أحمد)</div>
+                    <div class="metric-value">{{ "{:,.2f}".format(ahmed_shared_staff_total) }}</div>
+                    <div class="metric-sub"><i class="fas fa-search-plus me-1"></i> اضغط للتفاصيل</div>
+                </div>
+            </div>
+
+            <!-- سلف نقدية -->
+            <div class="col-md-4">
+                <div class="metric-card h-100" style="border-color: rgba(255,165,0,0.3);" onclick="showAdvances()">
+                    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#ffa500,#ff8c00);"></div>
+                    <div class="metric-label"><i class="fas fa-hand-holding-usd me-1"></i> سلف للموظفين</div>
+                    <div class="metric-value text-warning">{{ "{:,.2f}".format(ahmed_advances_total) }}</div>
+                    <div class="metric-sub"><i class="fas fa-search-plus me-1"></i> اضغط للتفاصيل</div>
+                </div>
+            </div>
+
+            <!-- مسحوبات شخصية -->
+            <div class="col-md-4">
+                <div class="metric-card bg-dark border border-secondary border-opacity-50 h-100" onclick="showWithdrawals()">
+                    <div class="metric-label text-secondary"><i class="fas fa-wallet me-1"></i> مسحوبات أحمد الشخصية</div>
+                    <div class="metric-value text-secondary">{{ "{:,.2f}".format(ahmed_withdrawals_total) }}</div>
+                    <div class="metric-sub text-secondary"><i class="fas fa-search-plus me-1"></i> اضغط للتفاصيل</div>
+                </div>
+            </div>
+
+            <!-- المكافآت والجزاءات -->
+            <div class="col-md-4">
+                <div class="metric-card h-100" style="border-color: rgba(255,215,0,0.3);" onclick="showBonusPenalty()">
+                    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#ffd700,#ffab40);"></div>
+                    <div class="metric-label"><i class="fas fa-gift me-1"></i> مكافآت وجزاءات</div>
+                    <div class="metric-value" style="color: {% if total_bonus_penalty_net >= 0 %}#69f0ae{% else %}#ef9a9a{% endif %};">{{ "{:,.2f}".format(total_bonus_penalty_net) }}</div>
+                    <div class="metric-sub"><i class="fas fa-search-plus me-1"></i> اضغط للتفاصيل</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- معادلة الخصم -->
+        <div class="deduction-formula mt-4">
+            <div class="line mt-2">
+                <span><i class="fas fa-gem text-warning me-1"></i> صافي الربح الأولي (إيراد − تكلفة − شحن - عمولات)</span>
+                <span class="text-warning fw-bold">{{ "{:,.2f}".format(initial_profit) }}</span>
+            </div>
+            <div class="line">
+                <span><i class="fas fa-minus text-danger me-1"></i> مصاريف عامة وتأسيس</span>
+                <span class="text-danger">− {{ "{:,.2f}".format(general_expenses_total) }}</span>
+            </div>
+            <div class="line">
+                <span><i class="fas fa-minus text-danger me-1"></i> رواتب الموظفين (نصيب أحمد)</span>
+                <span class="text-danger">− {{ "{:,.2f}".format(ahmed_shared_staff_total) }}</span>
+            </div>
+            <div class="line">
+                <span><i class="fas fa-minus text-danger me-1"></i> سلف للموظفين</span>
+                <span class="text-danger">− {{ "{:,.2f}".format(ahmed_advances_total) }}</span>
+            </div>
+            <div class="line">
+                <span><i class="fas fa-minus text-danger me-1"></i> مسحوبات شخصية</span>
+                <span class="text-danger">− {{ "{:,.2f}".format(ahmed_withdrawals_total) }}</span>
+            </div>
+            <div class="line">
+                <span><i class="fas fa-minus text-danger me-1"></i> مكافآت وجزاءات (صافي)</span>
+                <span class="text-danger">− {{ "{:,.2f}".format(total_bonus_penalty_net) }}</span>
+            </div>
+            <div class="line total">
+                <span class="fw-bold" style="color: {% if final_net_profit >= 0 %}#69f0ae{% else %}#ef9a9a{% endif %}">
+                    <i class="fas fa-crown me-1"></i> صافي ربح الشركة النهائي
+                </span>
+                <span class="fw-bold fs-5"
+                    style="color: {% if final_net_profit >= 0 %}#69f0ae{% else %}#ef9a9a{% endif %}">
+                    {{ "{:,.2f}".format(final_net_profit) }} ج.م
+                </span>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- ===== الصافي النهائي (كارت كبير) ===== -->
+        <div class="final-hero {% if final_net_profit < 0 %}negative{% endif %}">
+            <div class="metric-label"><i class="fas fa-crown me-2"></i> صافي ربح الشركة النهائي</div>
+            <div class="metric-value">{{ "{:,.2f}".format(final_net_profit) }} <span
+                    style="font-size: 1.2rem;">ج.م</span></div>
+            <div class="mt-2" style="color: rgba(255,255,255,0.4); font-size: 0.8rem;">
+                الرقم ده هو الفلوس اللي المفروض تكون باقية لأحمد يقدر يسحبها بعد كل حاجة.
+            </div>
+        </div>
+
+
+
+        <!-- Modal التفاصيل -->
+        <div class="modal fade" id="detailsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold" id="modal_title">تفاصيل</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-0" id="modal_body"></div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            const salesDetails = {{ sales_details | tojson }};
+            const teamCommDetails = {{ team_comm_details | tojson }};
+            const partnerCommInvoiceDetails = {{ partner_comm_invoice_details | tojson }};
+            const bonusPenaltyDetails = {{ bonus_penalty_details | tojson }};
+            const generalExpensesDetails = {{ general_expenses_details | tojson }};
+            const ahmedSharedStaffDetails = {{ ahmed_shared_staff_details | tojson }};
+            const ahmedAdvancesDetails = {{ ahmed_advances_details | tojson }};
+            const ahmedWithdrawalsDetails = {{ ahmed_withdrawals_details | tojson }};
+
+            function showSimpleDetails(title, details, descField, extraColsHtml = '', rowMapper) {
+                if (!details.length) { openModal(title, '<div class="text-center text-muted p-4">لا توجد بيانات</div>'); return; }
+                let total = 0;
+                let rows = details.map((d, i) => {
+                    total += d.amount;
+                    return `<tr>
+                    <td class="text-muted small">${i + 1}</td>
+                    <td>${d.date}</td>
+                    <td>${d[descField]}</td>
+                    ${rowMapper ? rowMapper(d) : ''}
+                    <td class="fw-bold text-danger">${fmt(d.amount)}</td>
+                </tr>`;
+                }).join('');
+
+                openModal(title, `<table class="table table-dark-custom table-hover mb-0 align-middle">
+                <thead><tr class="text-center"><th>#</th><th>التاريخ</th><th>البيان</th>${extraColsHtml}<th>المبلغ</th></tr></thead>
+                <tbody>${rows}</tbody>
+                <tfoot>
+                    <tr style="background:rgba(255,215,0,0.1)"><td colspan="${3 + (extraColsHtml ? extraColsHtml.match(/<th/g).length : 0)}" class="text-end px-3 fw-bold text-warning">الإجمالي:</td>
+                    <td class="fw-bold text-warning text-center">${fmt(total)}</td></tr>
+                </tfoot></table>`);
+            }
+
+            function showGeneralExpenses() { showSimpleDetails('المصاريف العامة والإدارية', generalExpensesDetails, 'desc', '<th>القسم</th>', d => `<td>${d.category}</td>`); }
+            function showSharedStaff() { showSimpleDetails('رواتب الموظفين (نصيب أحمد)', ahmedSharedStaffDetails, 'desc', '<th>النسبة</th><th>النوع</th>', d => `<td>${d.share_type}</td><td>${d.op_type}</td>`); }
+            function showAdvances() { showSimpleDetails('السلف النقدية للموظفين', ahmedAdvancesDetails, 'desc'); }
+            function showWithdrawals() { showSimpleDetails('المسحوبات الشخصية', ahmedWithdrawalsDetails, 'desc'); }
+
+            function openModal(title, html) {
+                document.getElementById('modal_title').innerText = title;
+                document.getElementById('modal_body').innerHTML = html;
+                new bootstrap.Modal(document.getElementById('detailsModal')).show();
+            }
+
+            function fmt(n) { return Number(n).toLocaleString('en', { minimumFractionDigits: 2 }); }
+
+            // 1. تفاصيل المبيعات / التكلفة / الشحن
+            function showSalesDetails(title, type) {
+                if (!salesDetails.length) { openModal(title, '<div class="text-center text-muted p-4">لا توجد بيانات</div>'); return; }
+                let total = 0;
+                let rows = salesDetails.map((d, i) => {
+                    let val = 0;
+                    let cls = '';
+                    if (type === 'revenue') { val = d.revenue; cls = 'text-success'; }
+                    else if (type === 'cost') { val = d.cost; cls = 'text-danger'; }
+                    else if (type === 'shipping') { val = (d.shipping || 0); cls = 'text-info'; }
+                    
+                    total += val;
+                    const retBadge = d.has_return ? `<span class="badge bg-warning text-dark ms-1" title="يحتوي على مرتجع (${d.returned_qty} قطعة)">↩ ${d.returned_qty}</span>` : '';
+                    
+                    return `<tr>
+                    <td class="text-muted small">${i + 1}</td>
+                    <td>${d.date}</td>
+                    <td><a href="/invoice/print/${d.invoice_id}" target="_blank" class="text-info fw-bold text-decoration-none">#${d.invoice_id}</a>${retBadge}</td>
+                    <td>${d.seller}</td>
+                    <td class="fw-bold ${cls}">${fmt(val)}</td>
+                </tr>`;
+                }).join('');
+
+                openModal(title, `<table class="table table-dark-custom table-hover mb-0 align-middle">
+                <thead><tr class="text-center"><th>#</th><th>التاريخ</th><th>الفاتورة</th><th>البائع</th><th>المبلغ</th></tr></thead>
+                <tbody>${rows}</tbody>
+                <tfoot>
+                    <tr style="background:rgba(255,215,0,0.1)"><td colspan="4" class="text-end px-3 fw-bold text-warning">الإجمالي (${salesDetails.length} فاتورة):</td>
+                    <td class="fw-bold text-warning text-center">${fmt(total)}</td></tr>
+                </tfoot></table>`);
+            }
+
+            // 2. عمولات الفريق
+            function showTeamComm() {
+                if (!teamCommDetails.length) { openModal('عمولات الفريق', '<div class="text-center text-muted p-4">لا توجد بيانات</div>'); return; }
+                let total = 0;
+                let rows = teamCommDetails.map((d, i) => {
+                    total += d.comm;
+                    return `<tr>
+                    <td class="text-muted small text-center">${i + 1}</td>
+                    <td class="text-center">${d.date}</td>
+                    <td class="text-center"><a href="/invoice/print/${d.invoice_id}" target="_blank" class="text-info fw-bold text-decoration-none">#${d.invoice_id}</a></td>
+                    <td class="text-center">${d.seller}</td>
+                    <td class="fw-bold text-info text-center">${fmt(d.comm)}</td>
+                </tr>`;
+                }).join('');
+                openModal('عمولات الفريق (من الفواتير)', `<table class="table table-dark-custom table-hover mb-0 align-middle">
+                <thead><tr class="text-center"><th>#</th><th>التاريخ</th><th>الفاتورة</th><th>الموظف</th><th>العمولة</th></tr></thead>
+                <tbody>${rows}</tbody>
+                <tfoot><tr style="background:rgba(0,176,255,0.1)"><td colspan="4" class="text-end px-3 fw-bold" style="color:#80d8ff">الإجمالي (${teamCommDetails.length} فاتورة):</td>
+                <td class="fw-bold text-center" style="color:#80d8ff">${fmt(total)}</td></tr></tfoot></table>`);
+            }
+
+            // 3. عمولات الشركاء (بالتفاصيل: عمولة، خصم، مرتجع)
+            function showPartnerCommInvoices() {
+                if (!partnerCommInvoiceDetails.length) { openModal('عمولات الشركاء', '<div class="text-center text-muted p-4">لا توجد بيانات</div>'); return; }
+                let totalComm = 0, totalDisc = 0, totalPen = 0, totalNet = 0;
+                let rows = partnerCommInvoiceDetails.map((d, i) => {
+                    totalComm += d.comm;
+                    totalDisc += d.discount;
+                    totalPen += d.penalty;
+                    totalNet += d.net;
+                    return `<tr>
+                    <td class="text-muted small text-center">${i + 1}</td>
+                    <td class="text-center">${d.date}</td>
+                    <td class="text-center"><a href="/invoice/print/${d.invoice_id}" target="_blank" class="text-info fw-bold text-decoration-none">#${d.invoice_id}</a></td>
+                    <td class="text-center">${d.seller}</td>
+                    <td class="fw-bold text-success text-center">${fmt(d.comm)}</td>
+                    <td class="fw-bold text-warning text-center">${d.discount > 0 ? '-' + fmt(d.discount) : '-'}</td>
+                    <td class="fw-bold text-danger text-center">${d.penalty > 0 ? '-' + fmt(d.penalty) : '-'}</td>
+                    <td class="fw-bold text-info text-center">${fmt(d.net)}</td>
+                </tr>`;
+                }).join('');
+                openModal('عمولات الشركاء (تفصيل لكل فاتورة)', `<table class="table table-dark-custom table-hover mb-0 align-middle">
+                <thead><tr class="text-center"><th>#</th><th>التاريخ</th><th>الفاتورة</th><th>البائع</th><th class="text-success">العمولة</th><th class="text-warning">خصم الفاتورة</th><th class="text-danger">خصم مرتجع</th><th class="text-info">الصافي</th></tr></thead>
+                <tbody>${rows}</tbody>
+                <tfoot><tr style="background:rgba(224,64,251,0.1)">
+                    <td colspan="4" class="text-end px-3 fw-bold" style="color:#ea80fc">الإجمالي:</td>
+                    <td class="fw-bold text-success text-center">${fmt(totalComm)}</td>
+                    <td class="fw-bold text-warning text-center">${totalDisc > 0 ? '-' + fmt(totalDisc) : '-'}</td>
+                    <td class="fw-bold text-danger text-center">${totalPen > 0 ? '-' + fmt(totalPen) : '-'}</td>
+                    <td class="fw-bold text-center" style="color:#ea80fc">${fmt(totalNet)}</td>
+                </tr></tfoot></table>`);
+            }
+
+            // 4. المكافآت والجزاءات
+            function showBonusPenalty() {
+                if (!bonusPenaltyDetails.length) { openModal('المكافآت والجزاءات', '<div class="text-center text-muted p-4">لا توجد مكافآت أو جزاءات في هذه الفترة</div>'); return; }
+                let totalBonus = 0, totalPenalty = 0;
+                let rows = bonusPenaltyDetails.map((d, i) => {
+                    if (d.badge === 'bonus') totalBonus += Math.abs(d.amount);
+                    else totalPenalty += Math.abs(d.amount);
+                    const badgeCls = d.badge === 'bonus' ? 'bg-success' : 'bg-danger';
+                    const badgeText = d.badge === 'bonus' ? 'مكافأة' : 'جزاء';
+                    const amtCls = d.amount >= 0 ? 'text-success' : 'text-danger';
+                    return `<tr>
+                    <td class="text-muted small text-center">${i + 1}</td>
+                    <td class="text-center">${d.date}</td>
+                    <td class="text-center">${d.partner}</td>
+                    <td class="text-center"><span class="badge ${badgeCls}">${badgeText}</span></td>
+                    <td class="text-start px-3" style="min-width:250px; white-space: pre-wrap; word-break: break-word;">${d.desc}</td>
+                    <td class="fw-bold ${amtCls} text-center">${fmt(d.amount)}</td>
+                </tr>`;
+                }).join('');
+                const net = totalBonus - totalPenalty;
+                openModal('المكافآت والجزاءات', `<table class="table table-dark-custom table-hover mb-0 align-middle">
+                <thead><tr class="text-center"><th>#</th><th>التاريخ</th><th>الشريك</th><th>النوع</th><th>الوصف</th><th>المبلغ</th></tr></thead>
+                <tbody>${rows}</tbody>
+                <tfoot>
+                    <tr style="background:rgba(76,175,80,0.1)"><td colspan="5" class="text-end px-3 fw-bold text-success">إجمالي المكافآت:</td>
+                    <td class="fw-bold text-success text-center">${fmt(totalBonus)}</td></tr>
+                    <tr style="background:rgba(244,67,54,0.1)"><td colspan="5" class="text-end px-3 fw-bold text-danger">إجمالي الجزاءات:</td>
+                    <td class="fw-bold text-danger text-center">-${fmt(totalPenalty)}</td></tr>
+                    <tr style="background:rgba(255,215,0,0.15)"><td colspan="5" class="text-end px-3 fw-bold text-warning">الصافي:</td>
+                    <td class="fw-bold text-warning text-center">${fmt(net)}</td></tr>
+                </tfoot></table>`);
+            }
+        </script>
+
+</body>
+
+</html>

@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>نقطة البيع (POS)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --bg-color: #f0f2f5;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* === Navbar === */
+        .pos-navbar {
+            height: 60px;
+            background: white;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .search-box {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .search-box input {
+            padding-right: 35px;
+            border-radius: 20px;
+            background: #f8f9fa;
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+
+        /* === Main Layout === */
+        .pos-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            height: calc(100vh - 60px);
+        }
+
+        /* === Products Area (Left) === */
+        .products-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            overflow: hidden;
+            background-color: #f0f2f5;
+        }
+
+        .cats-wrapper {
+            flex-shrink: 0;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding-bottom: 10px;
+            margin-bottom: 5px;
+            scrollbar-width: none;
+        }
+
+        .cats-wrapper::-webkit-scrollbar {
+            display: none;
+        }
+
+        .cat-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            margin-left: 8px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            cursor: pointer;
+            color: #555;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+
+        .cat-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .products-grid {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 60px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #eee;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: transform 0.1s;
+            position: relative;
+        }
+
+        .product-card:active {
+            transform: scale(0.96);
+            border-color: var(--primary-color);
+        }
+
+        .p-img-con img {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: contain;
+        }
+
+        /* === Products Grid & Cards === */
+        .p-img-con {
+            height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            position: relative !important;
+            background: white;
+        }
+
+        /* تاغ الكمية - أعلى اليمين */
+        .stock-tag {
+            position: absolute !important;
+            top: 5px !important;
+            right: 5px !important;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        /* تاغ الكود (#ID) - أعلى اليسار - شفاف وبدون سواد */
+        .id-tag {
+            position: absolute !important;
+            top: 5px !important;
+            left: 5px !important;
+            background: transparent !important;
+            color: #2c3e50 !important;
+            padding: 0;
+            font-size: 0.8rem;
+            font-weight: 800;
+            z-index: 10;
+            text-shadow: 1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff;
+        }
+
+        .p-info {
+            padding: 8px;
+            text-align: center;
+            border-top: 1px solid #f8f9fa;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: white;
+        }
+
+        /* === Cart Area (Right) === */
+        .cart-area {
+            width: 380px;
+            background: white;
+            border-left: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            z-index: 1050;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        /* Mobile Cart Behavior */
+        @media (max-width: 991px) {
+            .cart-area {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                transform: translateY(100%);
+                transition: transform 0.3s ease-in-out;
+            }
+
+            .cart-area.show {
+                transform: translateY(0);
+            }
+
+            .mobile-cart-toggle {
+                display: flex !important;
+            }
+        }
+
+        @media (min-width: 992px) {
+
+            .mobile-cart-toggle,
+            .cart-mobile-head {
+                display: none !important;
+            }
+        }
+
+        /* Cart Internal Structure */
+        .cart-header {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        .cart-items-wrapper {
+            flex-grow: 1;
+            flex-shrink: 0;
+            padding: 10px;
+            background: #fafafa;
+            min-height: 150px;
+        }
+
+        .cart-footer {
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #ddd;
+            flex-shrink: 0;
+            margin-top: auto;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f0f0f0;
+        }
+
+        .mobile-cart-toggle {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: #212529;
+            color: white;
+            padding: 15px;
+            border-radius: 50px;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            z-index: 1040;
+            cursor: pointer;
+        }
+
+        /* Select2 Fixes */
+        .select2-container {
+            width: 100% !important;
+            z-index: 1060;
+        }
+
+        .select2-dropdown {
+            z-index: 1070;
+        }
+
+        .select2-container .select2-selection--single {
+            height: 38px;
+            border: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+        }
+
+        .select2-selection__arrow {
+            height: 36px !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="pos-navbar">
+        <a href="/dashboard" class="btn btn-light rounded-circle me-2"><i class="fas fa-arrow-right"></i></a>
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="search_input" class="form-control" placeholder="بحث (اسم / باركود)..."
+                onkeyup="filterProducts()">
+        </div>
+        <div class="ms-auto d-none d-md-flex align-items-center bg-light px-3 py-1 rounded-pill shadow-sm border">
+            <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center me-2"
+                style="width: 32px; height: 32px; font-weight: bold; font-size: 0.9rem;">
+                {{ current_user.fullname[0] }}
+            </div>
+            <div class="fw-bold text-dark small">{{ current_user.fullname }}</div>
+        </div>
+    </nav>
+
+    <div class="pos-container">
+
+        <div class="products-area">
+            <div class="cats-wrapper">
+                <div class="cat-btn active" onclick="filterCat('all', this)">الكل</div>
+                {% for cat in categories %}
+                <div class="cat-btn" onclick="filterCat('{{ cat.id }}', this)">{{ cat.name }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="products-grid">
+                <div class="row g-2" id="products_container">
+                    {% for p in products %}
+                    <div class="col-6 col-md-4 col-xl-3 p-item" data-cat="{{ p.model.category_id }}"
+                        data-search="{{ p.model.name }} {{ p.barcode or '' }} {{ p.id }}">
+
+                        <div class="product-card" id="card_{{ p.id }}"
+                            onclick="addToCart({{ p.id }}, '{{ p.model.name }}', {{ p.sell_price }}, {{ p.stock }}, {{ p.cost_price or 0 }}, {{ p.model.id }}, '{{ p.barcode or '' }}')">
+                            <div class="p-img-con" style="position: relative;">
+
+                                <span class="id-tag"
+                                    style="position: absolute; top: 5px; left: 5px; background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 8px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; z-index: 5;">
+                                    #{{ p.id }}
+                                </span>
+
+                                <span id="badge_{{ p.id }}"
+                                    class="stock-tag {% if p.stock > 0 %}bg-success text-white{% else %}bg-danger text-white{% endif %}">
+                                    {{ p.stock }}
+                                </span>
+
+                                <img src="{{ p.model.image | image_url }}" loading="lazy"
+                                    onerror="this.onerror=null; this.src='/static/uploads/default.png';">
+                            </div>
+
+                            <div class="p-info">
+                                <div class="fw-bold text-dark text-truncate w-100" style="font-size: 0.9rem;">{{ p.model.name }}</div>
+                                {% if p.barcode %}
+                                <div class="text-muted mb-1" style="font-size: 0.75rem;">
+                                    باركود: {{ p.barcode }}
+                                </div>
+                                {% endif %}
+                                <div class="text-primary fw-bold">{{ p.sell_price }} ج.م</div>
+                            </div>
+                        </div>
+
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="cart-area" id="cartArea">
+
+            <div class="cart-mobile-head p-3 bg-dark text-white d-flex justify-content-between align-items-center d-lg-none"
+                onclick="toggleCart()">
+                <span class="fw-bold"><i class="fas fa-chevron-down me-2"></i> إغلاق السلة</span>
+                <span class="badge bg-warning text-dark" id="cart_count_mob">0</span>
+            </div>
+
+            <div class="cart-header bg-white pb-3 shadow-sm" style="z-index: 10;">
+                <div class="d-flex gap-2 mb-2 align-items-center">
+                    <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addClientModal"
+                        style="width: 42px; height: 38px; padding: 0;" title="إضافة عميل جديد">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <div style="flex: 1;">
+                        <select id="customer_select" class="select2" data-placeholder="ابحث عن العميل...">
+                            <option></option> {% for c in customers %}
+                            <option value="{{ c.id }}">{{ c.name }} - {{ c.phone }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                {% if current_user.role in ['general_manager', 'manager'] %}
+                <div class="mb-2">
+                    <select id="sales_rep_id"
+                        class="form-select form-select-sm fw-bold border-primary text-primary bg-primary bg-opacity-10 shadow-sm"
+                        style="border-radius: 8px;">
+                        <option value="{{ current_user.id }}" selected>بيع مباشر باسمي ({{ current_user.fullname }})
+                        </option>
+                        {% for emp in all_employees %}
+                        {% if emp.id != current_user.id %}
+                        {% if current_user.role == 'general_manager' or emp.manager_id == current_user.id %}
+                        <option value="{{ emp.id }}">تسجيل البيع باسم: {{ emp.fullname }}</option>
+                        {% endif %}
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <div class="row g-2">
+                    <div class="col-7">
+                        <select id="packer_id" class="form-select form-select-sm bg-light">
+                            <option value="">تعبئة بواسطة...</option>
+                            {% for emp in all_employees %}
+                            <option value="{{ emp.id }}">{{ emp.fullname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-5">
+                        <input type="datetime-local" id="order_date" class="form-control form-control-sm bg-light"
+                            style="font-size: 0.8rem;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="cart-items-wrapper" id="cart_items_container">
+                <div class="text-center text-muted mt-5 pt-5 opacity-50">
+                    <i class="fas fa-shopping-basket fa-3x mb-3"></i>
+                    <p>السلة فارغة</p>
+                </div>
+            </div>
+
+            <div class="cart-footer bg-white shadow-lg pt-3">
+                <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                    <span class="text-muted small fw-bold">إجمالي عدد القطع</span>
+                    <span class="badge bg-secondary rounded-pill fs-6" id="totalQty">0</span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+                    <span class="fw-bold text-dark">المجموع</span>
+                    <span class="fw-bold fs-6" id="subtotal">0.00</span>
+                </div>
+
+                <div class="input-group input-group-sm mb-3 shadow-sm">
+                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-tags"></i></span>
+                    <input type="number" id="discount" class="form-control border-start-0 ps-0"
+                        placeholder="قيمة الخصم (ج.م)" oninput="calc()">
+                </div>
+
+                <div class="bg-light p-2 rounded-3 mb-3 border shadow-sm">
+                    <label class="small fw-bold text-primary mb-2"><i class="fas fa-wallet me-1"></i> تسجيل
+                        الدفعات</label>
+                    <div class="d-flex gap-1 mb-1">
+                        <input type="number" id="part_pay_amount" class="form-control form-control-sm"
+                            placeholder="المبلغ" style="flex: 1;">
+                        <select id="part_pay_acc" class="form-select form-select-sm" style="flex: 1.5;">
+                            {% for acc in money_accounts %}
+                            <option value="{{ acc.id }}">{{ acc.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button class="btn btn-success btn-sm px-3 shadow-sm" onclick="addPayment()"><i
+                                class="fas fa-plus"></i></button>
+                    </div>
+                    <div id="payments_list" class="small mt-2"></div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="p-2 border rounded-3 bg-white text-center shadow-sm">
+                            <div class="small text-muted fw-bold mb-1">الباقي للتحصيل</div>
+                            <div class="fs-5 fw-bold text-danger" id="remaining_due">0.00</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 border rounded-3 bg-white text-center shadow-sm"
+                            style="border-color: #198754 !important;">
+                            <div class="small text-muted fw-bold mb-1">الصافي النهائي</div>
+                            <div class="fs-5 fw-bold text-success" id="final_total">0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-2 border rounded-3 mb-3 shadow-sm">
+                    <label class="form-label fw-bold small text-danger mb-2"><i class="fas fa-truck me-1"></i> الفاتورة
+                        والتسليم (إجباري)</label>
+                    <select id="order_type" class="form-select form-select-sm border-danger fw-bold mb-2"
+                        onchange="toggleShipType()">
+                        <option value="">-- اختر (شحن أم مكتب) --</option>
+                        <option value="office">مكتب (تسليم محلي)</option>
+                        <option value="shipping">شحن (عبر شركة شحن)</option>
+                    </select>
+                    <div id="ship_div" style="display: none;">
+                        <select id="ship_comp" class="form-select form-select-sm bg-light">
+                            <option value="">اختر شركة الشحن...</option>
+                            {% for comp in shipping_companies %}
+                            <option value="{{ comp.id }}">{{ comp.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                {% if current_user.fullname == "أحمد عبد الفتاح" %}
+                <div
+                    class="form-check form-switch mb-3 p-2 bg-danger bg-opacity-10 rounded border border-danger shadow-sm d-flex align-items-center">
+                    <input class="form-check-input ms-2 mt-0" type="checkbox" id="isOfficeInvoice"
+                        style="transform: scale(1.2);">
+                    <label class="form-check-label fw-bold text-danger mb-0" for="isOfficeInvoice">
+                        <i class="fas fa-briefcase"></i> فاتورة مكتب (+5 ج.م تكلفة)
+                    </label>
+                </div>
+                {% endif %}
+
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary fw-bold shadow-sm" style="width: 30%;"
+                        onclick="saveOrder(true)">
+                        <i class="fas fa-file-invoice"></i> عرض
+                    </button>
+                    <button class="btn btn-primary fw-bold shadow-sm" style="width: 70%;" onclick="saveOrder(false)"
+                        id="btnSave">
+                        <i class="fas fa-check-circle me-1"></i> حفظ وتأكيد
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mobile-cart-toggle" onclick="toggleCart()">
+        <div class="d-flex align-items-center">
+            <span class="badge bg-warning text-dark rounded-circle me-2" id="mob_badge">0</span>
+            <span class="fw-bold">السلة</span>
+        </div>
+        <span class="fw-bold fs-5" id="mob_total">0.00</span>
+    </div>
+
+    <div class="modal fade" id="addClientModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border: none; border-radius: 18px; box-shadow: 0 10px 40px rgba(0,0,0,0.12);">
+                <div class="modal-header" style="background: #4361ee; padding: 20px 24px;">
+                    <h5 class="modal-title fw-bold text-white">
+                        <i class="fas fa-user-plus me-2"></i> إضافة عميل سريع
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="padding: 24px;">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small mb-1">اسم العميل <span class="text-danger">*</span></label>
+                        <input type="text" id="new_client_name" class="form-control" placeholder="أدخل اسم العميل" style="border-radius: 12px; background: #f4f7fe; border: 1px solid transparent; padding: 10px 14px;" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small mb-1">رقم الهاتف <span class="text-danger">*</span></label>
+                        <input type="text" id="new_client_phone" class="form-control" placeholder="01xxxxxxxxx" style="border-radius: 12px; background: #f4f7fe; border: 1px solid transparent; padding: 10px 14px;" required>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-bold text-muted small mb-1">العنوان</label>
+                        <input type="text" id="new_client_address" class="form-control" placeholder="المدينة، الحي..." style="border-radius: 12px; background: #f4f7fe; border: 1px solid transparent; padding: 10px 14px;">
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 16px 24px; border-top: none;">
+                    <button type="button" class="btn btn-light rounded-pill px-4 shadow-sm" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="addNewClientAJAX()">
+                        <i class="fas fa-check me-1"></i> حفظ العميل
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="successPrintModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-body text-center p-5">
+                    <div class="mb-4">
+                        <i class="fas fa-check-circle text-success fa-5x"></i>
+                    </div>
+                    <h3 class="fw-bold mb-3">تم حفظ الفاتورة!</h3>
+                    <p class="text-muted mb-4">تم تسجيل العملية بنجاح، يمكنك الآن طباعة الفاتورة أو البدء في عملية بيع
+                        جديدة.</p>
+
+                    <div class="d-grid gap-2">
+                        <a id="printBtnLink" href="#" target="_blank" class="btn btn-primary btn-lg fw-bold">
+                            <i class="fas fa-print me-2"></i> طـباعة الـفـاتـورة
+                        </a>
+                        <a id="editProformaBtn" href="#" class="btn btn-warning btn-lg fw-bold" style="display:none;">
+                            <i class="fas fa-edit me-2"></i> تـعـديـل عـرض الـسـعر
+                        </a>
+                        <button type="button" class="btn btn-light btn-lg fw-bold" onclick="location.reload()">
+                            عملية بيع جديدة
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        let cart = [];
+        let payments = []; // مصفوفة الدفعات الجديدة
+
+        $(document).ready(function () {
+            $('.select2').select2({ width: '100%', dir: 'rtl' });
+
+            // === الكود الجديد لاستكمال عرض السعر ===
+            const urlParams = new URLSearchParams(window.location.search);
+            const proformaId = urlParams.get('proforma_id');
+
+            if (proformaId) {
+                fetch(`/api/get_proforma_items/${proformaId}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.items) {
+                            cart = data.items;
+                            // تحديث العميل والخصم
+                            $('#customerSelect').val(data.customer_id).trigger('change');
+                            $('#discount').val(data.discount);
+                            render(); // تحديث شكل السلة فوراً
+                            alert('تم تحميل بيانات عرض السعر رقم #' + proformaId + ' بنجاح');
+                        } else if (data.error) {
+                            alert(data.error);
+                        }
+                    })
+                    .catch(e => console.error('Error loading proforma:', e));
+            }
+        });
+
+        // Toggle Cart on Mobile
+        function toggleCart() {
+            document.getElementById('cartArea').classList.toggle('show');
+        }
+
+        // Filter Logic
+        function filterCat(id, btn) {
+            $('.cat-btn').removeClass('active');
+            $(btn).addClass('active');
+            const term = $('#search_input').val().toLowerCase();
+
+            $('.p-item').each(function () {
+                const cat = $(this).data('cat');
+                const search = $(this).data('search').toString().toLowerCase();
+
+                const matchCat = (id === 'all' || cat == id);
+                const matchSearch = (search.includes(term));
+
+                $(this).toggle(matchCat && matchSearch);
+            });
+        }
+
+        function filterProducts() {
+            const term = $('#search_input').val().toLowerCase();
+            $('.p-item').each(function () { // تغيير اسم الكلاس هنا
+                const searchStr = $(this).data('search').toString().toLowerCase();
+                if (searchStr.includes(term)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+            if (term) $('.cat-btn').removeClass('active');
+        }
+
+        // Cart Functions
+        function addToCart(id, name, price, stock, cost_price, model_id, barcode) {
+            const existing = cart.find(x => x.id === id);
+            if (existing) {
+                if (existing.qty < stock) existing.qty++;
+                else return alert('الكمية نفذت!');
+            } else {
+                if (stock <= 0) return alert('المنتج غير متوفر');
+                cart.push({ id, name, price, qty: 1, max: stock, cost_price: cost_price, model_id: model_id, barcode: barcode });
+            }
+            render();
+            if (navigator.vibrate) navigator.vibrate(30);
+        }
+
+        function updateQty(idx, val) {
+            let q = parseInt(val);
+            if (q > 0 && q <= cart[idx].max) cart[idx].qty = q;
+            else cart[idx].qty = 1;
+            render();
+        }
+
+        function remove(idx) {
+            cart.splice(idx, 1);
+            render();
+        }
+
+        function render() {
+            const div = document.getElementById('cart_items_container');
+            const totalQtyElement = document.getElementById('totalQty');
+            let isOffice = $('#isOfficeInvoice').is(':checked');
+
+            let totalQty = 0;
+
+            if (cart.length === 0) {
+                div.innerHTML = `<div class="text-center text-muted mt-5 pt-5 opacity-50"><i class="fas fa-shopping-basket fa-3x mb-3"></i><p>السلة فارغة</p></div>`;
+                if (totalQtyElement) totalQtyElement.innerText = 0;
+            } else {
+                let h = '';
+                cart.forEach((item, i) => {
+                    totalQty += parseInt(item.qty) || 0;
+                    let actualPrice = isOffice ? (item.cost_price + 5) : item.price;
+                    h += `
+                <div class="cart-item">
+                    <div style="flex:1">
+                        <div class="fw-bold small text-truncate" style="max-width:130px">${item.name}</div>
+                        <div class="text-muted small">${actualPrice}</div>
+                    </div>
+                    <div class="d-flex flex-column justify-content-center text-end me-2 pe-2 border-end" style="font-size: 0.7rem; min-width: 60px;">
+                        <span class="text-primary fw-bold">كود: ${item.id}</span>
+                        ${item.barcode ? `<span class="text-secondary fw-bold">${item.barcode}</span>` : ''}
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <input type="number" class="form-control form-control-sm text-center mx-1" style="width:50px" value="${item.qty}" onchange="updateQty(${i}, this.value)">
+                        <div class="fw-bold small me-2" style="width:50px text-align:left">${(actualPrice * item.qty).toFixed(1)}</div>
+                        <i class="fas fa-times text-danger cursor-pointer" onclick="remove(${i})"></i>
+                    </div>
+                </div>`;
+                });
+                div.innerHTML = h;
+
+                if (totalQtyElement) {
+                    totalQtyElement.innerText = totalQty;
+                }
+            }
+            calc();
+        }
+
+        // === دوال الدفع المتعدد الجديدة ===
+        function addPayment() {
+            const amount = parseFloat($('#part_pay_amount').val());
+            const accId = $('#part_pay_acc').val();
+            const accName = $('#part_pay_acc option:selected').text();
+
+            if (!amount || amount <= 0) return alert('أدخل مبلغ صحيح');
+
+            payments.push({ account_id: accId, account_name: accName, amount: amount });
+
+            $('#part_pay_amount').val(''); // تفريغ الخانة
+            renderPayments();
+            calc();
+        }
+
+        function removePayment(idx) {
+            payments.splice(idx, 1);
+            renderPayments();
+            calc();
+        }
+
+        function renderPayments() {
+            let html = '';
+            payments.forEach((p, i) => {
+                html += `
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-1 mb-1">
+                <span>${p.account_name}</span>
+                <span class="fw-bold text-success">${p.amount}</span>
+                <i class="fas fa-times text-danger cursor-pointer" onclick="removePayment(${i})"></i>
+            </div>`;
+            });
+            $('#payments_list').html(html);
+        }
+
+        function calc() {
+            let isOffice = $('#isOfficeInvoice').is(':checked');
+            let sub = cart.reduce((a, b) => {
+                let actualPrice = isOffice ? (b.cost_price + 5) : b.price;
+                return a + (actualPrice * b.qty);
+            }, 0);
+
+            let disc = parseFloat($('#discount').val() || 0);
+            let total = sub - disc;
+
+            let totalPaid = payments.reduce((a, b) => a + b.amount, 0);
+            let remaining = total - totalPaid;
+
+            $('#subtotal').text(sub.toFixed(2));
+            $('#final_total').text((total > 0 ? total : 0).toFixed(2));
+            $('#remaining_due').text((remaining > 0 ? remaining : 0).toFixed(2));
+
+            $('#mob_total').text(sub.toFixed(2));
+            $('#mob_badge, #cart_count_mob').text(cart.length);
+        }
+
+        // Add event listener to office invoice switch to re-render cart dynamically
+        $(document).on('change', '#isOfficeInvoice', function () {
+            render();
+        });
+
+        function toggleShipType() {
+            const isShip = $('#order_type').val() === 'shipping';
+            $('#ship_div').toggle(isShip);
+        }
+
+        function saveOrder(isProforma) {
+            if (!cart.length) return alert('السلة فارغة');
+            const custId = $('#customer_select').val();
+            if (!custId) return alert('اختر العميل');
+
+            const orderType = $('#order_type').val();
+            if (!orderType) return alert('⚠️ انتباه: يجب تحديد نوع الفاتورة (مكتب أو شحن) قبل الحفظ!');
+
+            const isShip = (orderType === 'shipping');
+            const shipId = $('#ship_comp').val();
+            if (isShip && !shipId) return alert('⚠️ انتباه: اختر شركة الشحن');
+
+            const salesRepEl = document.getElementById('sales_rep_id');
+            const salesRepId = salesRepEl ? salesRepEl.value : null;
+
+            const btn = document.getElementById('btnSave');
+            const oldHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            const data = {
+                cart,
+                customer_id: custId,
+                packer_id: $('#packer_id').val(),
+                sales_rep_id: salesRepId,
+                date: $('#order_date').val(),
+                discount: $('#discount').val(),
+                payments: payments,
+                is_shipping: isShip,
+                shipping_company_id: isShip ? shipId : null,
+                is_proforma: isProforma,
+                is_office_invoice: $('#isOfficeInvoice').is(':checked'),
+
+                // === [أضف هذا السطر هنا] ===
+                old_order_id: (typeof editOrderData !== 'undefined' && editOrderData) ? editOrderData.id : null
+
+            };
+
+            fetch('/api/process_order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+
+            })
+                .then(r => r.json())
+                .then(res => {
+                    // إعادة شكل الزر لحالته الطبيعية
+                    btn.innerHTML = oldHtml;
+                    btn.disabled = false;
+
+                    if (res.order_id) {
+                        // 1. تحديث "بادج" المخزون لكل منتج تم بيعه (لإظهار الكمية المتبقية فوراً)
+                        cart.forEach(item => {
+                            const badge = document.getElementById(`badge_${item.id}`);
+                            if (badge && !isProforma) {
+                                let stock = parseInt(badge.innerText);
+                                let newStock = stock - item.qty;
+                                badge.innerText = newStock;
+
+                                const card = document.getElementById(`card_${item.id}`);
+                                if (newStock <= 0) {
+                                    badge.className = 'stock-tag bg-danger text-white';
+                                    if (card) card.onclick = () => alert('نفذت الكمية');
+                                } else {
+                                    if (card) card.setAttribute('onclick', `addToCart(${item.id}, '${item.name}', ${item.price}, ${newStock})`);
+                                }
+                            }
+
+                        });
+                        if (isProforma) {
+                            $('#editProformaBtn').attr('href', '/pos?proforma_id=' + res.order_id).show();
+                        } else {
+                            $('#editProformaBtn').hide();
+                        }
+                        // 2. تصفير السلة والمدفوعات والواجهة لبدء عملية جديدة
+                        cart = [];
+                        payments = [];
+                        render();
+                        renderPayments();
+                        if ($('#discount').length) $('#discount').val('');
+
+                        // 3. الحل الذكي للطباعة (تجاوز حظر الموبايل)
+                        const printUrl = '/invoice/print/' + res.order_id;
+
+                        // أ) تجهيز رابط الطباعة داخل المودال (النافذة التي تظهر للمستخدم)
+                        const printBtn = document.getElementById('printBtnLink');
+                        if (printBtn) {
+                            printBtn.href = printUrl;
+
+                            // ب) إظهار المودال للمستخدم
+                            var successModal = new bootstrap.Modal(document.getElementById('successPrintModal'));
+                            successModal.show();
+                        }
+
+                        // ج) إذا كان المستخدم على كمبيوتر، نحاول فتح الفاتورة تلقائياً في تاب جديدة كالعادة
+                        if (window.innerWidth > 1024) {
+                            window.open(printUrl, '_blank');
+                        }
+
+                    } else {
+                        // في حالة وجود خطأ من السيرفر
+                        alert(res.error || 'حدث خطأ أثناء حفظ الفاتورة');
+                    }
+                })
+                .catch(e => {
+                    console.error(e);
+                    alert('خطأ في الاتصال بالسيرفر');
+                    btn.innerHTML = oldHtml;
+                    btn.disabled = false;
+                });
+        }
+
+        function addNewClientAJAX() {
+            const name = document.getElementById('new_client_name').value;
+            let phone = document.getElementById('new_client_phone').value.trim();
+            let address = document.getElementById('new_client_address').value.trim();
+
+            if (!name || !phone) return alert('يرجى إدخال الاسم ورقم الهاتف');
+
+            const hasLetters = /[a-zA-Z\u0600-\u06FF]/.test(phone);
+            const addressIsOnlyNumbers = address.length > 0 && /^[0-9+\-\s]+$/.test(address);
+
+            if (hasLetters || addressIsOnlyNumbers) {
+                if (confirm("عفواً، يبدو أنك قمت بإدخال العنوان في خانة التليفون أو العكس.\n\nهل تريد أن أقوم بتبديلهم تلقائياً وحفظ العميل؟")) {
+                    const temp = phone;
+                    phone = address;
+                    address = temp;
+                    document.getElementById('new_client_phone').value = phone;
+                    document.getElementById('new_client_address').value = address;
+                } else {
+                    return; // التوقف ليتمكن المستخدم من التعديل اليدوي
+                }
+            }
+
+            fetch('/api/customers/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, phone, address })
+            })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        // إغلاق المودال
+                        const modalEl = document.getElementById('addClientModal');
+                        const modal = bootstrap.Modal.getInstance(modalEl);
+                        modal.hide();
+
+                        // إضافة العميل للقائمة واختياره
+                        const newOption = new Option(res.customer.name + ' - ' + res.customer.phone, res.customer.id, true, true);
+                        $('#customer_select').append(newOption).trigger('change');
+
+                        // تنظيف الحقول
+                        document.getElementById('new_client_name').value = '';
+                        document.getElementById('new_client_phone').value = '';
+                        document.getElementById('new_client_address').value = '';
+
+                        alert(res.message);
+                    } else {
+                        alert('خطأ: ' + res.message);
+                    }
+                })
+                .catch(e => {
+                    console.error(e);
+                    alert('حدث خطأ في الاتصال');
+                });
+        }
+    </script>
+    <script>
+        // 1. استقبال البيانات من الباك-إند
+        const editOrderData = {{ edit_order_data| tojson | safe if edit_order_data else 'null' }};
+
+        $(document).ready(function () {
+            // لو احنا في وضع تعديل فاتورة (جايين من زرار التعديل)
+            if (editOrderData) {
+                console.log("Loading Draft Order:", editOrderData);
+
+                // أ) تعبئة بيانات العميل والتعبئة والبائع
+                if (editOrderData.customer_id) {
+                    $('#customer_select').val(editOrderData.customer_id).trigger('change');
+                }
+                if (editOrderData.packer_id) {
+                    $('#packer_id').val(editOrderData.packer_id).trigger('change');
+                }
+                if (editOrderData.user_id) {
+                    $('#sales_rep_id').val(editOrderData.user_id).trigger('change');
+                }
+
+                // ب) تعبئة السلة بالمنتجات
+                cart = []; // تصفير السلة
+                editOrderData.items.forEach(item => {
+                    cart.push({
+                        id: item.id,
+                        name: item.name,
+                        price: parseFloat(item.price),
+                        qty: parseInt(item.qty),
+                        max: parseInt(item.stock) + parseInt(item.qty) // الرصيد المتاح + اللي كان محجوز في الفاتورة دي
+                    });
+                });
+
+                // ج) تعبئة الخصم
+                if (editOrderData.discount) {
+                    $('#discount').val(editOrderData.discount);
+                }
+
+                // ج٢) تعبئة نوع الفاتورة والشحن
+                if (editOrderData.is_shipping) {
+                    $('#order_type').val('shipping');
+                    if (editOrderData.shipping_company_id) {
+                        $('#ship_comp').val(editOrderData.shipping_company_id);
+                    }
+                } else {
+                    $('#order_type').val('office');
+                }
+                toggleShipType();
+
+                if (editOrderData.is_office_invoice && $('#isOfficeInvoice').length) {
+                    $('#isOfficeInvoice').prop('checked', true);
+                }
+
+                // د) تعبئة العربون (لو كان دافع جزء)
+                // بما أن نظامك يعتمد على مصفوفة payments، سنضيف العربون كدفعة نقدية
+                if (editOrderData.paid_upfront > 0) {
+                    payments = []; // تصفير الدفعات
+                    payments.push({
+                        account_id: 1, // نفترض الخزنة الرئيسية أو الكاش (يمكنك تعديلها)
+                        account_name: "مدفوع سابقاً (تعديل)",
+                        amount: parseFloat(editOrderData.paid_upfront)
+                    });
+                    renderPayments(); // تحديث جدول الدفعات
+                }
+
+                // هـ) تحديث الجدول والأرقام (اسم الدالة عندك هو render و calc)
+                render();
+                calc();
+
+                // و) تغيير زر الحفظ ليوضح أنه تعديل (اسم الزر عندك هو btnSave)
+                $('#btnSave').html('<i class="fas fa-edit me-1"></i> حفظ التعديلات (تحديث المسودة)');
+                $('#btnSave').removeClass('btn-primary').addClass('btn-warning text-dark fw-bold');
+            }
+        });
+    </script>
+</body>
+
+</html>

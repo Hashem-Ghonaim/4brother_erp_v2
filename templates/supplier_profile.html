@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>كشف حساب - {{ supplier.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-light">
+
+<div class="container mt-4">
+
+    <div class="card p-4 shadow-sm mb-4 border-start border-5 border-primary">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="fw-bold mb-1">{{ supplier.name }}</h2>
+                <p class="text-muted mb-0"><i class="fas fa-phone"></i> {{ supplier.phone }}</p>
+            </div>
+            <div class="text-center">
+                <small class="text-muted fw-bold">الرصيد الحالي المستحق (مديونية)</small>
+                <h1 class="fw-bold text-danger">{{ supplier.balance }} <span class="fs-5 text-dark">ج.م</span></h1>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm border-start border-5 border-success p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted fw-bold mb-1">إجمالي القطع المشتراة</h6>
+                            <h3 class="mb-0 fw-bold text-dark">{{ total_items }} <small class="fs-6 text-muted">قطعة</small></h3>
+                        </div>
+                        <div class="bg-light p-3 rounded-circle text-success">
+                            <i class="fas fa-boxes fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <button class="btn btn-success btn-lg fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#payModal">
+                    <i class="fas fa-hand-holding-usd"></i> تسجيل سداد / تحويل
+                </button>
+                <a href="{{ url_for('purchase_return', supplier_id=supplier.id) }}" class="btn btn-outline-danger fw-bold">
+                    <i class="fas fa-undo"></i> تسجيل مرتجع بضاعة
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-3" id="myTab" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active fw-bold" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button">
+                <i class="fas fa-file-invoice"></i> سجل الفواتير (المسحوبات)
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-bold" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments" type="button">
+                <i class="fas fa-money-check-alt"></i> سجل السداد والتحويلات
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="myTabContent">
+
+        <div class="tab-pane fade show active" id="orders">
+            <div class="card shadow-sm border-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle text-center mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>رقم الفاتورة</th>
+                                <th>التاريخ</th>
+                                <th>قيمة البضاعة</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td>
+									<a href="/purchases/{{ order.id }}" class="btn btn-sm btn-outline-primary fw-bold">
+										<i class="fas fa-eye"></i> #{{ order.id }}
+									</a>
+								</td>
+                                <td>{{ order.date.strftime('%Y-%m-%d') }}</td>
+                                <td class="fw-bold fs-5">{{ order.total_cost }}</td>
+                                <td><span class="badge bg-secondary">تم الاستلام</span></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="py-4 text-muted">لا يوجد فواتير مسجلة</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="payments">
+            <div class="card shadow-sm border-0">
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle text-center mb-0">
+                        <thead class="table-success">
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>المبلغ المدفوع</th>
+                                <th>مصدر السداد (الخزينة)</th> <th>صورة الإيصال</th>
+                                <th>ملاحظات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pay in payments %}
+                            <tr>
+                                <td>{{ pay.date.strftime('%Y-%m-%d') }}<br><small class="text-muted">{{ pay.date.strftime('%H:%M') }}</small></td>
+                                <td class="fw-bold text-success fs-5">{{ pay.amount }} ج.م</td>
+
+                                <td>
+                                    {% if pay.account %}
+                                        <span class="badge bg-dark">{{ pay.account.name }}</span>
+                                    {% else %}
+                                        <span class="text-muted small">غير محدد</span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if pay.receipt_image %}
+                                    <a href="{{ pay.receipt_image | image_url }}" target="_blank">
+                                        <img src="{{ pay.receipt_image | image_url }}" class="rounded border" width="60" height="40">
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted small">بدون صورة</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-muted small">{{ pay.notes }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="py-4 text-muted">لم يتم تسجيل أي عمليات سداد بعد.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="/suppliers" class="btn btn-secondary">رجوع لقائمة الموردين</a>
+    </div>
+
+</div>
+
+<div class="modal fade" id="payModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold">تسجيل عملية سداد جديدة</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/suppliers/pay" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="supplier_id" value="{{ supplier.id }}">
+                <div class="modal-body p-4">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">المبلغ المدفوع (ج.م)</label>
+                        <input type="number" step="0.5" name="amount" class="form-control form-control-lg text-center fw-bold border-success text-success" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-danger">خصم من حساب (مصدر الأموال):</label>
+                        <select name="account_id" class="form-select border-danger" required>
+                            <option value="" disabled selected>-- اختر الخزينة / الحساب --</option>
+                            {% for acc in accounts %}
+                            <option value="{{ acc.id }}">{{ acc.name }} (رصيد: {{ acc.balance }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">صورة الإيصال / سكرين شوت</label>
+                        <input type="file" name="receipt_image" class="form-control" accept="image/*">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">ملاحظات</label>
+                        <textarea name="notes" class="form-control" placeholder="مثال: دفعة من الحساب - فودافون كاش"></textarea>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success w-100 fw-bold">تأكيد وتسجيل السداد</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

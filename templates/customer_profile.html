@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>بروفايل العميل - {{ customer.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        .stat-card {
+            border-radius: 15px;
+            border: none;
+            transition: 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .balance-red {
+            color: #dc3545;
+        }
+
+        .balance-green {
+            color: #198754;
+        }
+
+        .nav-tabs .nav-link {
+            font-weight: bold;
+            color: #555;
+            border: none;
+            padding: 12px 25px;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #4361ee;
+            border-bottom: 3px solid #4361ee;
+            background: transparent;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container mt-4 mb-5">
+        <div class="card p-4 shadow-sm mb-4 stat-card border-start border-5 border-primary bg-white">
+            <div class="row align-items-center">
+                <div class="col-md-5">
+                    <h2 class="fw-bold mb-1 text-dark">{{ customer.name }}</h2>
+                    <p class="text-muted mb-0"><i class="fas fa-phone-alt me-1"></i> {{ customer.phone }}</p>
+                    {% if customer.address %}
+                    <p class="text-muted small mb-0"><i class="fas fa-map-marker-alt me-1"></i> {{ customer.address }}
+                    </p>
+                    {% endif %}
+                    {% if customer.created_by %}
+                    <p class="mb-0 mt-1"><i class="fas fa-user-tag me-1 text-primary"></i> <span
+                            class="fw-bold">تبع:</span> <span class="badge bg-primary">{{ customer.created_by.fullname
+                            }}</span></p>
+                    {% endif %}
+                </div>
+                <div class="col-md-3 text-center border-start border-end">
+                    <small class="text-muted fw-bold d-block mb-1">المديونية الحالية (أجل)</small>
+                    <h1 class="fw-bold {% if customer.balance > 0 %}balance-red{% else %}text-dark{% endif %}">
+                        {{ "{:,.2f}".format(customer.balance or 0) }} <span class="fs-6">ج.م</span>
+                    </h1>
+                </div>
+                <div class="col-md-4 text-start">
+                    <button class="btn btn-primary btn-lg fw-bold shadow-sm w-100 py-3" data-bs-toggle="modal"
+                        data-bs-target="#payModal">
+                        <i class="fas fa-file-invoice-dollar me-1"></i> تحصيل مبلغ من الحساب
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs mb-4 border-0" id="customerTab" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders"
+                    type="button">
+                    <i class="fas fa-shopping-bag me-1"></i> سجل الفواتير
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments"
+                    type="button">
+                    <i class="fas fa-history me-1"></i> سجل التحصيلات
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="customerTabContent">
+            <div class="tab-pane fade show active" id="orders">
+                <div class="card shadow-sm border-0 overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle text-center mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>رقم الفاتورة</th>
+                                    <th>التاريخ</th>
+                                    <th>الإجمالي</th>
+                                    <th>المدفوع وقتها</th>
+                                    <th>المتبقي (أجل)</th>
+                                    <th>الحالة</th>
+                                    <th>عرض</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                <tr>
+                                    <td class="fw-bold">#{{ order.id }}</td>
+                                    <td class="small">{{ order.date.strftime('%Y-%m-%d') }}</td>
+                                    <td class="fw-bold">{{ "{:,.2f}".format(order.final_total) }}</td>
+                                    <td class="text-success">{{ "{:,.2f}".format(order.paid_upfront) }}</td>
+                                    <td class="text-danger fw-bold">{{ "{:,.2f}".format(order.amount_due) }}</td>
+                                    <td>
+                                        {% if order.amount_due <= 0 %} <span class="badge bg-success">خالص</span>
+                                            {% else %}
+                                            <span class="badge bg-warning text-dark">متبقي</span>
+                                            {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="/invoice/print/{{ order.id }}" class="btn btn-sm btn-outline-dark">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="7" class="py-5 text-muted">لا يوجد فواتير مسجلة لهذا العميل</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="payments">
+                <div class="card shadow-sm border-0 overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle text-center mb-0">
+                            <thead class="table-primary text-white">
+                                <tr>
+                                    <th>تاريخ التحصيل</th>
+                                    <th>المبلغ</th>
+                                    <th>الخزينة المستلمة</th>
+                                    <th>بواسطة</th>
+                                    <th>ملاحظات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pay in payments %}
+                                <tr>
+                                    <td>{{ pay.date.strftime('%Y-%m-%d | %H:%M') }}</td>
+                                    <td class="fw-bold text-primary">{{ "{:,.2f}".format(pay.amount) }} ج.م</td>
+                                    <td><span class="badge bg-dark">{{ pay.account.name }}</span></td>
+                                    <td class="small">{{ pay.created_by.fullname if pay.created_by else '---' }}</td>
+                                    <td class="text-muted small">{{ pay.notes or '-' }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="py-5 text-muted">لم يتم تسجيل أي دفعات "من الحساب" بعد</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="/customers" class="btn btn-secondary"><i class="fas fa-arrow-right me-1"></i> العودة لقائمة
+                العملاء</a>
+        </div>
+    </div>
+
+    <div class="modal fade" id="payModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <form action="/customers/pay" method="POST" class="modal-content border-0 shadow-lg">
+                <input type="hidden" name="customer_id" value="{{ customer.id }}">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-money-bill-wave me-1"></i> تحصيل دفعة جديدة</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">المبلغ المحصل (ج.م)</label>
+                        <input type="number" step="0.01" name="amount"
+                            class="form-control form-control-lg fw-bold text-center border-primary text-primary"
+                            placeholder="0.00" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">إيداع في خزينة:</label>
+                        <select name="account_id" class="form-select border-primary" required>
+                            <option value="" disabled selected>-- اختر الخزينة --</option>
+                            {% for acc in accounts %}
+                            <option value="{{ acc.id }}">{{ acc.name }} (الرصيد: {{ acc.balance }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-bold text-dark">ملاحظات (اختياري)</label>
+                        <textarea name="notes" class="form-control border-primary" rows="2"
+                            placeholder="مثال: دفعة فودافون كاش - متبقي من فاتورة #120"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-light fw-bold" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4">تأكيد التحصيل</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

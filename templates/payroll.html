@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>مسير الرواتب</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: Tahoma, sans-serif;
+        }
+
+        .table thead th {
+            vertical-align: middle;
+            white-space: nowrap;
+            font-size: 0.85rem;
+        }
+
+        .card {
+            border-radius: 12px;
+        }
+
+        .badge-paid {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .swal2-input,
+        .swal2-select {
+            font-size: 0.9rem !important;
+        }
+    </style>
+</head>
+
+<body class="p-4">
+
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>💰 مسير الرواتب المطور</h3>
+            <div>
+                <a href="/hr/attendance_settings" class="btn btn-outline-warning me-2"><i
+                        class="fas fa-cogs me-1"></i>إعدادات الجزاءات</a>
+                <a href="/" class="btn btn-secondary"><i class="fas fa-home"></i> الرئيسية</a>
+            </div>
+        </div>
+
+        <form class="row g-3 mb-4 bg-white p-3 rounded shadow-sm align-items-center">
+            <div class="col-auto"><label class="fw-bold">الشهر المراد عرضه:</label></div>
+            <div class="col-auto"><input type="month" name="month" class="form-control" value="{{ month }}"></div>
+            <div class="col-auto"><button type="submit" class="btn btn-primary px-4 fw-bold">تحديث البيانات</button>
+            </div>
+        </form>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover text-center align-middle mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>الموظف</th>
+                                <th>النوع</th>
+                                <th>الأساسي</th>
+                                <th>العمولة</th>
+                                <th class="text-danger">مرتجعات</th>
+                                <th class="text-danger">جزاء حضور</th>
+                                <th class="text-danger">جزاء إداري</th>
+                                <th class="text-danger">سلف</th>
+                                <th class="text-success">مكافآت</th>
+                                <th class="bg-primary">الصافي</th>
+                                <th>الأذونات</th>
+                                <th>الإجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set total_base = namespace(value=0) %}
+                            {% set total_commission = namespace(value=0) %}
+                            {% set total_returns = namespace(value=0) %}
+                            {% set total_att_deduction = namespace(value=0) %}
+                            {% set total_penalties = namespace(value=0) %}
+                            {% set total_advances = namespace(value=0) %}
+                            {% set total_bonuses = namespace(value=0) %}
+                            {% set total_net = namespace(value=0) %}
+
+                            {% for e in employees %}
+                                {% set total_base.value = total_base.value + e.base %}
+                                {% set total_commission.value = total_commission.value + e.commission %}
+                                {% set total_returns.value = total_returns.value + e.returns_deduction %}
+                                {% set total_att_deduction.value = total_att_deduction.value + e.attendance_deduction %}
+                                {% set total_penalties.value = total_penalties.value + e.other_penalties %}
+                                {% set total_advances.value = total_advances.value + e.advances %}
+                                {% set total_bonuses.value = total_bonuses.value + e.bonuses %}
+                                {% set total_net.value = total_net.value + e.net_salary %}
+                            {% endfor %}
+
+                            <tr class="table-warning border-dark fw-bold fs-6">
+                                <td colspan="2" class="text-center border-end border-dark">الإجماليات الكلية:</td>
+                                <td>{{ total_base.value | round(2) }}</td>
+                                <td class="text-success">{{ total_commission.value | round(2) }}</td>
+                                <td class="text-danger">{{ total_returns.value | round(2) }}</td>
+                                <td class="text-danger">{{ total_att_deduction.value | round(2) }}</td>
+                                <td class="text-danger">{{ total_penalties.value | round(2) }}</td>
+                                <td class="text-danger">{{ total_advances.value | round(2) }}</td>
+                                <td class="text-success">{{ total_bonuses.value | round(2) }}</td>
+                                <td class="text-primary fs-5 border-start border-dark">{{ total_net.value | round(2) }} ج.م</td>
+                                <td colspan="2"></td>
+                            </tr>
+                            {% for e in employees %}
+                            <tr>
+                                <td class="fw-bold text-start ps-3">{{ e.name }}</td>
+                                <td class="small text-muted">{{ e.dist_type }}</td>
+                                <td>{{ e.base }}</td>
+                                <td class="text-success fw-bold commission-drilldown-cell" style="cursor:pointer"
+                                    data-name="{{ e.name }}"
+                                    data-gross="{{ e.gross_sales }}"
+                                    data-net="{{ e.net_sales }}"
+                                    data-same-month-returns="{{ e.same_month_returns }}"
+                                    data-cross-month-returns="{{ e.cross_month_returns }}"
+                                    data-commission="{{ e.commission }}">
+                                    {{ e.commission }}
+                                    <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                                </td>
+                                <td class="text-danger fw-bold hr-drilldown-cell" style="cursor:pointer"
+                                    data-name="{{ e.name }}" data-label="مرتجعات"
+                                    data-details="{{ e.returns_details | tojson | forceescape }}">
+                                    {{ e.returns_deduction }}
+                                    {% if e.returns_deduction > 0 %}<i
+                                        class="fas fa-search-plus small ms-1 text-muted"></i>{% endif %}
+                                </td>
+                                <td class="text-danger att-deduction-cell"
+                                    style="cursor:pointer; text-decoration:underline" data-name="{{ e.name }}"
+                                    data-details="{{ e.attendance_details | tojson | forceescape }}">
+                                    {{ e.attendance_deduction }}
+                                    {% if e.attendance_deduction > 0 %}<i
+                                        class="fas fa-search-plus small ms-1 text-muted"></i>{% endif %}
+                                </td>
+                                <td class="text-danger fw-bold hr-drilldown-cell" style="cursor:pointer"
+                                    data-name="{{ e.name }}" data-label="جزاء إداري"
+                                    data-details="{{ e.penalties_details | tojson | forceescape }}">
+                                    {{ e.other_penalties }}
+                                    {% if e.other_penalties > 0 %}<i
+                                        class="fas fa-search-plus small ms-1 text-muted"></i>{% endif %}
+                                </td>
+                                <td class="text-danger hr-drilldown-cell" style="cursor:pointer"
+                                    data-name="{{ e.name }}" data-label="سلف"
+                                    data-details="{{ e.advances_details | tojson | forceescape }}">
+                                    {{ e.advances }}
+                                    {% if e.advances > 0 %}<i class="fas fa-search-plus small ms-1 text-muted"></i>{%
+                                    endif %}
+                                </td>
+                                <td class="text-success hr-drilldown-cell" style="cursor:pointer"
+                                    data-name="{{ e.name }}" data-label="مكافآت"
+                                    data-details="{{ e.bonuses_details | tojson | forceescape }}">
+                                    {{ e.bonuses }}
+                                    {% if e.bonuses > 0 %}<i class="fas fa-search-plus small ms-1 text-muted"></i>{%
+                                    endif %}
+                                </td>
+                                <td class="fw-bold fs-5 bg-light">{{ e.net_salary }} ج.م</td>
+                                <td>
+                                    {% if e.excuses_count > 0 %}
+                                    <span class="badge bg-info text-dark fw-bold excuse-drilldown-cell"
+                                        style="cursor:pointer; font-size:0.9rem;" data-name="{{ e.name }}"
+                                        data-details="{{ e.excuses_details | tojson | forceescape }}">
+                                        {{ e.excuses_count }} إذن <i class="fas fa-search-plus small ms-1"></i>
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted small">لا يوجد</span>
+                                    {% endif %}
+                                    <button class="btn btn-sm btn-outline-primary fw-bold ms-1"
+                                        onclick="showExcuseModal('{{ e.id }}', '{{ e.name }}')">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </td>
+                                <td>
+                                    {% if e.is_paid %}
+                                    <span class="badge badge-paid p-2 w-100">
+                                        <i class="fas fa-check-circle"></i> تم الصرف
+                                    </span>
+                                    {% else %}
+                                    <button class="btn btn-sm btn-success fw-bold w-100"
+                                        onclick="paySalary('{{ e.id }}', '{{ e.net_salary }}', '{{ e.name }}', '{{ month }}', '{{ e.commission }}')">
+                                        <i class="fas fa-money-bill-wave"></i> صرف
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const accountsOptions = `
+        <select id="swal-account-select" class="swal2-select" style="display: flex; width: 85%; margin: 15px auto;">
+            <option value="" disabled selected>-- اختر الخزينة --</option>
+            {% for acc in accounts %}
+            <option value="{{ acc.id }}">{{ acc.name }} (الرصيد: {{ acc.balance }} ج.م)</option>
+            {% endfor %}
+        </select>
+    `;
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // 1. دالة تسجيل إذن جديد (ساعات أو يوم)
+        function showExcuseModal(userId, name) {
+            Swal.fire({
+                title: `تسجيل إذن لـ ${name}`,
+                html: `
+                <div class="text-start px-3">
+                    <label class="small fw-bold">تاريخ الإذن:</label>
+                    <input type="date" id="ex_date" class="swal2-input mt-1" value="${new Date().toISOString().split('T')[0]}">
+                    
+                    <label class="small fw-bold mt-2 d-block">نوع الإذن:</label>
+                    <select id="ex_type" class="swal2-select mt-1 w-100" onchange="toggleHoursInput(this.value)">
+                        <option value="hours">إذن ساعات معينة</option>
+                        <option value="day">إذن يوم كامل (غياب مبرر)</option>
+                    </select>
+
+                    <div id="hrs_div" class="mt-2">
+                        <label class="small fw-bold">عدد الساعات:</label>
+                        <input type="number" id="ex_hours" class="swal2-input mt-1 w-100" placeholder="مثلاً: 2" min="0.5" step="0.5">
+                    </div>
+
+                    <label class="small fw-bold mt-2 d-block">الملاحظات (السبب):</label>
+                    <input type="text" id="ex_note" class="swal2-input mt-1 w-100" placeholder="مثلاً: ظروف عائلية">
+                </div>
+            `,
+                showCancelButton: true,
+                confirmButtonText: 'حفظ الإذن ✅',
+                cancelButtonText: 'إلغاء',
+                confirmButtonColor: '#0d6efd',
+                preConfirm: () => {
+                    const dateVal = document.getElementById('ex_date').value;
+                    const typeVal = document.getElementById('ex_type').value;
+                    const hoursVal = document.getElementById('ex_hours').value;
+                    const noteVal = document.getElementById('ex_note').value;
+
+                    if (!dateVal) return Swal.showValidationMessage('يجب اختيار التاريخ');
+                    if (typeVal === 'hours' && !hoursVal) return Swal.showValidationMessage('يجب إدخال عدد الساعات');
+
+                    return { user_id: userId, date: dateVal, type: typeVal, hours: hoursVal, note: noteVal };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let formData = new FormData();
+                    for (let key in result.value) formData.append(key, result.value[key]);
+
+                    fetch('/hr/add_excuse', { method: 'POST', body: formData })
+                        .then(r => r.json()).then(data => {
+                            if (data.success) {
+                                Swal.fire('تم!', data.message, 'success').then(() => location.reload());
+                            } else {
+                                Swal.fire('خطأ', data.message, 'error');
+                            }
+                        });
+                }
+            });
+        }
+
+        function toggleHoursInput(val) {
+            document.getElementById('hrs_div').style.display = (val === 'hours') ? 'block' : 'none';
+        }
+
+        // 2. دالة صرف الراتب (المحسنة)
+        function paySalary(userId, amount, name, monthStr, commissionAmount) {
+            Swal.fire({
+                title: `صرف راتب: ${name}`,
+                html: `
+                <div class="text-center">
+                    <p class="mb-1">صافي المبلغ: <b class="text-primary fs-4">${amount}</b> ج.م</p>
+                    <p class="text-muted small">عن شهر: <b>${monthStr}</b></p>
+                    <hr>
+                    ${accountsOptions}
+                </div>
+            `,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: 'تأكيد الصرف 💰',
+                cancelButtonText: 'إلغاء',
+                preConfirm: () => {
+                    const accId = document.getElementById('swal-account-select').value;
+                    if (!accId) return Swal.showValidationMessage('يجب اختيار الخزينة!');
+                    return accId;
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let formData = new FormData();
+                    formData.append('user_id', userId);
+                    formData.append('amount', amount);
+                    formData.append('account_id', result.value);
+                    formData.append('month', monthStr);
+                    formData.append('commission_amount', commissionAmount);
+
+                    fetch('/api/pay_salary', { method: 'POST', body: formData })
+                        .then(r => r.json()).then(data => {
+                            if (data.success) location.reload();
+                            else Swal.fire('فشل', data.message, 'error');
+                        });
+                }
+            });
+        }
+    </script>
+
+    <!-- Attendance Deduction Details Modal -->
+    <div class="modal fade" id="attDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title fw-bold" id="att_modal_title"><i class="fas fa-clock me-2"></i>تفاصيل جزاءات
+                        الحضور</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0" id="att_modal_body"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Single Attendance Record Modal -->
+    <div class="modal fade" id="editAttRecordModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i>تعديل سجل الحضور</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit_rec_id">
+                    <div class="mb-3">
+                        <label class="fw-bold small">وقت الحضور</label>
+                        <input type="datetime-local" id="edit_rec_checkin" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="fw-bold small">وقت الانصراف</label>
+                        <input type="datetime-local" id="edit_rec_checkout" class="form-control">
+                        <small class="text-muted">اتركه فارغ لو مفيش انصراف</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="fw-bold small">الحالة</label>
+                        <select id="edit_rec_status" class="form-select">
+                            <option value="present">حاضر</option>
+                            <option value="late">متأخر</option>
+                            <option value="absent">غائب</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-primary fw-bold" onclick="saveAttRecord()"><i
+                            class="fas fa-save me-1"></i>حفظ التعديل</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Attendance deduction drilldown
+            document.body.addEventListener('click', function (e) {
+                const cell = e.target.closest('.att-deduction-cell');
+                if (!cell) return;
+                const name = cell.getAttribute('data-name');
+                const detailsJson = cell.getAttribute('data-details');
+                try {
+                    const details = JSON.parse(detailsJson);
+                    showAttDetails(name, details);
+                } catch (err) { console.error('Error:', err); }
+            });
+
+            // Generic HR drilldown (penalties, advances, bonuses, returns)
+            document.body.addEventListener('click', function (e) {
+                const cell = e.target.closest('.hr-drilldown-cell');
+                if (!cell) return;
+                const name = cell.getAttribute('data-name');
+                const label = cell.getAttribute('data-label');
+                const detailsJson = cell.getAttribute('data-details');
+                try {
+                    const details = JSON.parse(detailsJson);
+                    showHRDetails(name, label, details);
+                } catch (err) { console.error('Error:', err); }
+            });
+
+            // Excuse drilldown (الأذونات)
+            document.body.addEventListener('click', function (e) {
+                const cell = e.target.closest('.excuse-drilldown-cell');
+                if (!cell) return;
+                const name = cell.getAttribute('data-name');
+                const detailsJson = cell.getAttribute('data-details');
+                try {
+                    const details = JSON.parse(detailsJson);
+                    showExcuseDetails(name, details);
+                } catch (err) { console.error('Error:', err); }
+            });
+
+            // Commission drilldown
+            document.body.addEventListener('click', function (e) {
+                const cell = e.target.closest('.commission-drilldown-cell');
+                if (!cell) return;
+                const name = cell.getAttribute('data-name');
+                const gross = cell.getAttribute('data-gross');
+                const net = cell.getAttribute('data-net');
+                const sameMonthReturns = cell.getAttribute('data-same-month-returns');
+                const crossMonthReturns = cell.getAttribute('data-cross-month-returns');
+                const commission = cell.getAttribute('data-commission');
+
+                document.getElementById('att_modal_title').innerHTML =
+                    `<i class="fas fa-percentage me-2"></i>العمولة: ${name}`;
+                document.getElementById('att_modal_body').innerHTML = `
+                    <div class="p-4 text-center">
+                        <div class="mb-3">
+                            <span class="text-muted">المبيعات (الشهر الحالي)</span><br>
+                            <h4 class="text-success fw-bold">${gross} قطعة</h4>
+                        </div>
+                        <div class="mb-3">
+                            <span class="text-muted">مرتجعات من مبيعات الشهر الحالي</span><br>
+                            <h4 class="text-danger fw-bold">${sameMonthReturns} قطعة</h4>
+                        </div>
+                        <div class="mb-3">
+                            <span class="text-muted">مرتجعات من أشهر سابقة</span><br>
+                            <h4 class="text-danger fw-bold">${crossMonthReturns} قطعة</h4>
+                        </div>
+                        <div class="mb-3">
+                            <span class="text-muted">صافي المبيعات (بعد المرتجعات)</span><br>
+                            <h4 class="text-primary fw-bold">${net} قطعة</h4>
+                        </div>
+                        <hr>
+                        <div>
+                            <span class="text-muted">قيمة العمولة</span><br>
+                            <h3 class="text-success fw-bold">${commission} ج.م</h3>
+                        </div>
+                    </div>`;
+                new bootstrap.Modal(document.getElementById('attDetailsModal')).show();
+            });
+        });
+
+        function showHRDetails(name, label, details) {
+            const title = document.getElementById('att_modal_title');
+            const body = document.getElementById('att_modal_body');
+            title.innerHTML = `<i class="fas fa-list me-2"></i>${label}: ${name}`;
+
+            if (!details || details.length === 0) {
+                body.innerHTML = '<div class="text-center text-muted p-4 fs-5"><i class="fas fa-info-circle me-2"></i>لا توجد حركات مسجلة</div>';
+            } else {
+                let total = 0;
+                let rows = '';
+                details.forEach((d, i) => {
+                    total += d.amount;
+                    rows += `<tr>
+                        <td class="text-muted small">${i + 1}</td>
+                        <td>${d.date}</td>
+                        <td class="fw-bold ${d.amount < 0 ? 'text-danger' : ''}">${d.amount}</td>
+                        <td class="text-start small">${d.note}</td>
+                    </tr>`;
+                });
+                body.innerHTML = `
+                <table class="table table-striped table-hover mb-0 text-center align-middle">
+                    <thead class="table-dark">
+                        <tr><th>#</th><th>التاريخ</th><th>المبلغ</th><th class="text-start">السبب / الملاحظات</th></tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                    <tfoot class="table-light">
+                        <tr class="fw-bold fs-6">
+                            <td colspan="2" class="text-end px-3">الإجمالي (${details.length} حركة):</td>
+                            <td class="text-danger">${total.toFixed(2)}</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>`;
+            }
+            new bootstrap.Modal(document.getElementById('attDetailsModal')).show();
+        }
+
+        function showExcuseDetails(name, details) {
+            const title = document.getElementById('att_modal_title');
+            const body = document.getElementById('att_modal_body');
+            title.innerHTML = `<i class="fas fa-clipboard-list me-2"></i>أذونات: ${name}`;
+
+            if (!details || details.length === 0) {
+                body.innerHTML = '<div class="text-center text-muted p-4 fs-5"><i class="fas fa-info-circle me-2"></i>لا توجد أذونات مسجلة</div>';
+            } else {
+                let rows = '';
+                details.forEach((d, i) => {
+                    rows += `<tr>
+                        <td class="text-muted small">${i + 1}</td>
+                        <td class="fw-bold">${d.date}</td>
+                        <td><span class="badge ${d.type === 'يوم كامل' ? 'bg-danger' : 'bg-warning text-dark'}">${d.type}</span></td>
+                        <td class="text-start small">${d.note}</td>
+                    </tr>`;
+                });
+                body.innerHTML = `
+                <table class="table table-striped table-hover mb-0 text-center align-middle">
+                    <thead class="table-dark">
+                        <tr><th>#</th><th>التاريخ</th><th>النوع</th><th class="text-start">السبب / الملاحظات</th></tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                    <tfoot class="table-light">
+                        <tr class="fw-bold fs-6">
+                            <td colspan="4" class="text-center">إجمالي الأذونات: ${details.length} إذن</td>
+                        </tr>
+                    </tfoot>
+                </table>`;
+            }
+            new bootstrap.Modal(document.getElementById('attDetailsModal')).show();
+        }
+
+        function showAttDetails(name, details) {
+            const title = document.getElementById('att_modal_title');
+            const body = document.getElementById('att_modal_body');
+            title.innerHTML = `<i class="fas fa-clock me-2"></i>جزاءات حضور: ${name}`;
+
+            if (!details || details.length === 0) {
+                body.innerHTML = '<div class="text-center text-success p-4 fs-5"><i class="fas fa-check-circle me-2"></i>لا توجد جزاءات حضور ✅</div>';
+            } else {
+                let total = 0;
+                let rows = '';
+                details.forEach((d, i) => {
+                    total += d.deduction;
+                    rows += `<tr>
+                    <td class="text-muted small">${i + 1}</td>
+                    <td class="fw-bold">${d.date}<br><small class="text-muted">${d.day_name}</small></td>
+                    <td>${d.check_in}</td>
+                    <td>${d.check_out}</td>
+                    <td class="text-start small">${d.reason}</td>
+                    <td class="text-danger fw-bold">${d.deduction.toFixed(2)}</td>
+                    <td><button class="btn btn-sm btn-outline-primary" onclick="openEditAttRecord(${d.rec_id}, '${d.date}', '${d.shift_start}', '${d.shift_end}')"><i class="fas fa-edit"></i></button></td>
+                </tr>`;
+                });
+                body.innerHTML = `
+            <table class="table table-striped table-hover mb-0 text-center align-middle">
+                <thead class="table-dark">
+                    <tr><th>#</th><th>التاريخ</th><th>حضور</th><th>انصراف</th><th class="text-start">السبب</th><th>الخصم</th><th>تعديل</th></tr>
+                </thead>
+                <tbody>${rows}</tbody>
+                <tfoot class="table-light">
+                    <tr class="fw-bold fs-6">
+                        <td colspan="5" class="text-end px-3">إجمالي الجزاءات (${details.length} يوم):</td>
+                        <td class="text-danger">${total.toFixed(2)}</td><td></td>
+                    </tr>
+                </tfoot>
+            </table>`;
+            }
+            new bootstrap.Modal(document.getElementById('attDetailsModal')).show();
+        }
+
+        function openEditAttRecord(recId, dateStr, shiftStart, shiftEnd) {
+            bootstrap.Modal.getInstance(document.getElementById('attDetailsModal')).hide();
+            document.getElementById('edit_rec_id').value = recId;
+            document.getElementById('edit_rec_checkin').value = dateStr + 'T' + shiftStart;
+            document.getElementById('edit_rec_checkout').value = dateStr + 'T' + shiftEnd;
+            document.getElementById('edit_rec_status').value = 'present';
+            new bootstrap.Modal(document.getElementById('editAttRecordModal')).show();
+        }
+
+        function saveAttRecord() {
+            const id = document.getElementById('edit_rec_id').value;
+            const checkIn = document.getElementById('edit_rec_checkin').value;
+            const checkOut = document.getElementById('edit_rec_checkout').value;
+            const status = document.getElementById('edit_rec_status').value;
+            fetch('/api/attendance/edit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: parseInt(id), check_in: checkIn, check_out: checkOut, status: status })
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) { alert(data.success); location.reload(); }
+                    else { alert(data.error || 'حدث خطأ'); }
+                })
+                .catch(err => alert('خطأ في الاتصال'));
+        }
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>إعدادات جزاءات الحضور والانصراف</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: #f4f6f9;
+            font-family: Tahoma, sans-serif;
+        }
+
+        .settings-card {
+            border-radius: 14px;
+            border: none;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-bottom: 2px solid #0d6efd;
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+        }
+
+        .tier-row {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+
+        .form-label {
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .help-text {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+
+<body class="p-4">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3><i class="fas fa-cogs me-2 text-primary"></i>إعدادات جزاءات الحضور والانصراف</h3>
+            <div>
+                <a href="/hr/payroll" class="btn btn-outline-primary me-2"><i class="fas fa-money-bill me-1"></i>مسير
+                    الرواتب</a>
+                <a href="/" class="btn btn-secondary"><i class="fas fa-home"></i> الرئيسية</a>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }} alert-dismissible fade show">{{ msg }}<button type="button" class="btn-close"
+                data-bs-dismiss="alert"></button></div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <div class="row g-4">
+
+                <!-- فترة السماح -->
+                <div class="col-md-6">
+                    <div class="card settings-card shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="section-title text-primary"><i class="fas fa-clock me-2"></i>فترة السماح</div>
+                            <div class="mb-3">
+                                <label class="form-label">فترة السماح (بالدقائق)</label>
+                                <input type="number" name="grace_period"
+                                    class="form-control form-control-lg text-center fw-bold"
+                                    value="{{ s.grace_period }}" min="0" max="120">
+                                <div class="help-text mt-1">التأخير أقل من هذه المدة لا يُحسب عليه جزاء</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- أيام الإجازة -->
+                <div class="col-md-6">
+                    <div class="card settings-card shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="section-title text-success"><i class="fas fa-calendar-minus me-2"></i>أيام
+                                الإجازة (يتم تخطيها)</div>
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" name="skip_friday" id="skip_friday"
+                                    {{ 'checked' if s.skip_friday }}>
+                                <label class="form-check-label fw-bold" for="skip_friday">تخطي يوم الجمعة</label>
+                            </div>
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" name="skip_saturday" id="skip_saturday"
+                                    {{ 'checked' if s.skip_saturday }}>
+                                <label class="form-check-label fw-bold" for="skip_saturday">تخطي يوم السبت</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- شرائح التأخير والانصراف المبكر -->
+                <div class="col-12">
+                    <div class="card settings-card shadow-sm">
+                        <div class="card-body">
+                            <div class="section-title text-danger"><i class="fas fa-layer-group me-2"></i>شرائح جزاءات
+                                التأخير والانصراف المبكر</div>
+                            <div class="help-text mb-3">
+                                <i class="fas fa-info-circle me-1"></i>
+                                يتم حساب إجمالي الوقت الضائع = (دقائق التأخير + دقائق الانصراف المبكر - ساعات الإذن).
+                                ثم يتم تطبيق الشريحة المناسبة. الجزاء = نسبة × أجر اليوم الواحد.
+                            </div>
+
+                            <div class="tier-row d-flex align-items-center gap-3 flex-wrap">
+                                <span class="badge bg-success fs-6 px-3">شريحة 1</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="small fw-bold">من {{ s.grace_period }} إلى</span>
+                                    <input type="number" name="tier1_max_mins" class="form-control" style="width:80px"
+                                        value="{{ s.tier1_max_mins }}" min="1">
+                                    <span class="small fw-bold">دقيقة</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 ms-auto">
+                                    <span class="small fw-bold">الجزاء:</span>
+                                    <input type="number" name="tier1_penalty" class="form-control" style="width:80px"
+                                        value="{{ s.tier1_penalty }}" step="0.05" min="0">
+                                    <span class="small fw-bold">× أجر اليوم</span>
+                                </div>
+                            </div>
+
+                            <div class="tier-row d-flex align-items-center gap-3 flex-wrap" style="background:#fff3cd">
+                                <span class="badge bg-warning text-dark fs-6 px-3">شريحة 2</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="small fw-bold">من {{ s.tier1_max_mins }} إلى</span>
+                                    <input type="number" name="tier2_max_mins" class="form-control" style="width:80px"
+                                        value="{{ s.tier2_max_mins }}" min="1">
+                                    <span class="small fw-bold">دقيقة</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 ms-auto">
+                                    <span class="small fw-bold">الجزاء:</span>
+                                    <input type="number" name="tier2_penalty" class="form-control" style="width:80px"
+                                        value="{{ s.tier2_penalty }}" step="0.05" min="0">
+                                    <span class="small fw-bold">× أجر اليوم</span>
+                                </div>
+                            </div>
+
+                            <div class="tier-row d-flex align-items-center gap-3 flex-wrap" style="background:#f8d7da">
+                                <span class="badge bg-danger fs-6 px-3">شريحة 3</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="small fw-bold">من {{ s.tier2_max_mins }} إلى</span>
+                                    <input type="number" name="tier3_max_mins" class="form-control" style="width:80px"
+                                        value="{{ s.tier3_max_mins }}" min="1">
+                                    <span class="small fw-bold">دقيقة</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 ms-auto">
+                                    <span class="small fw-bold">الجزاء:</span>
+                                    <input type="number" name="tier3_penalty" class="form-control" style="width:80px"
+                                        value="{{ s.tier3_penalty }}" step="0.05" min="0">
+                                    <span class="small fw-bold">× أجر اليوم</span>
+                                </div>
+                            </div>
+
+                            <div class="tier-row d-flex align-items-center gap-3 flex-wrap" style="background:#e2d5f1">
+                                <span class="badge bg-dark fs-6 px-3">شريحة 4</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="small fw-bold">أكثر من {{ s.tier3_max_mins }} دقيقة</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 ms-auto">
+                                    <span class="small fw-bold">الجزاء:</span>
+                                    <input type="number" name="tier4_penalty" class="form-control" style="width:80px"
+                                        value="{{ s.tier4_penalty }}" step="0.05" min="0">
+                                    <span class="small fw-bold">× أجر اليوم</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- جزاءات الغياب -->
+                <div class="col-md-6">
+                    <div class="card settings-card shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="section-title text-danger"><i class="fas fa-user-times me-2"></i>جزاءات الغياب
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">غياب بدون إذن (نسبة من أجر اليوم)</label>
+                                <input type="number" name="absent_no_excuse" class="form-control text-center"
+                                    value="{{ s.absent_no_excuse }}" step="0.1" min="0">
+                                <div class="help-text mt-1">مثال: 1.0 = يوم كامل، 0.5 = نصف يوم</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">غياب بإذن ساعات (نسبة من أجر اليوم)</label>
+                                <input type="number" name="absent_excused" class="form-control text-center"
+                                    value="{{ s.absent_excused }}" step="0.1" min="0">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">غياب بإذن يوم كامل (نسبة من أجر اليوم)</label>
+                                <input type="number" name="absent_full_day_excuse" class="form-control text-center"
+                                    value="{{ s.absent_full_day_excuse }}" step="0.1" min="0">
+                                <div class="help-text mt-1">ضعها 0 إذا كنت لا تريد خصم في حالة إذن اليوم الكامل</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- عدم تسجيل انصراف -->
+                <div class="col-md-6">
+                    <div class="card settings-card shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="section-title text-warning"><i class="fas fa-sign-out-alt me-2"></i>عدم تسجيل
+                                انصراف</div>
+                            <div class="mb-3">
+                                <label class="form-label">جزاء عدم تسجيل الانصراف (نسبة من أجر اليوم)</label>
+                                <input type="number" name="no_checkout_penalty"
+                                    class="form-control form-control-lg text-center fw-bold"
+                                    value="{{ s.no_checkout_penalty }}" step="0.1" min="0">
+                                <div class="help-text mt-1">يُطبق عندما يسجل الموظف حضور بدون تسجيل انصراف</div>
+                            </div>
+
+                            <!-- ملخص القواعد الحالية -->
+                            <div class="alert alert-info small mb-0">
+                                <h6 class="fw-bold"><i class="fas fa-info-circle me-1"></i>ملخص القواعد الحالية:</h6>
+                                <ul class="mb-0 pe-3">
+                                    <li>فترة سماح: <b>{{ s.grace_period }}</b> دقيقة</li>
+                                    <li>تأخير ≤{{ s.tier1_max_mins }}د → خصم <b>{{ s.tier1_penalty }}</b> × أجر اليوم
+                                    </li>
+                                    <li>تأخير ≤{{ s.tier2_max_mins }}د → خصم <b>{{ s.tier2_penalty }}</b> × أجر اليوم
+                                    </li>
+                                    <li>تأخير ≤{{ s.tier3_max_mins }}د → خصم <b>{{ s.tier3_penalty }}</b> × أجر اليوم
+                                    </li>
+                                    <li>تأخير >{{ s.tier3_max_mins }}د → خصم <b>{{ s.tier4_penalty }}</b> × أجر اليوم
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="text-center mt-4 mb-5">
+                <button type="submit" class="btn btn-primary btn-lg px-5 shadow fw-bold">
+                    <i class="fas fa-save me-2"></i>حفظ الإعدادات
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

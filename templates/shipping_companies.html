@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>شركات الشحن (مصاريف التحصيل)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }</style>
+</head>
+<body>
+
+<nav class="navbar navbar-light bg-white shadow-sm px-3 mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <a href="/dashboard" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-right"></i> الرئيسية</a>
+        <h5 class="m-0 fw-bold">إعدادات شركات الشحن</h5>
+    </div>
+    <button class="btn btn-dark btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#addCompModal">
+        <i class="fas fa-plus"></i> شركة جديدة
+    </button>
+</nav>
+
+<div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        {% for comp in companies %}
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-primary m-0">{{ comp.name }}</h5>
+                        <div class="dropdown">
+                            <button class="btn btn-light btn-sm rounded-circle" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editCompModal{{ comp.id }}">تعديل</a></li>
+                                <li><a class="dropdown-item text-danger" href="/shipping/company/delete/{{ comp.id }}">حذف</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2 text-muted small"><i class="fas fa-phone me-1"></i> {{ comp.phone }}</div>
+                    
+                    <div class="bg-light p-2 rounded border mt-3">
+                        <h6 class="small fw-bold text-dark border-bottom pb-1 mb-2">نظام خصم التحصيل (من أصل الفلوس)</h6>
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span>خصم على أول 1000ج:</span>
+                            <span class="fw-bold text-danger">{{ comp.fee_first_1k }} ج.م</span>
+                        </div>
+                        <div class="d-flex justify-content-between small">
+                            <span>خصم لكل 1000ج زيادة:</span>
+                            <span class="fw-bold text-danger">{{ comp.fee_extra_1k }} ج.م</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="editCompModal{{ comp.id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <form action="/shipping/company/edit/{{ comp.id }}" method="POST" class="modal-content">
+                    <div class="modal-header">
+                        <h6 class="modal-title">تعديل: {{ comp.name }}</h6>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-2"><label>اسم الشركة</label><input type="text" name="name" class="form-control" value="{{ comp.name }}" required></div>
+                        <div class="mb-2"><label>رقم الشركة</label><input type="text" name="phone" class="form-control" value="{{ comp.phone }}"></div>
+                        <hr>
+                        <h6 class="small fw-bold text-primary">عمولة التحصيل</h6>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="small">على أول 1000ج</label>
+                                <input type="number" name="fee_first" class="form-control" value="{{ comp.fee_first_1k }}">
+                            </div>
+                            <div class="col-6">
+                                <label class="small">لكل 1000ج زيادة</label>
+                                <input type="number" name="fee_extra" class="form-control" value="{{ comp.fee_extra_1k }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-primary">حفظ</button></div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="modal fade" id="addCompModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="/shipping/companies" method="POST" class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h6 class="modal-title">إضافة شركة شحن جديدة</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="fw-bold small">اسم الشركة</label>
+                    <input type="text" name="name" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="fw-bold small">رقم الهاتف</label>
+                    <input type="text" name="phone" class="form-control">
+                </div>
+                <hr>
+                <div class="alert alert-info small py-2">
+                    <i class="fas fa-info-circle"></i> حدد الشركة بتاخد منك كام عمولة تحصيل؟
+                </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="small fw-bold">خصم على أول 1000 جنيه</label>
+                        <input type="number" name="fee_first" class="form-control" placeholder="مثلاً 100" value="0">
+                    </div>
+                    <div class="col-6">
+                        <label class="small fw-bold">خصم لكل 1000 جنيه زيادة</label>
+                        <input type="number" name="fee_extra" class="form-control" placeholder="مثلاً 20" value="0">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-dark w-100">إضافة الشركة</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

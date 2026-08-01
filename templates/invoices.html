@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ 'سجل عروض الأسعار' if is_proforma_view else 'سجل الفواتير التامة' }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --surface-color: #ffffff;
+            --bg-color: #f4f7fe;
+            --text-main: #2b3674;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-main);
+        }
+
+        .page-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .search-container {
+            background: white;
+            border-radius: 50px;
+            padding: 5px 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            border: 1px solid #eaeaea;
+            transition: all 0.3s ease;
+        }
+
+        .search-container:focus-within {
+            box-shadow: 0 4px 25px rgba(67, 97, 238, 0.15);
+            border-color: var(--primary-color);
+        }
+
+        .search-container input {
+            box-shadow: none !important;
+            border: none !important;
+            background: transparent;
+        }
+
+        .table-card {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .invoices-table {
+            table-layout: fixed;
+            min-width: 1400px;
+        }
+
+        .col-id {
+            width: 60px;
+        }
+
+        .col-date {
+            width: 140px;
+        }
+
+        .col-customer {
+            width: 180px;
+        }
+
+        .col-seller {
+            width: 120px;
+        }
+
+        .col-qty {
+            width: 50px;
+        }
+
+        .col-qty-ret {
+            width: 60px;
+        }
+
+        .col-total {
+            width: 95px;
+        }
+
+        .col-total-ret {
+            width: 90px;
+        }
+
+        .col-cost {
+            width: 95px;
+        }
+
+        .col-shipping-cell {
+            width: 80px;
+        }
+
+        .col-comm {
+            width: 95px;
+        }
+
+        .col-profit {
+            width: 95px;
+        }
+
+        .col-payment {
+            width: 100px;
+        }
+        
+        .col-ret-notes {
+            width: 140px;
+        }
+
+        .col-status {
+            width: 100px;
+        }
+
+        .col-actions {
+            width: 160px;
+        }
+
+        .payment-badge {
+            display: inline-block;
+            width: auto;
+            max-width: 100%;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .table td,
+        .table th {
+            vertical-align: middle;
+            padding: 0.6rem 0.4rem;
+            border-bottom: 1px solid #f0f2f8;
+            font-size: 0.85rem;
+        }
+
+        .table th {
+            font-weight: 700;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            white-space: nowrap;
+            background-color: transparent !important;
+            border-bottom: 2px solid #eaecf4;
+        }
+
+        /* Column color bands - applied to both th and td, but respect row colors like table-danger */
+        tr:not(.table-danger):not(.table-warning):not(.table-success) .col-cost-cell {
+            background-color: rgba(220, 53, 69, 0.04) !important;
+        }
+
+        tr:not(.table-danger):not(.table-warning):not(.table-success) .col-comm-cell {
+            background-color: rgba(255, 193, 7, 0.05) !important;
+        }
+
+        tr:not(.table-danger):not(.table-warning):not(.table-success) .col-profit-cell {
+            background-color: rgba(25, 135, 84, 0.04) !important;
+        }
+
+        tr:not(.table-danger):not(.table-warning):not(.table-success) .col-payment-cell {
+            background-color: rgba(67, 97, 238, 0.03) !important;
+        }
+
+        .table-hover tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .table-hover tbody tr:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+            background-color: #f8f9ff !important;
+            position: relative;
+            z-index: 10;
+        }
+
+        .badge {
+            font-weight: 600;
+            padding: 0.45em 0.8em;
+            border-radius: 8px;
+            letter-spacing: 0.2px;
+            font-size: 0.78rem;
+        }
+
+        .action-btn {
+            border-radius: 8px;
+            transition: all 0.2s;
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-pills .nav-link.active {
+            font-weight: bold;
+        }
+
+        .nav-pills .nav-link {
+            color: #555;
+            border-radius: 10px;
+            margin-left: 5px;
+        }
+
+        /* لون مختلف للتاب النشط حسب النوع */
+        .btn-check:checked+.btn-outline-success,
+        .btn-check:active+.btn-outline-success,
+        .btn-outline-success.active,
+        .btn-outline-success.dropdown-toggle.show,
+        .btn-outline-success:active {
+            background-color: #198754;
+            color: white;
+        }
+
+        /* Mobile optimization: Allow horizontal scroll but keep fonts readable */
+        @media (max-width: 768px) {
+            .invoices-table {
+                min-width: 1200px !important; /* Force scroll */
+            }
+
+            .page-header {
+                padding: 15px;
+            }
+
+            .table-card {
+                padding: 10px;
+            }
+
+            .invoices-table th,
+            .invoices-table td {
+                padding: 0.5rem 0.3rem !important;
+                font-size: 0.8rem !important;
+            }
+
+            .invoices-table .badge {
+                font-size: 0.75rem !important;
+                padding: 0.3rem 0.5rem !important;
+            }
+
+            .invoices-table .action-btn {
+                width: 28px !important;
+                height: 28px !important;
+                font-size: 0.8rem !important;
+            }
+
+            .col-payment-cell>div>div {
+                font-size: 0.75rem !important;
+            }
+
+            .invoices-table tfoot td,
+            .invoices-table thead tr.table-dark td {
+                font-size: 0.8rem !important;
+                padding: 0.5rem 0.2rem !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="p-4">
+
+    <div class="container-fluid">
+
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-3">
+                <div>
+                    <h3 class="fw-bold m-0" style="color: var(--text-main);">
+                        <i
+                            class="fas {{ 'fa-file-signature' if is_proforma_view else 'fa-file-invoice-dollar' }} text-primary me-2"></i>
+                        {{ 'سجل عروض الأسعار (المسودات)' if is_proforma_view else 'سجل الفواتير التامة' }}
+                    </h3>
+                    <p class="text-muted m-0 small mt-1">عدد السجلات: {{ orders|length }}</p>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <a href="/dashboard"
+                        class="btn btn-light rounded-pill px-4 fw-bold text-secondary shadow-sm">الرئيسية</a>
+                    <a href="/pos" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">+ فاتورة جديدة</a>
+                </div>
+            </div>
+
+            <!-- الفلاتر والبحث المطور -->
+            <div class="filter-card mt-4 p-3 bg-white shadow-sm rounded-4 border border-light-subtle">
+                <div class="row g-3 align-items-center">
+                    <!-- صندوق البحث -->
+                    <div class="col-lg-5 col-md-12">
+                        <div class="input-group input-group-lg bg-light rounded-pill px-3 py-1 border-0 shadow-none"
+                            style="border: 1px solid #eee !important;">
+                            <span class="input-group-text bg-transparent border-0 text-muted"><i
+                                    class="fas fa-search"></i></span>
+                            <input type="text" id="quickSearch"
+                                class="form-control bg-transparent border-0 fs-6 shadow-none"
+                                placeholder="ابحث باسم العميل، الموبايل، أو رقم الفاتورة..." oninput="searchInvoices()">
+                        </div>
+                    </div>
+
+                    <!-- فلاتر الحالة والدفع -->
+                    <div class="col-lg-7 col-md-12">
+                        <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+                            <!-- فلاتر الدفع -->
+                            <div class="btn-group bg-light p-1 rounded-pill shadow-none border"
+                                style="border-color: #eee !important;">
+                                <button type="button"
+                                    class="btn btn-primary active rounded-pill px-4 fw-bold filter-status-btn border-0"
+                                    onclick="filterInvoices('all', this)">الكل</button>
+                                <button type="button"
+                                    class="btn btn-light text-danger rounded-pill px-4 fw-bold filter-status-btn border-0"
+                                    onclick="filterInvoices('unpaid', this)">
+                                    غير مدفوع <i class="fas fa-exclamation-circle ms-1"></i>
+                                </button>
+                                <button type="button"
+                                    class="btn btn-light text-warning rounded-pill px-4 fw-bold filter-status-btn border-0"
+                                    onclick="filterInvoices('returned', this)">
+                                    مرتجع <i class="fas fa-undo ms-1"></i>
+                                </button>
+                            </div>
+
+                            <div class="vr mx-1 d-none d-lg-block"></div>
+
+                            <!-- فلاتر النوع -->
+                            <div class="d-flex gap-2">
+                                <a href="/invoices{{ '?user_id=' + selected_user_id|string if selected_user_id else '' }}"
+                                    class="btn rounded-pill px-4 fw-bold border {{ 'btn-success shadow-sm' if not is_proforma_view else 'btn-outline-secondary text-secondary' }}">
+                                    <i class="fas fa-check-circle me-1"></i> الفواتير التامة
+                                </a>
+                                <a href="/invoices?type=proforma{{ '&user_id=' + selected_user_id|string if selected_user_id else '' }}"
+                                    class="btn rounded-pill px-4 fw-bold border {{ 'btn-warning shadow-sm' if is_proforma_view else 'btn-outline-secondary text-secondary' }}">
+                                    <i class="fas fa-edit me-1"></i> المسودات
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- فلاتر التاريخ والموظف المنسقة -->
+        <form action="/invoices" method="get" class="mt-3 bg-white p-3 rounded-4 shadow-sm border border-light-subtle">
+            <div class="row g-3 align-items-end">
+                {% if is_proforma_view %}
+                <input type="hidden" name="type" value="proforma">
+                {% endif %}
+
+                {% if accessible_users and accessible_users|length > 1 %}
+                <div class="col-lg-3 col-md-6">
+                    <label class="fw-bold text-secondary small d-block mb-1"><i
+                            class="fas fa-user text-primary me-1"></i> الموظف:</label>
+                    <select name="user_id" class="form-select border-0 bg-light shadow-none rounded-pill px-3 py-2">
+                        <option value="">-- الكل --</option>
+                        {% for u in accessible_users %}
+                        <option value="{{ u.id }}" {{ 'selected' if selected_user_id==u.id else '' }}>{{ u.fullname }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <div class="col-lg-3 col-md-6">
+                    <label class="fw-bold text-secondary small d-block mb-1"><i
+                            class="fas fa-calendar-alt text-primary me-1"></i> من تاريخ:</label>
+                    <input type="date" name="start_date" value="{{ start_date if start_date else '' }}"
+                        class="form-control border-0 bg-light shadow-none rounded-pill px-3 py-2">
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <label class="fw-bold text-secondary small d-block mb-1"><i
+                            class="fas fa-calendar-alt text-primary me-1"></i> إلى تاريخ:</label>
+                    <input type="date" name="end_date" value="{{ end_date if end_date else '' }}"
+                        class="form-control border-0 bg-light shadow-none rounded-pill px-3 py-2">
+                </div>
+
+                <div class="col-lg-3 col-md-6 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold flex-grow-1 shadow-sm py-2">
+                        <i class="fas fa-filter me-1"></i> تصفية
+                    </button>
+                    <a href="/invoices{{ '?type=proforma' if is_proforma_view else '' }}"
+                        class="btn btn-light text-secondary rounded-pill px-3 shadow-sm py-2 border"
+                        title="إلغاء الفلتر">
+                        <i class="fas fa-undo"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div id="alert-area"></div>
+
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle text-center invoices-table">
+                <colgroup>
+                    <col class="col-id">
+                    <col class="col-date">
+                    {% if is_gm %}<col style="width: 80px;">{% endif %}
+                    <col class="col-customer">
+                    <col class="col-seller">
+                    <col class="col-qty">
+                    <col class="col-qty-ret">
+                    <col class="col-total">
+                    <col class="col-total-ret">
+                    {% if is_gm %}
+                    <col class="col-cost">
+                    <col class="col-shipping-cell">
+                    <col class="col-comm">
+                    <col class="col-profit">
+                    {% endif %}
+                    <col class="col-payment">
+                    {% if is_gm %}
+                    <col class="col-ret-notes" style="width: 150px;">
+                    {% endif %}
+                    <col class="col-status">
+                    <col class="col-actions">
+                </colgroup>
+                <thead>
+                    {% if is_gm and orders %}
+                    <tr class="table-dark">
+                        <td colspan="{% if is_gm %}5{% else %}4{% endif %}" class="fw-bold text-end py-3">الإجماليات:</td>
+                        <td class="fw-bold py-3 fs-6 text-success" title="إجمالي المبيعات (خام)">{{ grand_totals.total_gross_items }}</td>
+                        <td class="fw-bold py-3 fs-6 text-danger" title="إجمالي المرتجعات في الفترة">{{ grand_totals.total_returns_in_period }}</td>
+                        <td class="fw-bold py-3 fs-6">{{ grand_totals.total_sell }}</td>
+                        <td></td>
+                        {% if is_gm %}
+                        <td class="fw-bold text-danger py-3 fs-6">{{ grand_totals.total_cost }}</td>
+                        <td class="fw-bold text-info py-3 fs-6">{{ grand_totals.total_shipping }}</td>
+                        <td class="fw-bold text-warning py-3 fs-6">{{ grand_totals.total_comm }}</td>
+                        <td class="fw-bold text-success py-3 fs-6">{{ grand_totals.total_company_net }}</td>
+                        {% endif %}
+                        <td colspan="3"></td>
+                    </tr>
+                    {% endif %}
+                    <tr class="border-bottom border-2">
+                        <th class="col-id">#ID</th>
+                        <th class="col-date">التاريخ</th>
+                        {% if is_gm %}<th class="text-danger" style="font-size:0.78rem;">مرتجع</th>{% endif %}
+                        <th class="col-customer">العميل</th>
+                        <th class="col-seller">البائع</th>
+                        <th class="col-qty text-success">العدد</th>
+                        <th class="col-qty text-danger" style="font-size:0.8rem;">عدد مرتجع</th>
+                        <th class="col-total text-primary">الإجمالي</th>
+                        <th class="col-total text-danger" style="font-size:0.8rem;">إجمالي مرتجع</th>
+                        {% if is_gm %}
+                        <th class="col-cost-cell text-danger">التكلفة</th>
+                        <th class="col-shipping-cell text-info" style="font-size:0.8rem;">م. الشحن</th>
+                        <th class="col-comm-cell text-warning">العمولة</th>
+                        <th class="col-profit-cell text-success">ربح الشركة</th>
+                        {% endif %}
+                        <th class="col-payment-cell">الدفع</th>
+                        {% if is_gm %}
+                        <th class="text-danger" style="font-size:0.8rem;">ملاحظات المرتجع</th>
+                        {% endif %}
+                        <th class="col-status">الحالة</th>
+                        <th class="col-actions">إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr id="row-{{ order.id }}" class="{% if order.returns %}table-danger{% endif %}"
+                        data-customer="{{ order.customer.name if order.customer else 'عميل نقدي' }}"
+                        data-phone="{{ order.customer.phone if order.customer else '' }}"
+                        data-address="{{ order.customer.address if order.customer else '' }}"
+                        data-payment-status="{{ 'unpaid' if order.amount_due > 0 else 'paid' }}"
+                        data-return-status="{{ 'returned' if order.returns else 'none' }}"
+                        data-id="{{ order.id }}">
+                        <td class="fw-bold text-primary">{{ order.id }}</td>
+                        <td class="text-muted" style="font-size: 0.82rem;">{{ order.date.strftime('%Y-%m-%d')
+                            }}<br><span class="text-secondary">{{ order.date.strftime('%I:%M %p') }}</span></td>
+                        {% if is_gm %}
+                        <td class="text-muted" style="font-size: 0.82rem;">
+                            {% if order.ret_date %}
+                            <span class="text-danger fw-bold">{{ order.ret_date.strftime('%Y-%m-%d') }}</span><br>
+                            <span class="text-danger">{{ order.ret_date.strftime('%I:%M %p') }}</span>
+                            {% else %}-{% endif %}
+                        </td>
+                        {% endif %}
+                        <td class="fw-semibold">{% if order.customer %}<a href="/customers/{{ order.customer_id }}"
+                                class="text-decoration-none fw-bold text-dark">{{ order.customer.name }}</a>{% else
+                            %}<span class="text-muted">عميل نقدي</span>{%
+                            endif %}</td>
+                        <td><span class="badge bg-secondary bg-opacity-10 text-secondary border"
+                                style="border-color:rgba(108,117,125,0.2)!important;">{{ order.sales_rep.fullname
+                                }}</span></td>
+                        <td class="fw-bold text-success" style="cursor:pointer;"
+                            onclick="showQtyDetails({{ order.display_qty }}, {{ order.display_ret_qty }})">
+                            {{ order.display_qty }}
+                        </td>
+                        <td class="fw-bold text-danger">
+                            {% if order.display_ret_qty > 0 %}{{ order.display_ret_qty }}{% else %}-{% endif %}
+                        </td>
+                        <td class="fw-bold text-primary">
+                            {{ order.total_amount }} ج.م
+                        </td>
+                        <td class="fw-bold text-danger">
+                            {% if is_gm %}
+                                {% set ret_val = (order.total_amount or 0) - order.net_total %}
+                                {% if ret_val > 0 %}{{ ret_val|round(2) }} ج.م{% else %}-{% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        {% if is_gm %}
+                        <td class="col-cost-cell text-danger fw-semibold">{{ order.net_cost }}</td>
+                        <td class="col-shipping-cell text-info fw-semibold">{{ order.shipping_fee or 0 }}</td>
+                        <td class="col-comm-cell fw-bold" style="color: #c9a000; cursor:pointer;"
+                            onclick="viewCommissionDetails({{ order.id }})" title="عرض تفاصيل الحسبة">
+                            {{ order.net_comm }}
+                        </td>
+                        <td class="col-profit-cell text-success fw-bold" style="cursor:pointer;"
+                            onclick="viewCompanyProfitDetails({{ order.net_total }}, {{ order.discount or 0 }}, '{{ 'true' if order.company_bears_discount else 'false' }}', {{ order.shipping_fee or 0 }}, {{ order.net_cost }}, {{ order.net_comm }}, {{ order.company_net }})" title="عرض تفاصيل ربح الشركة">
+                            {{ order.company_net }}
+                            {% if order.company_bears_discount %}
+                                <div class="text-danger" style="font-size:0.65rem; font-weight: normal; margin-top:2px;">(خصم الفاتورة: {{ order.discount }})</div>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+
+                        <td class="col-payment-cell">
+                            {% if order.amount_due > 0 %}
+                            <div onclick="viewPaymentDetails({{ order.id }})" style="cursor:pointer;"
+                                title="عرض التفاصيل">
+                                <div
+                                    style="display:inline-block; background:rgba(220,53,69,0.12); color:#c0392b; border:1px solid rgba(220,53,69,0.25); border-radius:20px; padding:3px 10px; font-size:0.75rem; font-weight:600; white-space:nowrap;">
+                                    <i class="fas fa-exclamation-circle"></i> غير مدفوع
+                                </div>
+                                <div style="color:#c0392b; font-weight:700; font-size:0.8rem; margin-top:4px;">{{
+                                    order.amount_due }} ج.م</div>
+                            </div>
+                            {% else %}
+                            <div onclick="viewPaymentDetails({{ order.id }})" style="cursor:pointer;"
+                                title="عرض التفاصيل">
+                                <div
+                                    style="display:inline-block; background:rgba(25,135,84,0.12); color:#1a7a4a; border:1px solid rgba(25,135,84,0.25); border-radius:20px; padding:3px 10px; font-size:0.75rem; font-weight:600; white-space:nowrap;">
+                                    <i class="fas fa-check-circle"></i> مدفوع
+                                </div>
+                            </div>
+                            {% endif %}
+                        </td>
+
+                        {% if is_gm %}
+                        <td class="small text-muted text-wrap" style="max-width: 150px;">
+                            {% if order.returns %}
+                                {% for ret in order.returns %}
+                                    <div class="mb-1 pb-1">
+                                        <div class="text-dark" style="font-size: 0.8rem;">
+                                            {% if ret.notes %}
+                                                <i class="fas fa-comment-dots text-danger me-1"></i>{{ ret.notes }}
+                                            {% else %}
+                                                <span class="text-black-50 fw-bold fs-5">-</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        {% endif %}
+
+                        <td>
+                            {% if order.is_proforma %}
+                            <span class="badge bg-warning bg-opacity-10 text-dark"
+                                style="border: 1px solid rgba(255,193,7,0.4);"><i class="fas fa-clock"></i> مسودة</span>
+                            {% else %}
+                            {% if not (order.return_details and not order.return_details.is_partial) %}
+                            <span class="badge bg-success bg-opacity-10 text-success"
+                                style="border: 1px solid rgba(25,135,84,0.2);"><i class="fas fa-check"></i> تامة</span>
+                            {% if order.is_shipping %}
+                            <span class="badge bg-info bg-opacity-10 text-dark"
+                                style="border: 1px solid rgba(13,202,240,0.3);">شحن</span>
+                            {% endif %}
+                            {% endif %}
+
+                            {% if order.return_details %}
+                            <div class="mt-1 text-center">
+                                <span onclick="showReturnItems(this)"
+                                    data-type="{{ order.return_details.type }}"
+                                    data-details="{{ order.return_details.details }}"
+                                    class="badge {{ 'bg-warning bg-opacity-10 text-dark' if order.return_details.is_partial else 'bg-danger bg-opacity-10 text-danger' }}"
+                                    style="border: 1px solid rgba(220,53,69,0.2); cursor: pointer;">
+                                    <i class="fas fa-undo"></i> {{ order.return_details.type }}
+                                </span>
+                            </div>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group gap-1">
+                                {% if is_gm and not order.is_proforma %}
+                                <button type="button"
+                                    class="btn action-btn btn-outline-info btn-sm border-0 bg-info bg-opacity-10 text-info"
+                                    onclick="openPaymentModal({{ order.id }}, {{ order.amount_due }})"
+                                    title="تسجيل دفعة">
+                                    <i class="fas fa-hand-holding-usd"></i>
+                                </button>
+                                <a href="/returns/add?order_id={{ order.id }}"
+                                    class="btn action-btn btn-outline-danger btn-sm border-0 bg-danger bg-opacity-10 text-danger"
+                                    title="تسجيل مرتجع">
+                                    <i class="fas fa-undo"></i>
+                                </a>
+                                <button type="button"
+                                    class="btn action-btn btn-outline-warning btn-sm border-0 bg-warning bg-opacity-10 text-warning"
+                                    onclick="revertToDraft({{ order.id }})"
+                                    title="تحويل لمسودة للتعديل">
+                                    <i class="fas fa-pen-to-square"></i>
+                                </button>
+                                {% endif %}
+                                <a href="/invoice/print/{{ order.id }}" target="_blank"
+                                    class="btn action-btn btn-outline-dark btn-sm border-0 bg-dark bg-opacity-10 text-dark"
+                                    title="طباعة">
+                                    <i class="fas fa-print"></i>
+                                </a>
+
+                                {% if order.is_proforma %}
+                                <a href="/invoice/edit_proforma/{{ order.id }}"
+                                    class="btn action-btn btn-outline-primary btn-sm border-0 bg-primary bg-opacity-10 text-primary"
+                                    title="تعديل">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                                <a href="/invoice/convert/{{ order.id }}"
+                                    class="btn action-btn btn-outline-success btn-sm border-0 bg-success bg-opacity-10 text-success fw-bold"
+                                    title="اعتماد وتحويل لفاتورة"
+                                    onclick="return confirm('هل أنت متأكد من اعتماد عرض السعر وتحويله لفاتورة؟ سيتم خصم الكميات من المخزن.')">
+                                    <i class="fas fa-check-circle"></i>
+                                </a>
+                                {% endif %}
+
+                                {% if current_user.role in ['general_manager', 'manager'] or
+                                current_user.has_perm('manage_orders') %}
+                                <button
+                                    class="btn action-btn btn-outline-danger btn-sm border-0 bg-danger bg-opacity-10 text-danger"
+                                    onclick="deleteInvoice({{ order.id }})" title="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10" class="py-5 text-muted">
+                            <i class="fas fa-folder-open fa-3x mb-3"></i>
+                            <p>لا توجد بيانات للعرض في هذا القسم</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    </div>
+    </div>
+
+    <!-- Modal for Company Profit Details -->
+    <div class="modal fade" id="companyProfitModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-success text-white border-0">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-chart-pie me-2"></i> تفاصيل حساب ربح الشركة</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body bg-light" id="companyProfitContent">
+                    <!-- Content will be injected here via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Invoice Payment -->
+    <div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold text-primary"><i class="fas fa-hand-holding-usd"></i> تسجيل تحصيل
+                        إضافي</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="paymentForm">
+                        <input type="hidden" id="paymentOrderId">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">المبلغ المحصل (ج.م)</label>
+                            <input type="number" class="form-control" id="paymentAmount" required step="0.01">
+                            <small class="text-danger fw-bold mt-1 d-block">متبقي للتحصيل من التوصيل: <span
+                                    id="paymentAmountDueDisplay"></span></small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">الخزينة المحصل إليها</label>
+                            <select class="form-select" id="paymentAccountId" required>
+                                <option value="">-- اختر الخزينة --</option>
+                                {% for acc in money_accounts %}
+                                <option value="{{ acc.id }}">{{ acc.name }} (الرصيد: {{ acc.balance }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-primary fw-bold" onclick="submitPayment()"><i
+                            class="fas fa-check"></i> حفظ الدفعة</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Payment Details -->
+    <div class="modal fade" id="paymentDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-dark text-white border-0">
+                    <h5 class="modal-title fw-bold" id="paymentModalTitle"><i class="fas fa-receipt me-2"></i> تفاصيل
+                        مدفوعات فاتورة</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body bg-light p-4">
+                    <div id="paymentDetailsContent">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Commission Details -->
+    <div class="modal fade" id="commissionDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-warning text-dark border-0">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-calculator me-2"></i> تفاصيل حسبة العمولة</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-white" id="commissionDetailsContent" dir="rtl">
+                    <!-- سيمتلئ بالجافاسكريبت -->
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4"
+                        data-bs-dismiss="modal">إغلاق</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Return Items Details -->
+    <div class="modal fade" id="returnItemsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-danger text-white border-0 py-2">
+                    <h6 class="modal-title fw-bold" id="returnItemsModalTitle"><i class="fas fa-undo me-2"></i>تفاصيل المرتجع</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center" id="returnItemsContent">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Qty Details -->
+    <div class="modal fade" id="qtyDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white border-0 py-2">
+                    <h6 class="modal-title fw-bold"><i class="fas fa-boxes me-2"></i>تفاصيل العدد</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 text-center" id="qtyDetailsContent" dir="rtl"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function viewPaymentDetails(orderId) {
+            document.getElementById('paymentDetailsContent').innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div></div>';
+            document.getElementById('paymentModalTitle').innerHTML = `<i class="fas fa-receipt me-2"></i> تفاصيل مدفوعات فاتورة #${orderId}`;
+            new bootstrap.Modal(document.getElementById('paymentDetailsModal')).show();
+
+            fetch(`/api/invoice/${orderId}/payment_details`)
+                .then(res => res.json())
+                .then(data => {
+                    let html = `
+                    <div class="row text-center mb-4 g-3">
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body">
+                                    <h6 class="text-muted mb-2">إجمالي الفاتورة</h6>
+                                    <h4 class="text-primary fw-bold mb-0">${data.total_invoice} ج.م</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body">
+                                    <h6 class="text-muted mb-2">إجمالي المدفوع</h6>
+                                    <h4 class="text-success fw-bold mb-0">${data.total_paid} ج.م</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm h-100 ${data.amount_due > 0 ? 'bg-danger bg-opacity-10' : 'bg-success bg-opacity-10'}">
+                                <div class="card-body">
+                                    <h6 class="text-muted mb-2">الحالة</h6>
+                                    <h4 class="${data.amount_due > 0 ? 'text-danger' : 'text-success'} fw-bold mb-0">
+                                        ${data.amount_due > 0 ? 'متبقي: ' + data.amount_due : 'خالصة'} ج.م
+                                    </h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+
+                    html += `
+                    <div class="table-responsive bg-white rounded shadow-sm border border-light" dir="rtl">
+                        <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-dark fs-6"><i class="fas fa-history me-1"></i> سجل المعاملات المالية</span>
+                            <span class="badge bg-success bg-opacity-10 text-success fs-6 px-3 py-2 border border-success border-opacity-25">
+                                إجمالي المحصل: ${data.total_paid.toFixed(2)} ج.م
+                            </span>
+                        </div>
+                        <table class="table table-hover mb-0 text-center">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="py-3">#</th>
+                                    <th class="py-3">التاريخ</th>
+                                    <th class="py-3">النوع</th>
+                                    <th class="py-3">المبلغ</th>
+                                    <th class="py-3">الخزينة</th>
+                                    <th class="py-3">البيان</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    if (data.payments.length === 0) {
+                        html += `<tr><td colspan="6" class="py-4 text-muted">لا توجد معاملات مالية مسجلة لهذه الفاتورة</td></tr>`;
+                    } else {
+                        data.payments.forEach(p => {
+                            let typeBadge = p.is_in ? 'bg-success' : 'bg-danger';
+                            html += `
+                            <tr>
+                                <td class="text-muted fw-semibold">${p.index}</td>
+                                <td class="text-muted" dir="ltr">${p.date}</td>
+                                <td><span class="badge ${typeBadge} px-3 py-2 rounded-pill">${p.type_label}</span></td>
+                                <td class="fw-bold text-${p.is_in ? 'success' : 'danger'}">${p.amount.toFixed(2)}</td>
+                                <td><span class="badge bg-light text-dark border px-3 py-2">${p.account}</span></td>
+                                <td class="text-muted small text-end">${p.description}</td>
+                            </tr>
+                            `;
+                        });
+
+                        html += `
+                            <tr class="table-light">
+                                <td colspan="6" class="text-center py-2 text-muted small">عدد الحركات المسجلة: ${data.payments.length}</td>
+                            </tr>
+                        `;
+                    }
+
+                    html += `
+                            </tbody>
+                        </table>
+                    </div>
+                    `;
+                    document.getElementById('paymentDetailsContent').innerHTML = html;
+                })
+                .catch(err => {
+                    document.getElementById('paymentDetailsContent').innerHTML = '<div class="alert alert-danger">حدث خطأ في تحميل البيانات</div>';
+                });
+        }
+
+        function openPaymentModal(orderId, amountDue) {
+            document.getElementById('paymentOrderId').value = orderId;
+            document.getElementById('paymentAmountDueDisplay').innerText = amountDue;
+            document.getElementById('paymentAmount').max = amountDue; // Optional: Prevent overpaying
+            document.getElementById('paymentAmount').value = '';
+            var myModal = new bootstrap.Modal(document.getElementById('paymentModal'));
+            myModal.show();
+        }
+
+        function submitPayment() {
+            var orderId = document.getElementById('paymentOrderId').value;
+            var amount = document.getElementById('paymentAmount').value;
+            var accountId = document.getElementById('paymentAccountId').value;
+
+            if (!amount || !accountId) {
+                showAlert('warning', 'يجب إدخال المبلغ واختيار الخزينة');
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append('amount', amount);
+            formData.append('account_id', accountId);
+
+            fetch(`/api/invoice/${orderId}/add_payment`, {
+                method: 'POST',
+                body: formData
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        var myModal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
+                        myModal.hide();
+                        location.reload();
+                    } else {
+                        showAlert('danger', 'خطأ: ' + data.message);
+                    }
+                })
+                .catch(err => {
+                    showAlert('danger', 'حدث خطأ في الاتصال بالسيرفر');
+                });
+        }
+
+        function revertToDraft(orderId) {
+            if (!confirm('⚠️ هل أنت متأكد من تحويل هذه الفاتورة لمسودة؟\n\nسيتم:\n• إرجاع الكميات للمخزن\n• عكس المعاملات المالية\n• حذف العمولات المسجلة\n\nبعد التأكيد ستجد الفاتورة في قسم "عروض الأسعار" وتقدر تعدل عليها.')) return;
+
+            fetch(`/invoice/revert_to_draft/${orderId}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('success', data.message);
+                        const row = document.getElementById('row-' + orderId);
+                        if (row) {
+                            row.style.transition = 'all 0.5s';
+                            row.style.opacity = '0';
+                            row.style.backgroundColor = '#fff3cd';
+                            setTimeout(() => row.remove(), 500);
+                        }
+                    } else {
+                        showAlert('danger', '❌ ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'حدث خطأ في الاتصال بالسيرفر');
+                });
+        }
+
+        function deleteInvoice(orderId) {
+            if (!confirm('هل أنت متأكد من حذف هذه الفاتورة نهائياً؟ سيتم استرجاع الكميات للمخزن.')) return;
+
+            fetch(`/invoice/delete/${orderId}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('success', data.message);
+                        const row = document.getElementById('row-' + orderId);
+                        if (row) {
+                            row.style.transition = 'all 0.5s';
+                            row.style.opacity = '0';
+                            setTimeout(() => row.remove(), 500);
+                        }
+                    } else {
+                        showAlert('danger', '❌ خطأ: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'حدث خطأ في الاتصال بالسيرفر');
+                });
+        }
+
+        function showAlert(type, message) {
+            const alertArea = document.getElementById('alert-area');
+            alertArea.innerHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show shadow-sm border-0" role=\"alert\">
+                <strong>${type === 'success' ? 'تم بنجاح!' : 'تنبيه!'}</strong> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+            setTimeout(() => {
+                const alertEl = document.querySelector('.alert');
+                if (alertEl) {
+                    const alert = bootstrap.Alert.getOrCreateInstance(alertEl);
+                    alert.close();
+                }
+            }, 3000);
+        }
+        let currentPaymentFilter = 'all';
+
+        function searchInvoices() {
+            var input = document.getElementById('quickSearch');
+            var filter = input.value.toUpperCase();
+            var tbody = document.querySelector('table tbody');
+            var rows = tbody.getElementsByTagName('tr');
+
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                var customer = (row.getAttribute('data-customer') || '').toUpperCase();
+                var phone = (row.getAttribute('data-phone') || '').toUpperCase();
+                var address = (row.getAttribute('data-address') || '').toUpperCase();
+                var id = (row.getAttribute('data-id') || '').toUpperCase();
+                var paymentStatus = row.getAttribute('data-payment-status');
+                var returnStatus = row.getAttribute('data-return-status');
+
+                var matchesSearch = (filter === '' || customer.indexOf(filter) > -1 || phone.indexOf(filter) > -1 || address.indexOf(filter) > -1 || id.indexOf(filter) > -1);
+                var matchesPayment = (currentPaymentFilter === 'all') ||
+                    (currentPaymentFilter === 'unpaid' && paymentStatus === 'unpaid') ||
+                    (currentPaymentFilter === 'returned' && returnStatus === 'returned');
+
+                if (matchesSearch && matchesPayment) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        }
+
+        function filterInvoices(status, btnElement) {
+            currentPaymentFilter = status;
+
+            // Update buttons
+            document.querySelectorAll('.filter-status-btn').forEach(btn => {
+                btn.classList.remove('active', 'btn-primary');
+                btn.classList.add('btn-light', 'text-secondary');
+            });
+
+            btnElement.classList.remove('btn-light', 'text-secondary');
+            btnElement.classList.add('active', 'btn-primary');
+
+            // Re-run search which now respects the new filter state
+            searchInvoices();
+        }
+
+        function viewCompanyProfitDetails(netTotal, discount, companyBearsDiscount, shippingFee, netCost, netComm, companyNet) {
+            let finalSales = Number(netTotal);
+            let discountHtml = '';
+
+            if (companyBearsDiscount === 'true' && Number(discount) > 0) {
+                // نخصم من إجمالي المبيعات لو الشركة هي اللي تحملت الخصم
+                finalSales = finalSales - Number(discount);
+                discountHtml = `
+                <div class="d-flex justify-content-between mb-2 pb-2 border-bottom border-danger border-opacity-25">
+                    <span class="text-danger"><i class="fas fa-minus-circle me-1"></i> خصم تحملته الشركة</span>
+                    <span class="fw-bold text-danger">-${Number(discount).toFixed(2)}</span>
+                </div>`;
+            }
+
+            let shippingHtml = '';
+            if (Number(shippingFee) > 0) {
+                shippingHtml = `
+                <div class="d-flex justify-content-between mb-2 pb-2 border-bottom border-danger border-opacity-25">
+                    <span class="text-danger"><i class="fas fa-minus-circle me-1"></i> مصاريف الشحن</span>
+                    <span class="fw-bold text-danger">-${Number(shippingFee).toFixed(2)}</span>
+                </div>`;
+            }
+
+            const html = `
+                <div class="p-3">
+                    <div class="d-flex justify-content-between mb-2 pb-2 border-bottom border-primary border-opacity-25">
+                        <span class="text-primary fw-bold"><i class="fas fa-plus-circle me-1"></i> الإجمالي</span>
+                        <span class="fw-bold text-primary">${Number(netTotal).toFixed(2)}</span>
+                    </div>
+                    
+                    ${discountHtml}
+                    ${shippingHtml}
+
+                    <div class="d-flex justify-content-between mb-2 pb-2 border-bottom border-danger border-opacity-25">
+                        <span class="text-danger"><i class="fas fa-minus-circle me-1"></i> تكلفة البضاعة</span>
+                        <span class="fw-bold text-danger">-${Number(netCost).toFixed(2)}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-3 pb-3 border-bottom border-warning border-opacity-50">
+                        <span class="text-warning text-darken"><i class="fas fa-minus-circle me-1"></i> العمولة الصافية المدفوعة</span>
+                        <span class="fw-bold text-warning text-darken">-${Number(netComm).toFixed(2)}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between bg-success bg-opacity-10 p-3 rounded border border-success">
+                        <span class="text-success fw-bold fs-5"><i class="fas fa-equals me-1"></i> صافي ربح الشركة</span>
+                        <span class="fw-bold text-success fs-4">${Number(companyNet).toFixed(2)} ج.م</span>
+                    </div>
+                </div>
+            `;
+            document.getElementById('companyProfitContent').innerHTML = html;
+            new bootstrap.Modal(document.getElementById('companyProfitModal')).show();
+        }
+
+        function viewCommissionDetails(orderId) {
+            const content = document.getElementById('commissionDetailsContent');
+            content.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-warning" role="status"></div></div>';
+            new bootstrap.Modal(document.getElementById('commissionDetailsModal')).show();
+
+            fetch(`/api/invoice/${orderId}/commission_details`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        content.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+                        return;
+                    }
+
+                    const colorMap = {
+                        'danger': 'border-danger',
+                        'success': 'border-success',
+                        'warning': 'border-warning',
+                        'secondary': 'border-secondary',
+                        'info': 'border-info',
+                        'dark': 'border-dark'
+                    };
+
+                    let breakdownHtml = data.breakdown.map(item => {
+                        const text = typeof item === 'string' ? item : item.text;
+                        const color = typeof item === 'string' ? 'warning' : (item.color || 'warning');
+                        const borderClass = colorMap[color] || 'border-warning';
+                        const textClass = color === 'danger' ? 'text-danger fw-bold' : (color === 'dark' ? 'fw-bold text-dark' : '');
+                        return `<div class="p-2 mb-2 bg-light rounded border-start border-4 ${borderClass} shadow-sm ${textClass}"><i class="fas fa-arrow-left me-2 text-${color}"></i> ${text}</div>`;
+                    }).join('');
+
+                    content.innerHTML = `
+                        <div class="text-center mb-4">
+                            <div class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-25 px-4 py-2 rounded-pill fs-6 mb-2">
+                                ${data.calculation_method}
+                            </div>
+                            <h6 class="text-muted mt-2">البائع: <span class="text-dark fw-bold">${data.seller_name}</span></h6>
+                        </div>
+                        
+                        <div class="calculation-tree mt-3">
+                            ${breakdownHtml}
+                        </div>
+                        
+                        <div class="mt-4 p-3 bg-dark text-white rounded-4 shadow text-center">
+                            <p class="small mb-1 opacity-75">الصافي النهائي للعمولة</p>
+                            <h3 class="mb-0 fw-bold">${data.net_comm.toFixed(2)} ج.م</h3>
+                        </div>
+                    `;
+                })
+                .catch(err => {
+                    content.innerHTML = `<div class="alert alert-danger">حدث خطأ أثناء جلب البيانات</div>`;
+                });
+        }
+
+        function showReturnItems(element) {
+            const type = element.getAttribute('data-type');
+            const details = element.getAttribute('data-details');
+            document.getElementById('returnItemsModalTitle').innerHTML = '<i class="fas fa-undo me-2"></i>' + type;
+            document.getElementById('returnItemsContent').innerHTML = '<div style="font-size:1rem; line-height: 1.8; color: #dc3545; font-weight: bold;">' + details.split('،').join('<br><hr class="my-2 opacity-25">') + '</div>';
+            new bootstrap.Modal(document.getElementById('returnItemsModal')).show();
+        }
+
+        function showQtyDetails(totalQty, returnedQty) {
+            const netQty = totalQty - returnedQty;
+            let html = `<div class="mb-3"><span class="text-muted">إجمالي القطع المباعة</span><br><h4 class="fw-bold text-dark">${totalQty}</h4></div>`;
+            if (returnedQty > 0) {
+                html += `<div class="mb-3"><span class="text-muted">مرتجع</span><br><h4 class="fw-bold text-danger">-${returnedQty}</h4></div>`;
+                html += `<hr><div><span class="text-muted">الصافي</span><br><h3 class="fw-bold text-success">${netQty}</h3></div>`;
+            } else {
+                html += `<div class="text-muted"><i class="fas fa-check-circle text-success me-1"></i> لا يوجد مرتجعات</div>`;
+            }
+            document.getElementById('qtyDetailsContent').innerHTML = html;
+            new bootstrap.Modal(document.getElementById('qtyDetailsModal')).show();
+        }
+    </script>
+
+</body>
+
+</html>

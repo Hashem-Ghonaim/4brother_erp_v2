@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ 'عرض سعر #' if order.is_proforma else 'فاتورة #' }}{{ order.id }}</title>
+
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#0d6efd">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="/static/icon.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --main-color: {
+                    {
+                    theme_color or '#0d6efd'
+                }
+            }
+
+            ;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: #555;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* حاوية الفاتورة - ورقة A4 ثابتة */
+        .invoice-paper {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 20px auto;
+            padding: 15mm;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            box-sizing: border-box;
+            border-top: 10px solid var(--main-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            /* لدفع الفوتر للأسفل */
+        }
+
+        /* إصلاح للموبايل */
+        .mobile-scroll-wrapper {
+            overflow-x: auto;
+            width: 100%;
+            padding-bottom: 20px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .header-grid {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        .custom-table th {
+            background-color: #f2f2f2 !important;
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .custom-table td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .totals-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .totals-table td, .totals-table th {
+            border: 1px solid #000;
+            padding: 8px;
+            font-weight: bold;
+        }
+
+        .logo-img {
+            max-height: 100px;
+            max-width: 250px;
+            object-fit: contain;
+        }
+
+        .returned-stamp {
+            position: absolute;
+            top: 40%;
+            left: 25%;
+            border: 5px solid #dc3545;
+            color: #dc3545;
+            font-size: 5rem;
+            font-weight: bold;
+            padding: 10px 40px;
+            text-transform: uppercase;
+            transform: rotate(-30deg);
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        @media print {
+            body {
+                background: white;
+                width: 100%;
+                height: auto;
+            }
+
+            .invoice-paper {
+                margin: 0;
+                width: 100%;
+                min-height: 100%;
+                height: auto;
+                box-shadow: none;
+                border: none;
+                padding: 10mm;
+                display: block !important;
+            }
+
+            .mt-auto {
+                margin-top: 30px !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .mobile-scroll-wrapper {
+                overflow: visible;
+            }
+
+            /* Prevent page breaks inside important elements */
+            .totals-table, .info-grid {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="no-print text-center py-3 bg-light border-bottom mb-3 sticky-top shadow-sm">
+        <div class="container d-flex justify-content-center flex-wrap gap-2">
+            <button onclick="window.print()" class="btn btn-secondary fw-bold"><i class="fas fa-print"></i>
+                طباعة</button>
+            <button onclick="downloadPDF()" class="btn btn-primary fw-bold"><i class="fas fa-file-pdf"></i> PDF</button>
+            <a href="#" onclick="sendWhatsApp()" class="btn btn-success fw-bold"><i class="fab fa-whatsapp"></i>
+                واتساب</a>
+            {% if order.is_proforma %}
+            <div class="vr mx-2"></div>
+            <a href="/invoice/convert/{{ order.id }}" class="btn btn-warning fw-bold"
+                onclick="return confirm('تأكيد التحويل؟')">اعتماد</a>
+            <a href="{{ url_for('pos', proforma_id=order.id) }}" class="btn btn-warning fw-bold no-print"
+                onclick="return confirm('هل تريد العودة لشاشة البيع لتعديل عرض السعر هذا؟')">
+                تعديل عرض السعر
+            </a>
+            <a href="/invoice/delete/{{ order.id }}" class="btn btn-danger fw-bold"
+                onclick="return confirm('حذف؟')">حذف</a>
+            {% endif %}
+            <a href="/pos" class="btn btn-dark">عودة</a>
+        </div>
+    </div>
+
+    <div class="mobile-scroll-wrapper">
+        <div class="invoice-paper" id="invoiceElement">
+
+            <div>
+                {% if order.return_invoices %}
+                <div class="returned-stamp">مرتجع</div>
+                {% endif %}
+
+                {% if order.is_proforma %}
+                <div class="text-center mb-3">
+                    <span class="badge bg-warning text-dark fs-6 border border-dark px-4 py-2">مسودة / عرض سعر</span>
+                </div>
+                {% endif %}
+
+                <div class="header-grid">
+                    <div style="width: 40%; text-align: right;">
+                        {% if global_company_logo %}
+                        <img src="{{ global_company_logo | image_url }}" class="logo-img">
+                        {% elif company_logo %}
+                        <img src="{{ company_logo | image_url }}" class="logo-img">
+                        {% else %}
+                        <h2 class="fw-bold text-primary m-0">اسم الشركة</h2>
+                        {% endif %}
+                    </div>
+                    <div style="width: 60%; text-align: center;">
+                        <h3 class="fw-bold m-0 text-dark">مجموعة شركات ومصانع فور برزر</h3>
+                        {% if order.sales_rep.phone %}
+                        <div class="mt-1 text-muted small">للتواصل مع الإدارة: {{ order.sales_rep.phone }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span>العميل:</span> <a href="/customers/{{ order.customer_id }}"
+                            class="text-decoration-none text-primary fw-bold">{{ order.customer.name }}</a>
+                    </div>
+                    <div class="info-item">
+                        <span>التاريخ:</span> <span>{{ order.date.strftime('%Y/%m/%d') }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span>رقم الهاتف:</span> <span id="custPhone">{{ order.customer.phone }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span>رقم الفاتورة:</span> <span>#<span id="orderId">{{ order.id }}</span></span>
+                    </div>
+                    <div class="info-item" style="grid-column: span 2;">
+                        <span>العنوان:</span> <span>{{ order.customer.address or '---' }}</span>
+                    </div>
+                    {% if order.is_shipping %}
+                    <div class="info-item"
+                        style="grid-column: span 2; border-top: 1px dashed #ccc; padding-top: 5px; margin-top: 5px;">
+                        <span class="text-danger">
+                            شركة الشحن: {{ order.courier.name }}
+                            {% if order.courier.phone %} - {{ order.courier.phone }} {% endif %}
+                        </span>
+
+                        <span>(بوليصة: {{ order.waybill_no or '---' }})</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if order.return_invoices %}
+                <div class="alert alert-danger p-2 mb-2 text-center" style="font-size: 14px; border: 2px solid #dc3545;">
+                    <strong><i class="fas fa-undo"></i> يوجد مرتجع لهذه الفاتورة</strong>
+                </div>
+                {% endif %}
+
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th width="5%">م</th>
+                            <th width="35%">الصنف</th>
+                            {% if order.return_invoices %}
+                            <th width="10%" class="text-danger">المرتجع</th>
+                            {% endif %}
+                            <th width="10%">الكمية</th>
+                            <th width="15%">السعر</th>
+                            <th width="15%">الإجمالي</th>
+                            <th width="10%">كود</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items %}
+                        {% set ret_qty = return_map.get(item.variant_id, 0) %}
+                        <tr {% if ret_qty > 0 %}style="background-color: rgba(220, 53, 69, 0.15);"{% endif %}>
+                            <td>{{ loop.index }}</td>
+                            <td class="text-end pe-2">
+                                {% if item.variant %}
+                                <span class="fw-bold">{{ item.variant.model.name }}</span>
+                                <br>
+                                <small class="text-muted" style="font-size: 11px;">({{ item.variant.model.category.name
+                                    }})</small>
+                                {% else %}
+                                <span class="fw-bold text-danger">منتج محذوف</span>
+                                {% endif %}
+                            </td>
+                            {% if order.return_invoices %}
+                            <td class="text-danger fw-bold">{{ ret_qty if ret_qty > 0 else '-' }}</td>
+                            {% endif %}
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.unit_price }}</td>
+                            <td>{{ item.total_price }}</td>
+                            <td>{{ item.variant_id }}</td>
+                        </tr>
+                        {% endfor %}
+
+                        {% if order.items|length < 5 %}
+                        {% for i in range(5 - order.items|length) %}
+                        <tr style="height: 35px;">
+                            <td></td>
+                            <td></td>
+                            {% if order.return_invoices %}
+                            <td></td>
+                            {% endif %}
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+
+                <div style="display: flex; margin-top: 20px;">
+                    <div style="width: 60%; padding-right: 10px;">
+                        <div class="d-flex gap-2" style="max-width: 250px;">
+                            <div class="border p-2 text-center flex-fill" style="border-radius: 8px;">
+                                <div class="small fw-bold text-muted">عدد القطع</div>
+                                <div class="fs-4 fw-bold">{{ order.items|sum(attribute='quantity') }}</div>
+                            </div>
+                            {% if return_stats and return_stats.total_returned_qty > 0 %}
+                            <div class="border p-2 text-center flex-fill" style="border-radius: 8px; border-color: #dc3545 !important; background-color: rgba(220,53,69,0.05);">
+                                <div class="small fw-bold text-danger">بعد المرتجع</div>
+                                <div class="fs-4 fw-bold text-danger">{{ order.items|sum(attribute='quantity') - return_stats.total_returned_qty }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mt-3" style="font-size: 13px; line-height: 1.8;">
+                            <strong>مبيعات:</strong> <span class="text-primary fw-bold">{{ order.sales_rep.emp_code
+                                }}</span> <br>
+                            <strong>تعبئة:</strong> <span class="text-success fw-bold">{{ order.packer.emp_code if
+                                order.packer else '---' }}</span> <br>
+                            <span class="text-muted" style="font-size: 11px;">{{ order.date.strftime('%I:%M %p')
+                                }}</span>
+                        </div>
+                        
+                    </div>
+
+                    <div style="width: 40%;">
+                        <table class="totals-table" style="width: 100%;">
+                            {% if return_stats and return_stats.total_returned_qty > 0 %}
+                            <thead>
+                                <tr style="background-color: #f2f2f2; text-align: center; font-size: 13px;">
+                                    <th width="40%">البيان</th>
+                                    <th width="30%">الفاتورة</th>
+                                    <th width="30%" class="text-danger">بعد المرتجع</th>
+                                </tr>
+                            </thead>
+                            {% endif %}
+                            <tbody>
+                                <tr>
+                                    <td>الإجمالي</td>
+                                    <td class="text-end">{{ order.total_amount }}</td>
+                                    {% if return_stats and return_stats.total_returned_qty > 0 %}
+                                    <td class="text-end text-danger fw-bold">{{ return_stats.after_total_amount }}</td>
+                                    {% endif %}
+                                </tr>
+                                <tr>
+                                    <td>الخصم</td>
+                                    <td class="text-end">{{ order.discount }}</td>
+                                    {% if return_stats and return_stats.total_returned_qty > 0 %}
+                                    <td class="text-end text-danger fw-bold">{{ order.discount }}</td>
+                                    {% endif %}
+                                </tr>
+                                <tr>
+                                    <td>المدفوع</td>
+                                    <td class="text-end">{{ order.paid_upfront }}</td>
+                                    {% if return_stats and return_stats.total_returned_qty > 0 %}
+                                    <td class="text-end text-danger fw-bold">-</td>
+                                    {% endif %}
+                                </tr>
+                                <tr style="background-color: #eee;">
+                                    <td class="fs-6">الصافي النهائي</td>
+                                    <td class="text-end fs-5" id="finalTotal">{{ order.final_total - order.paid_upfront }}</td>
+                                    {% if return_stats and return_stats.total_returned_qty > 0 %}
+                                    <td class="text-end fs-5 text-danger fw-bold">{{ return_stats.after_final_total - order.paid_upfront }}</td>
+                                    {% endif %}
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-auto">
+                <div class="text-center border-top pt-2">
+
+                    {% if order.sales_rep %}
+                    {# الشرط: الموظف ليس مدير عام ولا مدير فرع #}
+                    {% if order.sales_rep.role not in ['general_manager', 'manager'] %}
+
+                    {# التأكد من وجود مدير مباشر ورقم تليفون له #}
+                    {% if order.sales_rep.manager and order.sales_rep.manager.phone %}
+                    <div class="d-inline-block px-4 py-1 mt-2 mb-2 rounded bg-light border">
+                        <span class="text-muted small fw-bold">للمقترحات والشكاوى:</span>
+                        <br>
+                        <strong class="text-dark fs-5">
+                            <i class="fas fa-phone-alt small text-success ms-1"></i>
+                            {{ order.sales_rep.manager.phone }}
+                        </strong>
+                    </div>
+                    {% endif %}
+
+                    {% endif %}
+                    {% endif %}
+
+                    <div class="w-100 mt-2 mb-2">
+                        <p class="mb-0 fw-bold"
+                            style="font-size: 0.8rem; color: #333; background: #f8f8f8; border: 1px solid #bbb; padding: 6px 16px; border-radius: 6px; display: inline-block;">
+                            ⚠️ الإستبدال عيوب مصنع فقط خلال 14 يوم من تاريخ الفاتورة بشرط سلامة المنتج
+                        </p>
+                    </div>
+                    <p class="fw-bold mt-2 mb-0" style="font-size: 0.85rem;">شكراً لثقتكم في مجموعة فور برزر ❤️</p>
+                    <small class="text-muted">نسعى دائماً لخدمتكم بأفضل جودة</small>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        function downloadPDF() {
+            const element = document.getElementById('invoiceElement');
+            const opt = { margin: 0, filename: 'Invoice_{{ order.id }}.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+            html2pdf().set(opt).from(element).save();
+        }
+        function sendWhatsApp() {
+            let phoneElement = document.getElementById('custPhone');
+            let phone = phoneElement ? phoneElement.innerText.trim().replace(/[^0-9]/g, '') : "";
+            if (phone.startsWith('0')) phone = phone.substring(1);
+            if (!phone.startsWith('20')) phone = '20' + phone;
+            let msg = `فاتورة رقم #{{ order.id }}\nالمطلوب: {{ order.final_total - order.paid_upfront }}`;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+    </script>
+</body>
+
+</html>

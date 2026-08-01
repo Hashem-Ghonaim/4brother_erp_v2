@@ -1,0 +1,130 @@
+
+--- DEBUG [2026-05]: سماح ---
+Monthly Sales: 1475, Monthly Returns: 60, Net: 1415
+Rate: 2.0
+Total Month Commission: 2878.0
+
+--- DEBUG [2026-05]: أحمد أبو اليزيد ---
+Monthly Sales: 932, Monthly Returns: 17, Net: 915
+Rate: 13.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-05]: أحمد العجان ---
+Monthly Sales: 847, Monthly Returns: 24, Net: 823
+Rate: 13.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-05]: حياه ---
+Monthly Sales: 959, Monthly Returns: 44, Net: 915
+Rate: 1.0
+Total Month Commission: 959.0
+
+--- DEBUG [2026-05]: أحمد هشام ---
+Monthly Sales: 1017, Monthly Returns: 152, Net: 865
+Rate: 13.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-05]: سلمى ---
+Monthly Sales: 2816, Monthly Returns: 2, Net: 2814
+Rate: 3.0
+Total Month Commission: 8448.0
+
+--- DEBUG [2026-05]: ندى ---
+Monthly Sales: 1194, Monthly Returns: 253, Net: 941
+Rate: 1.0
+Total Month Commission: 1029.0
+
+--- DEBUG [2026-05]: سلمي م ---
+Monthly Sales: 591, Monthly Returns: 0, Net: 591
+Rate: 1.0
+Total Month Commission: 591.0
+
+--- DEBUG [2026-05]: لارا ---
+Monthly Sales: 279, Monthly Returns: 164, Net: 115
+Rate: 6.0
+Total Month Commission: 1266.0
+
+--- DEBUG [2026-05]: هاجر ---
+Monthly Sales: 284, Monthly Returns: 0, Net: 284
+Rate: 0.5
+Total Month Commission: 142.0
+
+--- DEBUG [2026-05]: يوسف  ---
+Monthly Sales: 356, Monthly Returns: 16, Net: 340
+Rate: 3.0
+Total Month Commission: 1020.0
+
+--- DEBUG [2026-05]: مصطفي  ---
+Monthly Sales: 368, Monthly Returns: 16, Net: 352
+Rate: 3.0
+Total Month Commission: 1056.0
+
+--- DEBUG [2026-05]: أحمد وجدي ---
+Monthly Sales: 3015, Monthly Returns: 40, Net: 2975
+Rate: 13.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-05]: سماح ---
+Monthly Sales: 1475, Monthly Returns: 60, Net: 1415
+Rate: 2.0
+Total Month Commission: 2878.0
+
+--- DEBUG [2026-05]: أحمد أبو اليزيد ---
+Monthly Sales: 932, Monthly Returns: 17, Net: 915
+Rate: 13.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-05]: أحمد العجان ---
+Monthly Sales: 847, Monthly Returns: 24, Net: 823
+Rate: 13.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-05]: حياه ---
+Monthly Sales: 959, Monthly Returns: 44, Net: 915
+Rate: 1.0
+Total Month Commission: 959.0
+
+--- DEBUG [2026-05]: أحمد هشام ---
+Monthly Sales: 1017, Monthly Returns: 152, Net: 865
+Rate: 13.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-05]: سلمى ---
+Monthly Sales: 2816, Monthly Returns: 2, Net: 2814
+Rate: 3.0
+Total Month Commission: 8448.0
+
+--- DEBUG [2026-05]: ندى ---
+Monthly Sales: 1194, Monthly Returns: 253, Net: 941
+Rate: 1.0
+Total Month Commission: 1029.0
+
+--- DEBUG [2026-05]: سلمي م ---
+Monthly Sales: 591, Monthly Returns: 0, Net: 591
+Rate: 1.0
+Total Month Commission: 591.0
+
+--- DEBUG [2026-05]: لارا ---
+Monthly Sales: 279, Monthly Returns: 164, Net: 115
+Rate: 6.0
+Total Month Commission: 1266.0
+
+--- DEBUG [2026-05]: هاجر ---
+Monthly Sales: 284, Monthly Returns: 0, Net: 284
+Rate: 0.5
+Total Month Commission: 142.0
+
+--- DEBUG [2026-05]: يوسف  ---
+Monthly Sales: 356, Monthly Returns: 16, Net: 340
+Rate: 3.0
+Total Month Commission: 1020.0
+
+--- DEBUG [2026-05]: مصطفي  ---
+Monthly Sales: 368, Monthly Returns: 16, Net: 352
+Rate: 3.0
+Total Month Commission: 1056.0
+
+--- DEBUG [2026-05]: أحمد وجدي ---
+Monthly Sales: 3015, Monthly Returns: 40, Net: 2975
+Rate: 13.0
+Total Month Commission: 0.0

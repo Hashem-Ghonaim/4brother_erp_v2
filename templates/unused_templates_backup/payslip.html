@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>كشف راتب - {{ emp.username }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f4f6f9; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .payslip-container { max-width: 800px; margin: 30px auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .header { border-bottom: 2px solid #007bff; padding-bottom: 20px; margin-bottom: 30px; }
+        .table th { background-color: #f8f9fa; }
+        
+        /* إخفاء الأزرار عند الطباعة */
+        @media print {
+            .d-print-none { display: none !important; }
+            body { background: white; }
+            .payslip-container { box-shadow: none; margin: 0; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="payslip-container">
+        
+        <div class="header d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="m-0 text-primary fw-bold">كشف راتب / Payslip</h2>
+                <p class="text-muted m-0">عن شهر: <strong>{{ data.month }} / {{ 2024 }}</strong></p>
+            </div>
+            <div class="text-start">
+                <h4 class="m-0">{{ emp.username }}</h4>
+                <span class="badge bg-secondary">{{ emp.role }}</span>
+            </div>
+        </div>
+
+        <h5 class="fw-bold mb-3 text-success border-bottom pb-2">➕ الاستحقاقات (Earnings)</h5>
+        <table class="table table-bordered mb-4">
+            <tbody>
+                <tr>
+                    <th width="70%">الراتب الأساسي</th>
+                    <td class="text-end fw-bold">{{ data.base }} ج.م</td>
+                </tr>
+                <tr>
+                    <th>
+                        عمولة المبيعات 
+                        <span class="text-muted small ms-2">(مبيعات: {{ data.sales }} ج.م)</span>
+                    </th>
+                    <td class="text-end text-success">{{ data.commission }} ج.م</td>
+                </tr>
+                {% if data.bonuses > 0 %}
+                <tr>
+                    <th>مكافآت وحوافز إضافية</th>
+                    <td class="text-end text-success">{{ data.bonuses }} ج.م</td>
+                </tr>
+                {% endif %}
+                <tr class="table-success">
+                    <th>إجمالي الاستحقاقات</th>
+                    <td class="text-end fw-bold">{{ data.base + data.commission + data.bonuses }} ج.م</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h5 class="fw-bold mb-3 text-danger border-bottom pb-2">➖ الاستقطاعات (Deductions)</h5>
+        <table class="table table-bordered mb-4">
+            <tbody>
+                <tr>
+                    <th width="70%">
+                        خصم التأخير 
+                        {% if data.late_min > 0 %}
+                        <span class="badge bg-danger rounded-pill ms-2">{{ data.late_min }} دقيقة</span>
+                        {% endif %}
+                    </th>
+                    <td class="text-end text-danger">- {{ data.late_deduction }} ج.م</td>
+                </tr>
+                {% if data.penalties > 0 %}
+                <tr>
+                    <th>جزاءات وخصومات إدارية</th>
+                    <td class="text-end text-danger">- {{ data.penalties }} ج.م</td>
+                </tr>
+                {% endif %}
+                {% if data.advances > 0 %}
+                <tr>
+                    <th>سلف (خصم من المرتب)</th>
+                    <td class="text-end text-danger">- {{ data.advances }} ج.م</td>
+                </tr>
+                {% endif %}
+                <tr class="table-danger">
+                    <th>إجمالي الاستقطاعات</th>
+                    <td class="text-end fw-bold">- {{ data.late_deduction + data.penalties + data.advances }} ج.م</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="alert alert-primary d-flex justify-content-between align-items-center p-4">
+            <h3 class="m-0 fw-bold">صافي الراتب (Net Salary):</h3>
+            <h2 class="m-0 fw-bold">{{ data.net }} ج.م</h2>
+        </div>
+
+        <div class="text-center mt-5 d-print-none d-flex gap-2 justify-content-center">
+            <button onclick="window.print()" class="btn btn-outline-dark btn-lg">
+                <i class="fas fa-print"></i> طباعة
+            </button>
+            
+            <a href="/hr/pay_salary_confirm/{{ emp.id }}/{{ data.net }}" 
+               class="btn btn-success btn-lg"
+               onclick="return confirm('تنبيه: سيتم خصم مبلغ {{ data.net }} جنيه من الخزنة وتسجيله كمصروف رواتب. هل أنت متأكد؟')">
+                <i class="fas fa-money-bill-wave"></i> اعتماد وصرف من الخزنة
+            </a>
+            
+            <a href="/hr_dashboard" class="btn btn-secondary btn-lg">رجوع</a>
+        </div>
+
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+</body>
+</html>

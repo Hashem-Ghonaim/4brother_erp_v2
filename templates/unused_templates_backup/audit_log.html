@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>سجل الرقابة والأمان</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-4">
+        <h3 class="mb-3 text-danger">🛡️ الصندوق الأسود (Audit Log)</h3>
+        <p>يسجل هذا النظام أحدث 100 عملية حساسة لضمان الأمان.</p>
+        
+        <div class="card shadow-sm">
+            <table class="table table-hover table-striped mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>الوقت</th>
+                        <th>المستخدم</th>
+                        <th>نوع الحركة</th>
+                        <th>التفاصيل</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td style="direction: ltr; text-align: right;">{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td class="fw-bold">{{ log.user_name }}</td>
+                        <td><span class="badge bg-secondary">{{ log.action }}</span></td>
+                        <td>{{ log.details }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="/" class="btn btn-secondary">رجوع للرئيسية</a>
+        </div>
+    </div>
+</body>
+</html>

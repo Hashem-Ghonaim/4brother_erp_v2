@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>كتالوج المنتجات | فور برزر</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            padding-top: 140px;
+            /* مسافة للهيدر الثابت */
+            scroll-behavior: smooth;
+        }
+
+        /* الهيدر وشريط التصنيفات */
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-box {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .category-nav {
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 10px 15px;
+            background: white;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .category-nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .cat-link {
+            display: inline-block;
+            padding: 8px 20px;
+            margin-left: 10px;
+            background: #f1f3f5;
+            color: #333;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+
+        .cat-link.active,
+        .cat-link:hover {
+            background: #0d6efd;
+            color: white;
+        }
+
+        /* كروت المنتجات */
+        .section-title {
+            padding: 20px 0 10px;
+            font-weight: 800;
+            color: #2c3e50;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title i {
+            margin-left: 10px;
+            color: #0d6efd;
+        }
+
+        .product-card {
+            border: none;
+            border-radius: 12px;
+            background: white;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.03);
+            height: 100%;
+            transition: transform 0.2s;
+            position: relative;
+        }
+
+        .product-card:active {
+            transform: scale(0.98);
+        }
+
+        .img-wrap {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            position: relative;
+            padding: 10px;
+        }
+
+        .img-wrap img {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: contain;
+            cursor: zoom-in;
+        }
+
+        .price-tag {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #ffc107;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+            z-index: 5;
+        }
+
+        .p-details {
+            padding: 12px;
+            text-align: center;
+            border-top: 1px solid #f8f9fa;
+        }
+
+        /* Modal / Lightbox */
+        .shadow-text {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        #modalImage {
+            border: 3px solid white;
+        }
+
+        .btn-close-white {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="fixed-header">
+        <div class="search-box text-center">
+            <h5 class="fw-bold text-primary m-0 mb-2">{{ company_name }}</h5>
+            <input type="text" id="searchInput" class="form-control rounded-pill text-center bg-light border-0"
+                placeholder="🔍 ابحث عن موديل أو كود..." onkeyup="filterProducts()">
+        </div>
+
+        <div class="category-nav">
+            <a href="#" class="cat-link active" onclick="setActive(this)">الكل</a>
+            {% for item in catalog_data %}
+            <a href="#cat-{{ item.category.id }}" class="cat-link" onclick="setActive(this)">{{ item.category.name
+                }}</a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="container pb-5">
+
+        {% for item in catalog_data %}
+        <div id="cat-{{ item.category.id }}" class="category-section mb-5">
+            <h4 class="section-title">
+                <i class="fas fa-layer-group"></i> {{ item.category.name }}
+                <span class="badge bg-light text-dark ms-2 rounded-pill fs-6">{{ item.products|length }}</span>
+            </h4>
+
+            <div class="row g-3">
+                {% for p in item.products %}
+                <div class="col-6 col-md-4 col-lg-3 product-item" data-name="{{ p.model.name }}"
+                    data-code="{{ p.barcode or p.id }}">
+                    <div class="product-card">
+                        <div class="img-wrap">
+                            <span class="badge bg-light text-dark border position-absolute top-0 end-0 m-2"
+                                style="z-index: 10;">#{{ p.barcode if p.barcode else p.id }}</span>
+
+                            <img src="{{ p.model.image | image_url }}" loading="lazy"
+                                onclick="viewImage(this.src, '{{ p.model.name }}')"
+                                onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
+
+                            <div class="price-tag">{{ p.sell_price }} ج.م</div>
+                        </div>
+                        <div class="p-details">
+                            <h6 class="fw-bold text-dark m-0 small text-truncate">{{ p.model.name }}</h6>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center mt-5 pt-5">
+            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+            <p class="text-muted">لا توجد منتجات متاحة حالياً للعرض.</p>
+        </div>
+        {% endfor %}
+
+        <div id="noResults" class="text-center mt-5 d-none">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <p class="text-muted">لا توجد نتائج مطابقة لبحثك</p>
+        </div>
+
+    </div>
+
+    <!-- زر الواتساب العائم (يظهر فقط إذا كان هناك رقم في الرابط) -->
+    <div id="whatsapp-container" class="position-fixed bottom-0 end-0 p-4" style="z-index: 1050; display: none;">
+        <a href="#" id="whatsapp-btn" target="_blank"
+            class="btn btn-success rounded-pill shadow-lg d-flex align-items-center gap-2 px-4 py-3"
+            style="text-decoration: none;">
+            <i class="fab fa-whatsapp fa-2x"></i>
+            <div class="text-start">
+                <div class="fw-bold" style="font-size: 1rem; line-height: 1;">تواصل معنا للطلب</div>
+                <small id="whatsapp-phone" style="font-size: 0.8rem;"></small>
+            </div>
+        </a>
+    </div>
+
+
+
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 bg-transparent">
+                <div class="modal-body p-0 position-relative text-center">
+                    <button type="button"
+                        class="btn-close btn-close-white position-absolute top-0 end-0 m-3 shadow-none"
+                        data-bs-dismiss="modal" aria-label="Close" style="z-index: 2000;"></button>
+
+                    <img src="" id="modalImage" class="img-fluid rounded shadow-lg"
+                        style="max-height: 85vh; width: auto;">
+
+                    <div id="modalCaption" class="text-white mt-3 fw-bold fs-5 shadow-text"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // تفعيل رابط التصنيف
+        function setActive(element) {
+            document.querySelectorAll('.cat-link').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        // عرض الصورة الكبيرة
+        function viewImage(imgSrc, title) {
+            document.getElementById('modalImage').src = imgSrc;
+            document.getElementById('modalCaption').innerText = title;
+            var myModal = new bootstrap.Modal(document.getElementById('imageModal'));
+            myModal.show();
+        }
+
+        // فلتر البحث
+        function filterProducts() {
+            let input = document.getElementById('searchInput').value.trim().toLowerCase();
+            let items = document.getElementsByClassName('product-item');
+            let visibleCount = 0;
+
+            for (let i = 0; i < items.length; i++) {
+                let name = items[i].getAttribute('data-name').toLowerCase();
+                let code = items[i].getAttribute('data-code').toLowerCase();
+
+                // منطق البحث الجديد:
+                // 1    . إذا كان المدخل يطابق الكود بالظبط (Match الكامل)
+                // 2. أو إذا كان الاسم يحتوي على الكلمة المكتوبة (للبحث العادي)
+                if (code === input || name.includes(input)) {
+                    items[i].style.display = "";
+                    visibleCount++;
+                } else {
+                    items[i].style.display = "none";
+                }
+            }
+
+            // إخفاء الأقسام (التصنيفات) الفارغة أثناء البحث
+            document.querySelectorAll('.category-section').forEach(sec => {
+                let hasVisible = false;
+                sec.querySelectorAll('.product-item').forEach(item => {
+                    if (item.style.display !== "none") hasVisible = true;
+                });
+                sec.style.display = hasVisible ? "" : "none";
+            });
+
+            // إظهار رسالة "لا توجد نتائج" إذا لم يتم العثور على شيء، وإخفاؤها إذا كان البحث فارغاً
+            let noResults = document.getElementById('noResults');
+            if (visibleCount === 0 && input !== "") {
+                noResults.classList.remove('d-none');
+            } else {
+                noResults.classList.add('d-none');
+            }
+        }
+
+        // تجهيز زر الواتساب بناءً على رابط الـ ref
+        document.addEventListener("DOMContentLoaded", function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const refPhone = urlParams.get('ref');
+
+            if (refPhone) {
+                // تنظيف الرقم من أي مسافات أو رموز غير الأرقام للرابط
+                const cleanPhone = refPhone.replace(/\D/g, '');
+
+                // إضافة كود الدولة لمصر إذا لم يكن موجوداً
+                let whatsappNumber = cleanPhone;
+                if (cleanPhone.startsWith('01')) {
+                    whatsappNumber = '2' + cleanPhone;
+                }
+
+                // تحديث واجهة الزر وإظهاره
+                const waBtn = document.getElementById('whatsapp-btn');
+                const waPhoneTxt = document.getElementById('whatsapp-phone');
+                const waContainer = document.getElementById('whatsapp-container');
+
+                waPhoneTxt.innerText = refPhone; // عرض الرقم بالشكل العادي للمستخدم
+
+                // إنشاء رابط الواتساب مع رسالة ترحيبية
+                const message = encodeURIComponent("مرحباً، أود الاستفسار بخصوص بعض المنتجات من الكتالوج.");
+                waBtn.href = `https://wa.me/${whatsappNumber}?text=${message}`;
+
+                // إظهار الزر
+                waContainer.style.display = 'block';
+            }
+        });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تسجيل مرتجع</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; font-family: Tahoma, sans-serif; }
+        .card { border: none; border-radius: 15px; }
+        .order-info-box { display: none; background: #e8f0fe; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-right: 5px solid #0d6efd; }
+        .product-item { background: white; border: 1px solid #eee; padding: 10px; border-radius: 8px; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5 pb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-9">
+            <div class="card shadow-lg">
+                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center py-3">
+                    <h5 class="m-0 fw-bold"><i class="fas fa-undo-alt"></i> تسجيل مرتجع فاتورة (تسوية مالية)</h5>
+                    <a href="/invoices" class="btn btn-sm btn-light text-danger fw-bold">إلغاء والعودة</a>
+                </div>
+                <div class="card-body p-4">
+                    
+                    <form method="POST">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">ابحث عن رقم الفاتورة أو اسم العميل:</label>
+                            <select name="order_id" id="order_select" class="form-select select2" required>
+                                <option value="">-- اختر الفاتورة --</option>
+                                {% for o in orders %}
+                                <option value="{{ o.id }}">
+                                    فاتورة #{{ o.id }} - {{ o.customer.name if o.customer else 'عميل نقدي' }} ({{ o.date.strftime('%Y-%m-%d') }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div id="order_finance_info" class="order-info-box">
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <small class="text-muted d-block">إجمالي الفاتورة</small>
+                                    <b id="info_total" class="fs-5">0</b>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted d-block">المدفوع (العربون)</small>
+                                    <b id="info_paid" class="text-success fs-5">0</b>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted d-block">المتبقي (دين على الزبون)</small>
+                                    <b id="info_due" class="text-danger fs-5">0</b>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="items_container" style="display: none;" class="mb-4">
+                            <h6 class="fw-bold border-bottom pb-2 mb-3">حدد الكميات المراد إرجاعها للمخزن:</h6>
+                            <div id="items_list"></div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-danger">خسارة الشحن (إن وجدت):</label>
+                                <input type="number" step="0.1" name="shipping_loss" id="shipping_loss" class="form-control" value="0" oninput="calculateRefund()">
+                                <small class="text-muted">المبلغ الذي لن يسترد بسبب شركة الشحن</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-danger">تكلفة توالف/هالك:</label>
+                                <input type="number" step="0.1" name="missing_cost" id="missing_cost" class="form-control" value="0" oninput="calculateRefund()">
+                                <small class="text-muted">قيمة أي قطعة تالفة أو ناقصة</small>
+                            </div>
+                        </div>
+
+                        <div class="card bg-light border-0 mb-4">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <label class="fw-bold mb-2">كيف سيتم رد صافي المبلغ؟</label>
+                                        <select name="refund_method" id="refund_method" class="form-select border-primary fw-bold" onchange="toggleAccountSelect()">
+                                            <option value="debt">خصم من مديونية العميل (تسوية حساب)</option>
+                                            <option value="cash">رد نقدي للعميل (يخرج من الخزينة)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6" id="account_div" style="display: none;">
+                                        <label class="fw-bold mb-2 text-primary">اصرف الكاش من خزينة:</label>
+                                        <select name="refund_account_id" class="form-select border-primary">
+                                            <option value="">-- اختر الخزينة --</option>
+                                            {% for acc in accounts %}
+                                            <option value="{{ acc.id }}">{{ acc.name }} ({{ acc.balance }} ج.م)</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="fw-bold small">ملاحظات إضافية:</label>
+                            <textarea name="notes" class="form-control" rows="2" placeholder="سبب المرتجع..."></textarea>
+                        </div>
+
+                        <div class="alert alert-dark d-flex justify-content-between align-items-center p-3 mb-4">
+                            <h5 class="m-0 fw-bold">صافي المبلغ المستحق:</h5>
+                            <h3 class="m-0 fw-bold text-warning" id="net_refund_display">0.00 ج.م</h3>
+                        </div>
+
+                        <button type="submit" class="btn btn-danger btn-lg w-100 fw-bold shadow">
+                            <i class="fas fa-check-circle"></i> اعتماد المرتجع وتحديث الحسابات
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({ width: '100%', dir: 'rtl' });
+
+        $('#order_select').on('change', function() {
+            const orderId = $(this).val();
+            if (orderId) {
+                $.get('/api/get_order_details/' + orderId, function(data) {
+                    // عرض مديونية الفاتورة
+                    $('#info_total').text(data.total_amount + ' ج.م');
+                    $('#info_paid').text(data.paid_upfront + ' ج.م');
+                    $('#info_due').text(data.amount_due + ' ج.م');
+                    $('#order_finance_info').slideDown();
+
+                    // عرض قائمة المنتجات
+                    let html = '';
+                    data.items.forEach(item => {
+                        html += `
+                        <div class="product-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-bold text-dark"><span class="badge bg-secondary me-1">#${item.variant_id}</span>${item.name}</span>
+                                <small class="text-muted d-block">السعر في الفاتورة: ${item.price} ج.م | متاح: ${item.qty}</small>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="small text-muted">إرجاع:</label>
+                                <input type="number" name="qty_returned_${item.id}" 
+                                       class="form-control form-control-sm return-qty-input text-center" 
+                                       style="width: 70px;" min="0" max="${item.qty}" value="0"
+                                       data-price="${item.price}" oninput="calculateRefund()">
+                            </div>
+                        </div>`;
+                    });
+                    $('#items_list').html(html);
+                    $('#items_container').slideDown();
+                    calculateRefund();
+                });
+            }
+        });
+
+        // اختيار الفاتورة تلقائياً لو جاي من سجل الفواتير
+        const urlParams = new URLSearchParams(window.location.search);
+        const preselectedOrder = urlParams.get('order_id');
+        if (preselectedOrder) {
+            $('#order_select').val(preselectedOrder).trigger('change');
+        }
+    });
+
+    function calculateRefund() {
+        let totalItemsValue = 0;
+        $('.return-qty-input').each(function() {
+            let qty = parseInt($(this).val()) || 0;
+            let price = parseFloat($(this).data('price')) || 0;
+            totalItemsValue += (qty * price);
+        });
+
+        let shipLoss = parseFloat($('#shipping_loss').val()) || 0;
+        let missingCost = parseFloat($('#missing_cost').val()) || 0;
+
+        let netRefund = totalItemsValue - shipLoss - missingCost;
+        if (netRefund < 0) netRefund = 0;
+
+        $('#net_refund_display').text(netRefund.toFixed(2) + ' ج.م');
+    }
+
+    function toggleAccountSelect() {
+        const method = document.getElementById('refund_method').value;
+        const div = document.getElementById('account_div');
+        div.style.display = (method === 'cash') ? 'block' : 'none';
+        
+        // لو مديونية، نصفر المطلوب في الخزينة
+        if(method === 'debt') {
+            document.querySelector('[name="refund_account_id"]').required = false;
+        } else {
+            document.querySelector('[name="refund_account_id"]').required = true;
+        }
+    }
+</script>
+
+</body>
+</html>

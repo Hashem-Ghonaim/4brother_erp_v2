@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>إدارة الخزينة والحسابات</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+    </style>
+</head>
+
+<body class="p-4">
+
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-primary">💰 إدارة السيولة</h2>
+                <p class="text-muted">إجمالي السيولة في الشركة: <span class="badge bg-success fs-5">{{ '%.2f'|format(totals.all) }}
+                        ج.م</span></p>
+            </div>
+            <div>
+                <button class="btn btn-success fw-bold me-2" data-bs-toggle="modal" data-bs-target="#depositModal">
+                    <i class="fas fa-plus-circle"></i> إيداع يدوي
+                </button>
+                <button class="btn btn-warning fw-bold me-2" data-bs-toggle="modal" data-bs-target="#transferModal">
+                    <i class="fas fa-exchange-alt"></i> تحويل رصيد
+                </button>
+
+                <button class="btn btn-dark me-2" data-bs-toggle="modal" data-bs-target="#addAccountModal">
+                    <i class="fas fa-plus"></i> إضافة حساب جديد
+                </button>
+                <a href="/fix/recalculate_treasury" class="btn btn-danger fw-bold me-2" onclick="return confirm('هل أنت متأكد من إعادة حساب ومطابقة جميع الأرصدة؟ سيستغرق ذلك بضع ثواني.')">
+                    <i class="fas fa-sync-alt"></i> مطابقة وتصحيح الأرصدة
+                </a>
+                <a href="/dashboard" class="btn btn-outline-secondary">الرئيسية</a>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} shadow-sm text-center mb-4">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card bg-white border-0 shadow-sm p-3 text-center">
+                    <h6 class="text-muted">درج الكاش</h6>
+                    <h3 class="fw-bold text-dark">{{ '%.2f'|format(totals.cash) }}</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white border-0 shadow-sm p-3 text-center">
+                    <h6 class="text-white-50">فودافون كاش</h6>
+                    <h3 class="fw-bold">{{ '%.2f'|format(totals.vodafone) }}</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-primary text-white border-0 shadow-sm p-3 text-center">
+                    <h6 class="text-white-50">بنوك</h6>
+                    <h3 class="fw-bold">{{ '%.2f'|format(totals.bank) }}</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white border-0 shadow-sm p-3 text-center">
+                    <h6 class="text-white-50">إنستا باي</h6>
+                    <h3 class="fw-bold">{{ '%.2f'|format(totals.instapay) }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs mb-3" id="myTab" role="tablist">
+            <li class="nav-item"><button class="nav-link active fw-bold" data-bs-toggle="tab"
+                    data-bs-target="#vodafone">فودافون كاش ({{ grouped.vodafone|length }})</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#bank">حسابات
+                    بنكية ({{ grouped.bank|length }})</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#instapay">إنستا
+                    باي ({{ grouped.instapay|length }})</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#cash">الخزائن
+                    النقدية</button></li>
+        </ul>
+
+        <div class="tab-content" id="myTabContent">
+            {% for type, accounts in grouped.items() %}
+            <div class="tab-pane fade {% if type == 'vodafone' %}show active{% endif %}" id="{{ type }}">
+                <div class="table-responsive bg-white shadow-sm rounded">
+                    <table class="table table-hover align-middle mb-0 text-center">
+                        <thead class="table-light">
+                            <tr>
+                                <th>اسم الحساب</th>
+                                <th>الرقم / المعرف</th>
+                                <th>الرصيد الحالي</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for acc in accounts %}
+                            <tr>
+                                <td class="fw-bold">{{ acc.name }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ acc.account_number }}</span></td>
+                                <td class="fw-bold text-success fs-5">{{ '%.2f'|format(acc.balance) }}</td>
+                                <td>
+                                    <a href="/treasury/{{ acc.id }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-list"></i> كشف حساب
+                                    </a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-muted py-4">لا توجد حسابات مضافة</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="modal fade" id="addAccountModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form action="/treasury/add" method="POST" class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">إضافة حساب جديد</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>نوع الحساب</label>
+                        <select name="type" class="form-select" required>
+                            <option value="vodafone">فودافون كاش</option>
+                            <option value="instapay">إنستا باي</option>
+                            <option value="bank">حساب بنكي</option>
+                            <option value="cash">خزنة نقدية</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>الاسم التعريفي (مثلاً: رقم 1 - أحمد)</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>رقم الحساب / الموبايل</label>
+                        <input type="text" name="account_number" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary w-100">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="transferModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form action="/treasury/transfer" method="POST" class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title fw-bold">تحويل داخلي بين الحسابات</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="small fw-bold">من حساب (المصدر)</label>
+                            <select name="from_account" class="form-select" required>
+                                <option value="" selected disabled>اختر الحساب...</option>
+                                {% for type, accounts in grouped.items() %}
+                                <optgroup label="{{ type }}">
+                                    {% for acc in accounts %}
+                                    <option value="{{ acc.id }}">{{ acc.name }} ({{ '%.2f'|format(acc.balance) }})</option>
+                                    {% endfor %}
+                                </optgroup>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12 text-center">
+                            <i class="fas fa-arrow-down fa-lg text-muted"></i>
+                        </div>
+                        <div class="col-12">
+                            <label class="small fw-bold">إلى حساب (المستلم)</label>
+                            <select name="to_account" class="form-select" required>
+                                <option value="" selected disabled>اختر الحساب...</option>
+                                {% for type, accounts in grouped.items() %}
+                                <optgroup label="{{ type }}">
+                                    {% for acc in accounts %}
+                                    <option value="{{ acc.id }}">{{ acc.name }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="small fw-bold">المبلغ</label>
+                            <input type="number" name="amount" step="0.5" class="form-control font-monospace" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="small fw-bold">ملاحظات</label>
+                            <input type="text" name="notes" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-warning w-100 fw-bold">تأكيد التحويل</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال الإيداع اليدوي -->
+    <div class="modal fade" id="depositModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <form action="/treasury/deposit" method="POST" class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-plus-circle me-1"></i> إيداع يدوي (فلوس من بره)
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-info small mb-3">
+                        <i class="fas fa-info-circle me-1"></i> استخدم دي لما تعوز تضيف فلوس من بره السيستم (حسابات
+                        قديمة، تحصيل خارجي، رأس مال إضافي)
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">الحساب / الخزينة</label>
+                        <select name="account_id" class="form-select border-success" required>
+                            <option value="" disabled selected>-- اختر الحساب --</option>
+                            {% for type, accounts in grouped.items() %}
+                            <optgroup label="{{ type }}">
+                                {% for acc in accounts %}
+                                <option value="{{ acc.id }}">{{ acc.name }} (الرصيد: {{ '%.2f'|format(acc.balance) }})</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">المبلغ (ج.م)</label>
+                        <input type="number" step="0.01" name="amount"
+                            class="form-control form-control-lg fw-bold text-center border-success text-success"
+                            placeholder="0.00" required>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-bold">ملاحظات / السبب</label>
+                        <input type="text" name="notes" class="form-control border-success"
+                            placeholder="مثلاً: تحصيل حساب قديم من عميل فلان">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="submit" class="btn btn-success fw-bold w-100 py-2"><i
+                            class="fas fa-check-circle me-1"></i> تأكيد الإيداع</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

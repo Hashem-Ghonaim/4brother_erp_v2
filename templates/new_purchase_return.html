@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>فاتورة مرتجع شراء جديدة</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .invoice-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        .table-input { width: 100%; border: none; background: transparent; text-align: center; }
+        .table-input:focus { outline: 2px solid #0d6efd; background: #fff; }
+
+        /* تنسيق Select2 ليناسب الجدول */
+        .select2-container--default .select2-selection--single { border: none; background: transparent; text-align: right; }
+        .select2-container .select2-selection--single .select2-selection__rendered { padding-right: 0; color: #333; }
+        .cat-cell .select2-container--default .select2-selection--single { background-color: #f8f9fa; border-radius: 4px; }
+        
+        .header-title { color: #dc3545; font-weight: bold; border-right: 5px solid #dc3545; padding-right: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="header-title"><i class="fas fa-undo-alt"></i> فاتورة مرتجع شراء جديدة</h3>
+        <a href="/inventory" class="btn btn-secondary">عودة للمخزن</a>
+    </div>
+
+    <form action="/purchases/return" method="POST" class="invoice-box">
+        <div class="row g-3 mb-4 bg-light p-3 rounded border-start border-5 border-danger">
+            <div class="col-md-6">
+                <label class="form-label fw-bold">اختر المورد المراد إرجاع البضاعة له</label>
+                <select name="supplier_id" class="form-select select2" id="supplierSelect" required>
+                    <option value="">-- اختر مورد --</option>
+                    {% for s in suppliers %}
+                    <option value="{{ s.id }}" {% if request.args.get('supplier_id')|int == s.id %}selected{% endif %}>
+                        {{ s.name }} (الرصيد الحالي: {{ s.balance }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+                <div class="alert alert-danger mb-0 py-2 w-100 small">
+                    <i class="fas fa-exclamation-triangle"></i> تنبيه: سيتم خصم الكميات المختارة من المخزن وتقليل مديونية المورد.
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered text-center align-middle" id="itemsTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th width="35%">اسم الصنف</th>
+                        <th width="20%">التصنيف</th>
+                        <th width="15%">سعر التكلفة</th>
+                        <th width="15%">الكمية المرتجعة</th>
+                        <th width="10%">الإجمالي</th>
+                        <th width="5%"></th>
+                    </tr>
+                </thead>
+                <tbody id="tbody">
+                    </tbody>
+            </table>
+        </div>
+
+        <div class="mt-3 d-flex justify-content-between align-items-center">
+            <button type="button" class="btn btn-outline-danger" onclick="addRow()">
+                <i class="fas fa-plus"></i> إضافة صنف آخر للمرتجع
+            </button>
+            <div class="text-start">
+                <h4 class="fw-bold text-danger">إجمالي المرتجع: <span id="totalReturnAmount">0</span> ج.م</h4>
+                <button type="submit" class="btn btn-danger btn-lg fw-bold px-5 mt-2 shadow" onclick="return confirm('تأكيد تسجيل المرتجع وخصم الكميات من المخزن؟')">
+                    <i class="fas fa-save"></i> تسجيل المرتجع نهائياً
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    // بيانات المنتجات المقترحة من السيرفر
+    const productSuggestions = [
+        {% for p in product_suggestions %}
+            {
+                id: "{{ p.id }}",
+                name: "{{ p.model.name }}",
+                category: "{{ p.model.category.name }}",
+                cost: "{{ p.cost_price }}",
+                stock: "{{ p.stock }}"
+            },
+        {% endfor %}
+    ];
+
+    $(document).ready(function() {
+        $('.select2').select2({ dir: 'rtl', width: '100%' });
+        addRow(); // إضافة أول صف تلقائياً
+    });
+
+    function addRow() {
+        let productOptions = '<option></option>';
+        productSuggestions.forEach(p => {
+            productOptions += `<option value="${p.id}" data-name="${p.name}" data-cat="${p.category}" data-cost="${p.cost}" data-stock="${p.stock}">
+                                ${p.name} [كود: ${p.id}] (متاح: ${p.stock})
+                               </option>`;
+        });
+
+        var row = `
+        <tr class="item-row">
+            <td>
+                <select name="product_id[]" class="product-select" style="width: 100%;" onchange="fillProductData(this)" required>
+                    ${productOptions}
+                </select>
+                <input type="hidden" name="name[]" class="real-name-input">
+            </td>
+            <td><input type="text" name="category[]" class="table-input cat-input" readonly style="color: #666;"></td>
+            <td><input type="number" step="0.5" name="cost[]" class="table-input cost-input" oninput="calculateTotal()" required></td>
+            <td><input type="number" name="qty[]" class="table-input qty-input" placeholder="0" oninput="calculateTotal()" required style="background:#fff3f3; font-weight:bold;"></td>
+            <td class="item-total fw-bold text-danger">0.00</td>
+            <td><button type="button" class="btn btn-link text-danger" onclick="removeRow(this)"><i class="fas fa-times"></i></button></td>
+        </tr>`;
+
+        var newRow = $(row).appendTo('#tbody');
+        initProductSelect2(newRow.find('.product-select'));
+    }
+
+    function initProductSelect2(element) {
+        element.select2({
+            placeholder: "ابحث عن صنف لارجاعه...",
+            allowClear: true,
+            language: "ar",
+            dir: "rtl"
+        });
+    }
+
+    function fillProductData(selectElement) {
+        var option = $(selectElement).find(':selected');
+        var tr = $(selectElement).closest('tr');
+
+        tr.find('.real-name-input').val(option.data('name'));
+        tr.find('.cat-input').val(option.data('cat'));
+        tr.find('.cost-input').val(option.data('cost'));
+        tr.find('.qty-input').attr('max', option.data('stock')); // منع إرجاع أكثر من المتاح
+        
+        calculateTotal();
+    }
+
+    function calculateTotal() {
+        let grandTotal = 0;
+        $('.item-row').each(function() {
+            let cost = parseFloat($(this).find('.cost-input').val()) || 0;
+            let qty = parseInt($(this).find('.qty-input').val()) || 0;
+            let total = cost * qty;
+            $(this).find('.item-total').text(total.toFixed(2));
+            grandTotal += total;
+        });
+        $('#totalReturnAmount').text(grandTotal.toLocaleString());
+    }
+
+    function removeRow(btn) {
+        if($('#tbody tr').length > 1) {
+            $(btn).closest('tr').remove();
+            calculateTotal();
+        }
+    }
+</script>
+
+</body>
+</html>

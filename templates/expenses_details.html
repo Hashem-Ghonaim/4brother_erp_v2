@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تفاصيل المصروفات</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .stat-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #dc3545; }
+        .filter-box { background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark px-3 mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <a href="/dashboard" class="btn btn-outline-light btn-sm"><i class="fas fa-home"></i></a>
+        <a href="/expenses" class="btn btn-outline-light btn-sm">تسجيل مصروف</a>
+        <h5 class="m-0 text-white fw-bold">💰 سجل المصروفات التفصيلي</h5>
+    </div>
+</nav>
+
+<div class="container-fluid px-4">
+    
+    <form class="filter-box d-flex flex-wrap gap-3 align-items-end" method="GET">
+        <div>
+            <label class="fw-bold small">من تاريخ</label>
+            <input type="date" name="start_date" value="{{ start_date }}" class="form-control">
+        </div>
+        <div>
+            <label class="fw-bold small">إلى تاريخ</label>
+            <input type="date" name="end_date" value="{{ end_date }}" class="form-control">
+        </div>
+        <div style="min-width: 200px;">
+            <label class="fw-bold small">بند الصرف</label>
+            <select name="category_id" class="form-select">
+                <option value="all">-- كل البنود --</option>
+                {% for c in categories %}
+                <option value="{{ c.id }}" {% if selected_cat|int == c.id %}selected{% endif %}>{{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary fw-bold"><i class="fas fa-filter"></i> عرض</button>
+        <a href="/expenses/details" class="btn btn-outline-secondary">إلغاء الفلاتر</a>
+    </form>
+
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <h6 class="text-muted">إجمالي المصروفات (في الفترة المحددة)</h6>
+                <h2 class="text-danger fw-bold mb-0">{{ total_amount }} ج.م</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle text-center mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>#</th>
+                            <th>التاريخ / الوقت</th>
+                            <th>البند</th>
+                            <th>المبلغ</th>
+                            <th width="30%">الوصف / التفاصيل</th>
+                            <th>النوع</th>
+                            <th>خرجت من خزينة</th>
+                            <th>بواسطة</th>
+                            <th>إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for exp in expenses %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>
+                                {{ exp.date.strftime('%Y-%m-%d') }}
+                                <br>
+                                <small class="text-muted">{{ exp.date.strftime('%I:%M %p') }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ exp.category.name }}</span>
+                            </td>
+                            <td class="fw-bold text-danger fs-5">{{ exp.amount }}</td>
+                            <td class="text-start">{{ exp.description }}</td>
+                            
+                            <td>
+                                {% if exp.is_shared %}
+                                    <span class="badge bg-success">عام (شركة)</span>
+                                {% elif 'سحب' in exp.description or 'مسحوبات' in exp.description %}
+                                    <span class="badge bg-danger">مسحوبات</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">خاص / مشترك</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if exp.account %}
+                                    <span class="text-primary fw-bold"><i class="fas fa-wallet"></i> {{ exp.account.name }}</span>
+                                {% else %}
+                                    <span class="text-muted">---</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="small text-muted">
+                                {{ exp.created_by.fullname }}
+                            </td>
+
+                            <td>
+                                <a href="/expenses/delete/{{ exp.id }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('هل أنت متأكد من حذف هذا المصروف؟ سيتم رد المبلغ للخزينة.')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="9" class="py-5 text-muted">لا توجد مصروفات في هذه الفترة</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

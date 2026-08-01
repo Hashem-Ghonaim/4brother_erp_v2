@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>كتالوج: {{ catalog_title }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            margin: 0; 
+            background: #eee; 
+            -webkit-print-color-adjust: exact;
+        }
+        
+        /* لوحة التحكم */
+        .control-panel {
+            position: fixed; top: 0; left: 0; width: 100%; 
+            background: #2c3e50; color: white; padding: 15px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 9999;
+            display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 15px;
+        }
+
+        /* حاوية المنتجات */
+        #catalog-container {
+            width: 210mm; margin: 0 auto; background: white;
+        }
+
+        /* الصفحة الواحدة */
+        .product-page {
+            width: 210mm;
+            height: 296mm; /* A4 Height */
+            padding: 30px;
+            box-sizing: border-box;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center;
+            page-break-after: always;
+            border-bottom: 1px dashed #ddd;
+            position: relative;
+            background: white;
+        }
+
+        .prod-image {
+            width: 100%; height: 450px; object-fit: contain;
+            margin-bottom: 30px;
+        }
+
+        .prod-name { font-size: 2.5rem; margin-bottom: 10px; color: #2c3e50; font-weight: 800; }
+        .prod-cat { font-size: 1.2rem; color: #fff; background: #7f8c8d; padding: 5px 25px; border-radius: 50px; margin-bottom: 30px; display: inline-block; }
+        
+        .info-box {
+            border: 3px solid #2c3e50; padding: 20px 50px; border-radius: 20px;
+            background: #f8f9fa; min-width: 300px;
+        }
+
+        .prod-price { font-size: 3.5rem; color: #27ae60; margin: 0; font-weight: 900; }
+        .prod-code { font-size: 1.5rem; color: #c0392b; margin-top: 10px; font-weight: bold; }
+        .barcode-txt { font-family: monospace; font-size: 1.1rem; color: #7f8c8d; margin-top: 5px; letter-spacing: 2px; }
+
+        /* شاشة التحميل */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); color: white;
+            display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10000;
+        }
+
+        /* الطباعة */
+        @media print {
+            body { background: white; margin: 0; }
+            .control-panel, #loading-overlay { display: none !important; }
+            #catalog-container { margin: 0; width: 100%; }
+            .product-page { border: none; margin: 0; page-break-after: always; }
+            @page { margin: 0; size: A4 portrait; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <i class="fas fa-spinner fa-spin fa-3x mb-3"></i>
+        <h3>جاري إنشاء ملف PDF...</h3>
+        <p>يرجى الانتظار، قد يستغرق الأمر بضع ثوانٍ حسب عدد الصور.</p>
+    </div>
+
+    <div class="control-panel" id="ctrlPanel">
+        <div style="font-weight: bold;">{{ catalog_title }} ({{ products|length }})</div>
+        
+        <button onclick="window.print()" class="btn-action" style="background: #34495e;">
+            <i class="fas fa-print"></i> طباعة (PC)
+        </button>
+
+        <button onclick="downloadMobilePDF()" class="btn-action" style="background: #e74c3c;">
+            <i class="fas fa-file-download"></i> تحميل PDF (موبايل)
+        </button>
+
+        <a href="/dashboard" style="color: #ccc; font-size: 12px; text-decoration: underline;">خروج</a>
+    </div>
+
+    <div style="height: 70px;"></div> <div id="catalog-container">
+        {% for p in products %}
+        <div class="product-page">
+            <img src="{{ p.model.image | image_url }}" class="prod-image" loading="eager" onerror="this.src='https://via.placeholder.com/500x500?text=No+Image'">
+            
+            <div class="prod-name">{{ p.model.name }}</div>
+            <div class="prod-cat">{{ p.model.category.name }}</div>
+            <div class="prod-cat" style="background: #17a2b8; margin-right: 10px;">{{ p.model.season }}</div>
+
+            <div class="info-box">
+                <div class="prod-price">{{ p.sell_price }} ج.م</div>
+                <div class="prod-code">كود: {{ p.id }}</div>
+                {% if p.barcode %}
+                <div class="barcode-txt">{{ p.barcode }}</div>
+                {% endif %}
+            </div>
+            
+            <div style="position: absolute; bottom: 20px; font-size: 12px; color: #999;">
+                {{ loop.index }} / {{ products|length }}
+            </div>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 50px;">
+            <h2>لا توجد منتجات متوفرة في هذا القسم حالياً</h2>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        // دالة التحميل للموبايل
+        function downloadMobilePDF() {
+            // 1. إظهار شاشة التحميل وإخفاء الأزرار
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('ctrlPanel').style.display = 'none';
+
+            // 2. إعدادات التحويل (جودة متوسطة للسرعة وعدم التهنيج)
+            const element = document.getElementById('catalog-container');
+            const opt = {
+                margin:       0,
+                filename:     'Catalog_{{ catalog_title }}.pdf',
+                image:        { type: 'jpeg', quality: 0.7 }, // جودة 70% ممتازة للموبايل وسريعة
+                html2canvas:  { scale: 1.5, useCORS: true, logging: false }, // دقة متوسطة
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // 3. التنفيذ
+            html2pdf().set(opt).from(element).save().then(function(){
+                // عند الانتهاء
+                document.getElementById('loading-overlay').style.display = 'none';
+                document.getElementById('ctrlPanel').style.display = 'flex';
+            }).catch(function(err) {
+                alert("حدث خطأ أثناء التحميل، حاول مرة أخرى.");
+                document.getElementById('loading-overlay').style.display = 'none';
+                document.getElementById('ctrlPanel').style.display = 'flex';
+            });
+        }
+    </script>
+
+    <style>
+        .btn-action {
+            padding: 8px 20px; color: white; border: none; border-radius: 5px; 
+            cursor: pointer; font-family: 'Cairo'; font-size: 14px;
+        }
+    </style>
+
+</body>
+</html>

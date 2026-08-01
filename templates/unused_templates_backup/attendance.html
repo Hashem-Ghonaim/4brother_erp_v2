@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة الملابس</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card { margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <div class="text-center mb-5">
+        <h1>نظام إدارة مبيعات الملابس</h1>
+        <p class="text-muted">تسجيل الحضور ومتابعة المبيعات</p>
+    </div>
+
+    <div class="card p-4">
+        <h3>📍 تسجيل حضور بالـ GPS</h3>
+        <p>يجب أن تكون داخل نطاق المحل لتسجيل الحضور.</p>
+        <button onclick="getLocation()" class="btn btn-primary btn-lg w-100">سجل حضوري الآن</button>
+        <div id="result" class="mt-3 alert alert-info" style="display:none;"></div>
+    </div>
+
+    <div class="card p-4">
+        <h3>سجل الحركات الأخيرة</h3>
+        <table class="table table-striped mt-3">
+            <thead>
+                <tr>
+                    <th>الموظف</th>
+                    <th>التوقيت</th>
+                    <th>الحالة</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.user_name }}</td>
+                    <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td class="{{ 'text-success' if 'مقبول' in log.status else 'text-danger' }}">
+                        {{ log.status }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function getLocation() {
+        const resultDiv = document.getElementById('result');
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = "جاري تحديد الموقع... برجاء الانتظار";
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(sendPosition, showError);
+        } else {
+            resultDiv.innerHTML = "المتصفح لا يدعم تحديد الموقع.";
+        }
+    }
+
+    function sendPosition(position) {
+        const data = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+        };
+
+        fetch('/api/check-in', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('result').innerHTML = 
+                `<strong>النتيجة:</strong> ${data.message} <br> (المسافة: ${data.distance} متر)`;
+            // إعادة تحميل الصفحة بعد ثانيتين عشان تشوف السجل الجديد
+            setTimeout(() => location.reload(), 2000);
+        });
+    }
+
+    function showError(error) {
+        document.getElementById('result').innerHTML = "حدث خطأ في تحديد الموقع: " + error.message;
+    }
+</script>
+
+</body>
+</html>

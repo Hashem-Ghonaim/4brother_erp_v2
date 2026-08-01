@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متابعة الشحن</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #eef0fd;
+            --bg: #f4f7fe;
+            --card-bg: #ffffff;
+            --text-main: #2b3674;
+            --text-muted: #8f9bba;
+            --border: #e9ecef;
+            --success: #2ea776;
+            --warning: #f77f00;
+            --danger: #e63946;
+            --info: #0ea5e9;
+        }
+        body {
+            background: var(--bg);
+            font-family: 'Tajawal', 'Segoe UI', Tahoma, sans-serif;
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        /* NAV */
+        .top-nav {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+        }
+        .top-nav .page-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .top-nav .page-title i { color: var(--primary); }
+        .btn-back {
+            color: var(--text-muted);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 7px 16px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex; align-items: center; gap: 6px;
+            transition: 0.2s;
+        }
+        .btn-back:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+
+        /* HEADER & FILTERS */
+        .filter-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 12px rgba(67,97,238,0.05);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .search-input {
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 16px 10px 42px;
+            width: 100%;
+            font-size: 0.95rem;
+            background: var(--bg);
+            transition: 0.2s;
+            font-family: 'Tajawal', sans-serif;
+        }
+        .search-input:focus { border-color: var(--primary); background: white; outline: none; }
+        .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+        
+        .filter-btn {
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 8px 16px;
+            transition: 0.2s;
+            border: 1.5px solid transparent;
+        }
+
+        /* TABLE */
+        .table-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(67,97,238,0.05);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .table {
+            margin: 0;
+            table-layout: fixed; /* Ensures table columns don't resize dynamically */
+            width: 100%;
+        }
+        .table thead th {
+            background: var(--bg); color: var(--text-muted);
+            font-size: 0.8rem; font-weight: 700;
+            padding: 14px 8px; border: none;
+            text-align: center;
+        }
+        .table tbody td {
+            padding: 12px 8px; border-color: var(--border); vertical-align: middle; 
+            font-size: 0.88rem; text-align: center;
+            overflow: hidden; text-overflow: ellipsis; word-wrap: break-word;
+        }
+        .table tbody tr:hover { background: var(--primary-light); }
+
+        /* BADGES */
+        .status-badge { font-size: 0.75rem; font-weight: 700; padding: 5px 10px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; justify-content: center; width: 100%; }
+        .status-pending { background: #f1f5f9; color: #64748b; }
+        .status-shipped { background: rgba(67, 97, 238, 0.1); color: var(--primary); }
+        .status-delivered { background: rgba(46, 167, 118, 0.1); color: var(--success); }
+        .status-partial { background: rgba(247, 127, 0, 0.1); color: var(--warning); }
+        .status-returned { background: rgba(230, 57, 70, 0.1); color: var(--danger); }
+
+        .btn-action-small {
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 8px;
+            padding: 6px 0;
+            width: 100%;
+            margin-bottom: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: 0.2s;
+        }
+
+        .note-btn { cursor: pointer; transition: 0.2s; }
+        .note-btn:hover { filter: brightness(0.9); }
+
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+            .table-responsive { overflow-x: visible !important; }
+            .table { min-width: 100% !important; }
+            .table th, .table td, .table span, .table button, .table a, .table i {
+                padding: 0.1rem !important;
+                font-size: 0.25rem !important;
+                white-space: normal !important;
+                word-break: break-word !important;
+                line-height: 1.2 !important;
+            }
+            .status-badge, .btn-action-small, .badge {
+                font-size: 0.25rem !important;
+                padding: 0.1rem !important;
+            }
+            .btn-action-small i { font-size: 0.25rem !important; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="top-nav">
+    <div class="page-title"><i class="fas fa-shipping-fast"></i> متابعة شحنات الشركات</div>
+    <a href="/dashboard" class="btn-back"><i class="fas fa-arrow-right"></i> الرئيسية</a>
+</nav>
+
+<div class="container-fluid px-3 px-md-4 py-4">
+
+    <!-- HEADER BUTTONS -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div class="d-flex flex-wrap gap-2">
+            <a href="/shipping/bulk_collect" class="btn btn-dark fw-bold rounded-3 px-4 shadow-sm">
+                <i class="fas fa-cash-register me-2"></i> تحصيل متعدد
+            </a>
+            <a href="/shipping/daily_report" class="btn btn-success fw-bold rounded-3 px-4 shadow-sm">
+                <i class="fas fa-file-invoice-dollar me-2"></i> تقرير التحصيلات اليومي
+            </a>
+        </div>
+        <div class="badge bg-warning text-dark fs-6 p-3 rounded-3 shadow-sm border border-warning-subtle">
+            معلق لدى الشركات: <span class="fw-bold fs-5 ms-1">{{ total_pending }}</span> ج.م
+        </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filter-card">
+        <div class="row g-3 align-items-center">
+            <div class="col-lg-4 col-md-12">
+                <div class="position-relative">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="searchInput" class="search-input" placeholder="ابحث برقم البوليصة، العميل، الفاتورة..." oninput="filterShippingTable()">
+                </div>
+            </div>
+            
+            <div class="col-lg-5 col-md-12">
+                <div class="d-flex flex-wrap gap-2" id="statusFilters">
+                    <button class="btn btn-dark filter-btn active" data-status="all" onclick="setStatusFilter('all')">الكل</button>
+                    <button class="btn btn-outline-secondary filter-btn" data-status="pending" onclick="setStatusFilter('pending')">انتظار</button>
+                    <button class="btn btn-outline-primary filter-btn" data-status="shipped" onclick="setStatusFilter('shipped')">تم الشحن</button>
+                    <button class="btn btn-outline-success filter-btn" data-status="delivered" onclick="setStatusFilter('delivered')">تم التوصيل</button>
+                    <button class="btn btn-outline-danger filter-btn" data-status="returned" onclick="setStatusFilter('returned')">مرتجع</button>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-12">
+                <select id="companyFilter" class="form-select border-0 bg-light fw-bold text-primary" onchange="filterShippingTable()" style="height: 44px;">
+                    <option value="all">-- كل شركات الشحن --</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="shippingTable">
+                <colgroup>
+                    <col style="width: 4%;">  <!-- # -->
+                    <col style="width: 7%;">  <!-- رقم الفاتورة -->
+                    <col style="width: 9%;">  <!-- تاريخ -->
+                    <col style="width: 9%;">  <!-- البائع -->
+                    <col style="width: 15%;"> <!-- العميل -->
+                    <col style="width: 10%;"> <!-- شركة الشحن -->
+                    <col style="width: 10%;"> <!-- رقم البوليصة -->
+                    <col style="width: 9%;">  <!-- المطلوب -->
+                    <col style="width: 10%;"> <!-- الحالة -->
+                    <col style="width: 8%;">  <!-- ملاحظات -->
+                    <col style="width: 9%;">  <!-- إجراءات -->
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>الفاتورة</th>
+                        <th>تاريخ</th>
+                        <th>البائع</th>
+                        <th>العميل</th>
+                        <th>شركة الشحن</th>
+                        <th>البوليصة</th>
+                        <th>التحصيل</th>
+                        <th>الحالة</th>
+                        <th>ملاحظات</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr class="shipping-row" data-status="{{ order.shipping_status }}" data-company="{{ order.courier.name if order.courier else '-' }}">
+                        <td class="text-muted fw-bold">{{ loop.index }}</td>
+                        <td class="fw-bold text-primary">#{{ order.id }}</td>
+                        <td class="small text-muted fw-bold">{{ order.date.strftime('%Y-%m-%d') }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ order.sales_rep.fullname if order.sales_rep else '-' }}</span></td>
+                        <td>
+                            <div class="fw-bold"><a href="/customers/{{ order.customer_id }}" class="text-decoration-none text-dark">{{ order.customer.name }}</a></div>
+                            <div class="small text-muted" dir="ltr">{{ order.customer.phone }}</div>
+                            <div class="small text-primary mt-1">{{ order.customer.address }}</div>
+                        </td>
+                        <td>
+                            {% if order.courier %}
+                            <span class="badge" style="background: var(--primary-light); color: var(--primary); border: 1px solid rgba(67,97,238,0.2);">{{ order.courier.name }}</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if order.waybill_no %}
+                            <button type="button" class="btn btn-link text-decoration-none fw-bold text-primary p-0 w-100 d-flex align-items-center justify-content-center gap-1"
+                                data-bs-toggle="modal" data-bs-target="#editWaybillModal{{ order.id }}" title="تعديل البوليصة" style="font-size: 0.85rem;">
+                                {{ order.waybill_no }} <i class="fas fa-pen text-muted" style="font-size: 0.6rem;"></i>
+                            </button>
+                            {% else %}
+                            <button type="button" class="btn btn-link text-decoration-none text-muted p-0 w-100 small fw-bold"
+                                data-bs-toggle="modal" data-bs-target="#waybillModal{{ order.id }}">
+                                <i class="fas fa-plus-circle me-1"></i> لم يسجل
+                            </button>
+                            {% endif %}
+                        </td>
+
+                        <td class="fw-bold text-danger">{{ order.amount_due }} <small>ج</small></td>
+
+                        <td>
+                            {% if order.shipping_status == 'shipped' %}
+                            <span class="status-badge status-shipped">تم الشحن (بالطريق)</span>
+                            {% elif order.shipping_status == 'delivered' %}
+                            <span class="status-badge status-delivered">تم التوصيل (لم يحصل)</span>
+                            {% elif order.shipping_status == 'partial_return' %}
+                            <span class="status-badge status-partial">مرتجع جزئي (قيد الانتظار)</span>
+                            {% elif order.shipping_status == 'returned' %}
+                            <span class="status-badge status-returned">مرتجع</span>
+                            {% else %}
+                            <span class="status-badge status-pending">قيد الانتظار</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <span class="badge note-btn {{ 'bg-warning text-dark' if order.shipping_notes else 'bg-light text-muted border' }} p-2 w-100" 
+                                data-order-id="{{ order.id }}" data-note="{{ (order.shipping_notes or '')|e }}" title="{{ order.shipping_notes or 'اضغط لإضافة ملاحظة' }}">
+                                {% if order.shipping_notes %}
+                                <i class="fas fa-sticky-note"></i> {{ order.shipping_notes[:15] }}{{ '...' if order.shipping_notes|length > 15 else '' }}
+                                {% else %}
+                                <i class="fas fa-plus-circle"></i> ملاحظة
+                                {% endif %}
+                            </span>
+                        </td>
+
+                        <td>
+                            {% if order.shipping_status == 'none' %}
+                            <button class="btn btn-primary btn-action-small shadow-sm" data-bs-toggle="modal" data-bs-target="#waybillModal{{ order.id }}">
+                                <i class="fas fa-truck"></i> خروج للشحن
+                            </button>
+                            {% endif %}
+
+                            {% if order.shipping_status == 'shipped' %}
+                            <form action="/shipping/update/{{ order.id }}" method="POST" class="d-inline">
+                                <input type="hidden" name="action" value="mark_delivered">
+                                <button type="submit" class="btn btn-success btn-action-small shadow-sm">
+                                    <i class="fas fa-check"></i> تم التوصيل
+                                </button>
+                            </form>
+                            <button type="button" class="btn btn-warning btn-action-small shadow-sm text-dark" data-bs-toggle="modal" data-bs-target="#editWaybillModal{{ order.id }}">
+                                <i class="fas fa-edit"></i> تعديل البوليصة
+                            </button>
+                            {% endif %}
+
+                            {% if order.shipping_status in ['delivered', 'partial_return'] %}
+                            <button class="btn btn-dark btn-action-small shadow-sm" data-bs-toggle="modal" data-bs-target="#settleModal{{ order.id }}">
+                                <i class="fas fa-hand-holding-usd"></i> تحصيل وإيداع
+                            </button>
+                            <button type="button" class="btn btn-warning btn-action-small shadow-sm text-dark" data-bs-toggle="modal" data-bs-target="#editWaybillModal{{ order.id }}">
+                                <i class="fas fa-edit"></i> تعديل البوليصة
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="11" class="py-5 text-muted fw-bold"><i class="fas fa-box-open fs-2 mb-2 d-block opacity-50"></i> لا توجد شحنات معلقة</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODALS -->
+{% for order in orders %}
+<!-- Settle Modal -->
+<div class="modal fade" id="settleModal{{ order.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <form action="/shipping/update/{{ order.id }}" method="POST" class="modal-content">
+            <input type="hidden" name="action" value="settle">
+            <div class="modal-header bg-dark text-white border-0">
+                <h6 class="modal-title fw-bold"><i class="fas fa-wallet me-1"></i> تحصيل وإيداع</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <span class="d-block small text-muted fw-bold">المطلوب تحصيله</span>
+                    <span class="fs-4 fw-bold text-danger">{{ order.amount_due }} ج.م</span>
+                </div>
+                <label class="form-label fw-bold small">اختر الخزينة:</label>
+                <select name="account_id" class="form-select" required>
+                    <option value="" disabled selected>-- اختر --</option>
+                    {% for acc in accounts %}
+                    <option value="{{ acc.id }}">{{ acc.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="modal-footer bg-light border-0 p-2">
+                <button type="submit" class="btn btn-success w-100 fw-bold">تأكيد الإيداع</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Waybill Modal -->
+<div class="modal fade" id="waybillModal{{ order.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <form action="/shipping/update/{{ order.id }}" method="POST" class="modal-content">
+            <input type="hidden" name="action" value="set_waybill">
+            <div class="modal-header bg-primary text-white border-0">
+                <h6 class="modal-title fw-bold"><i class="fas fa-barcode me-1"></i> تسجيل بوليصة</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label fw-bold small">رقم البوليصة:</label>
+                <input type="text" name="waybill_no" class="form-control" required>
+            </div>
+            <div class="modal-footer bg-light border-0 p-2">
+                <button type="submit" class="btn btn-primary w-100 fw-bold">حفظ التغيير</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Waybill Modal -->
+<div class="modal fade" id="editWaybillModal{{ order.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <form action="/shipping/update/{{ order.id }}" method="POST" class="modal-content">
+            <input type="hidden" name="action" value="edit_waybill">
+            <div class="modal-header bg-warning border-0">
+                <h6 class="modal-title fw-bold text-dark"><i class="fas fa-pen me-1"></i> تعديل بوليصة</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label fw-bold small">الرقم الجديد:</label>
+                <input type="text" name="waybill_no" class="form-control" value="{{ order.waybill_no }}" required>
+            </div>
+            <div class="modal-footer bg-light border-0 p-2">
+                <button type="submit" class="btn btn-warning w-100 fw-bold text-dark">تحديث البوليصة</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Note Modal -->
+<div class="modal fade" id="noteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form id="noteForm" method="POST" class="modal-content">
+            <input type="hidden" name="action" value="save_note">
+            <div class="modal-header bg-warning border-0">
+                <h6 class="modal-title fw-bold text-dark"><i class="fas fa-sticky-note me-1"></i> ملاحظات الشحن</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <textarea name="note" id="noteText" class="form-control border-warning-subtle" rows="4" placeholder="اكتب ملاحظاتك هنا..."></textarea>
+            </div>
+            <div class="modal-footer bg-light border-0 p-2">
+                <button type="submit" class="btn btn-warning fw-bold text-dark w-100">حفظ الملاحظة</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let currentStatusFilter = 'all';
+
+    function setStatusFilter(status) {
+        currentStatusFilter = status;
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('btn-dark');
+            if(btn.getAttribute('data-status') === 'pending') btn.classList.add('btn-outline-secondary');
+            if(btn.getAttribute('data-status') === 'shipped') btn.classList.add('btn-outline-primary');
+            if(btn.getAttribute('data-status') === 'delivered') btn.classList.add('btn-outline-success');
+            if(btn.getAttribute('data-status') === 'returned') btn.classList.add('btn-outline-danger');
+            if(btn.getAttribute('data-status') === 'all') btn.classList.add('btn-outline-dark');
+            btn.classList.remove('active');
+        });
+        let activeBtn = document.querySelector(`.filter-btn[data-status="${status}"]`);
+        activeBtn.className = 'btn btn-dark filter-btn active';
+        filterShippingTable();
+    }
+
+    function filterShippingTable() {
+        let input = document.getElementById("searchInput").value.toLowerCase();
+        let company = document.getElementById("companyFilter").value;
+        let rows = document.querySelectorAll(".shipping-row");
+
+        rows.forEach(row => {
+            let text = row.innerText.toLowerCase();
+            let rowStatus = row.getAttribute('data-status');
+            let rowCompany = row.getAttribute('data-company');
+
+            let matchesSearch = input === '' || text.includes(input);
+            let matchesStatus = currentStatusFilter === 'all' || 
+                                rowStatus === currentStatusFilter || 
+                                (currentStatusFilter === 'pending' && rowStatus === 'none');
+            let matchesCompany = company === 'all' || rowCompany === company;
+
+            row.style.display = (matchesSearch && matchesStatus && matchesCompany) ? "" : "none";
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        let companies = new Set();
+        document.querySelectorAll(".shipping-row").forEach(row => {
+            let comp = row.getAttribute('data-company');
+            if(comp && comp !== '-') companies.add(comp);
+        });
+        let select = document.getElementById('companyFilter');
+        companies.forEach(comp => {
+            select.innerHTML += `<option value="${comp}">${comp}</option>`;
+        });
+
+        document.querySelectorAll('.note-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.getElementById('noteForm').action = '/shipping/update/' + this.getAttribute('data-order-id');
+                document.getElementById('noteText').value = this.getAttribute('data-note') || '';
+                new bootstrap.Modal(document.getElementById('noteModal')).show();
+            });
+        });
+    });
+</script>
+</body>
+</html>
