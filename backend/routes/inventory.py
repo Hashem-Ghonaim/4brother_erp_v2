@@ -79,13 +79,15 @@ def update_product_image():
             
             if success:
                 # تحديث المنتج
-            variant = ProductVariant.query.get(product_id)
-            if variant:
-                variant.model.image = url
-                db.session.commit()
-                return jsonify({'success': True, 'message': 'تم تحديث الصورة بنجاح', 'image_url': url})
+                variant = ProductVariant.query.get(product_id)
+                if variant:
+                    variant.model.image = url
+                    db.session.commit()
+                    return jsonify({'success': True, 'message': 'تم تحديث الصورة بنجاح', 'image_url': url})
+                else:
+                    return jsonify({'success': False, 'message': 'المنتج غير موجود'}), 404
             else:
-                return jsonify({'success': False, 'message': 'المنتج غير موجود'}), 404
+                return jsonify({'success': False, 'message': 'فشل رفع الصورة'}), 500
 
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
