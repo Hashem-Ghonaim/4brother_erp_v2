@@ -42,7 +42,7 @@ greenlet==3.2.4
 grpcio==1.76.0
 grpcio-status==1.71.2
 gspread==6.2.1
-h11==0.16.0
+h11==0.14.0
 httplib2==0.31.0
 idna==3.10
 itsdangerous==2.2.0
