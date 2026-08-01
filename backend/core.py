@@ -21,8 +21,11 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(STATIC_DIR, 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
+try:
+    if not os.path.exists(app.config['UPLOAD_FOLDER']):
+        os.makedirs(app.config['UPLOAD_FOLDER'])
+except OSError:
+    pass  # Read-only filesystem (like Vercel)
 
 app.jinja_env.globals.update(now=datetime.now)
 
