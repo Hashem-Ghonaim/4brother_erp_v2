@@ -3,22 +3,14 @@ from supabase import create_client, Client
 from werkzeug.utils import secure_filename
 import tempfile
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-SUPABASE_BUCKET = os.environ.get("SUPABASE_BUCKET", "images")
-
-supabase: Client = None
-if SUPABASE_URL and SUPABASE_KEY:
-    try:
-        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    except Exception as e:
-        print(f"Error initializing Supabase client: {e}")
-
 def upload_file_to_supabase(file_obj, filename, app_config):
-    if not supabase:
-        # If we are on Vercel, local storage is read-only and will crash
+    SUPABASE_URL = os.environ.get("SUPABASE_URL")
+    SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+    SUPABASE_BUCKET = os.environ.get("SUPABASE_BUCKET", "images")
+    
+    if not SUPABASE_URL or not SUPABASE_KEY:
         if os.environ.get('VERCEL') or os.environ.get('VERCEL_URL'):
-            return False, "خطأ: مفاتيح رفع الصور (SUPABASE_URL و SUPABASE_KEY) غير موجودة في إعدادات Vercel. يرجى إضافتها وعمل Redeploy."
+            return False, "خطأ: مفاتيح رفع الصور (SUPABASE_URL و SUPABASE_KEY) غير موجودة في بيئة تشغيل Vercel. تأكد من إضافتها."
             
         # Fallback to local storage (for local development)
         try:
@@ -28,6 +20,11 @@ def upload_file_to_supabase(file_obj, filename, app_config):
         except Exception as e:
             return False, f"فشل الحفظ المحلي: {str(e)}"
     
+    try:
+        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    except Exception as e:
+        return False, f"خطأ في الاتصال بسيرفر Supabase: {str(e)}"
+        
     try:
         # Create a temporary file to save the uploaded content
         temp_dir = tempfile.gettempdir()
