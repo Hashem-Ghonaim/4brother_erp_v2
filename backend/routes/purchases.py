@@ -97,8 +97,8 @@ def new_purchase():
             p_category = categories[i].strip() if i < len(categories) else "عام"
             if not p_category: p_category = "عام"
 
-            p_season = seasons[i].strip() if i < len(seasons) else "صيفي"
-            if not p_season: p_season = "صيفي"
+            p_season = seasons[i].strip() if i < len(seasons) else "شتوي 2027"
+            if not p_season: p_season = "شتوي 2027"
 
             # معالجة الصورة المرفوعة
             image_filename = 'default_product.png'
@@ -267,8 +267,8 @@ def edit_purchase(id):
                 p_category = categories[i].strip() if i < len(categories) else "عام"
                 if not p_category: p_category = "عام"
 
-                p_season = seasons[i].strip() if i < len(seasons) else "صيفي"
-                if not p_season: p_season = "صيفي"
+                p_season = seasons[i].strip() if i < len(seasons) else "شتوي 2027"
+                if not p_season: p_season = "شتوي 2027"
 
                 # معالجة الصورة المرفوعة
                 image_filename = 'default_product.png'

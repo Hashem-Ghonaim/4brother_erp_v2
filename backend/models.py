@@ -102,7 +102,7 @@ class ProductModel(db.Model):
     name = db.Column(db.String(100), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
     image = db.Column(db.String(150), default='default.png')
-    season = db.Column(db.String(20), default='صيفي')
+    season = db.Column(db.String(20), default='شتوي 2027')
     category = db.relationship('Category', backref='products')
     variants = db.relationship('ProductVariant', backref='model', lazy=True, cascade="all, delete-orphan")
 class EmployeeExcuse(db.Model):

@@ -124,7 +124,7 @@
                         {% set season_counts = namespace(data={}) %}
                         {% for p in products %}
                             {% set cat_name = p.model.category.name %}
-                            {% set season_name = p.model.season or 'صيفي' %}
+                            {% set season_name = p.model.season or 'صيفي 2026' %}
                             
                             {% if cat_name not in cat_counts.data %}
                                 {% set _ = cat_counts.data.update({cat_name: p.stock}) %}
@@ -189,7 +189,7 @@
                             </tr>
                             {% endif %}
                             {% for p in products %}
-                            <tr id="row_{{ p.id }}" class="product-row" data-category="{{ p.model.category.name }}" data-season="{{ p.model.season or 'صيفي' }}" data-cost="{{ p.cost_price }}" data-sell="{{ p.sell_price }}" data-stock="{{ p.stock }}">
+                            <tr id="row_{{ p.id }}" class="product-row" data-category="{{ p.model.category.name }}" data-season="{{ p.model.season or 'صيفي 2026' }}" data-cost="{{ p.cost_price }}" data-sell="{{ p.sell_price }}" data-stock="{{ p.stock }}">
                                 <td class="fw-bold text-muted">{{ p.id }}</td>
 
                                 <td>
@@ -424,9 +424,9 @@
             });
         });
 
-        // فلتر الأقسام
+        // فلتر الأقسام والمواسم
         var activeCategories = new Set();
-        var activeSeasons = new Set();
+        var activeSeasons = new Set(['شتوي 2027']); // الافتراضي هو الشتوي الجديد
 
         function toggleSeasonFilter(badge, seasonName) {
             if (activeSeasons.has(seasonName)) {
@@ -518,8 +518,14 @@
             applyFilters();
         }
 
-        // حساب الإجماليات عند تحميل الصفحة لأول مرة
+        // تطبيق الفلاتر عند تحميل الصفحة
         document.addEventListener('DOMContentLoaded', function () {
+            // إضافة كلاس active للزر الافتراضي (شتوي 2027)
+            document.querySelectorAll('.season-badge').forEach(b => {
+                if (b.innerText.includes('شتوي 2027')) {
+                    b.classList.add('active');
+                }
+            });
             applyFilters();
         });
     </script>
