@@ -102,4 +102,4 @@ yarl==1.22.0
 zopfli==0.4.0
 pytz
 psycopg2-binary==2.9.9
-supabase==2.3.0
+supabase==2.31.0
