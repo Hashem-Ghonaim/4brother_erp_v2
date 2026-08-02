@@ -107,7 +107,8 @@ def update_monthly_commissions(sales_rep_id, ref_date):
         monthly_orders = SaleOrder.query.filter(
             SaleOrder.user_id == sales_rep.id,
             SaleOrder.is_proforma == False,
-            func.to_char(SaleOrder.date, 'YYYY-MM') == target_month_str
+            SaleOrder.date >= target_month_start,
+            SaleOrder.date < next_month
         ).all()
 
         total_month_comm = 0.0
@@ -117,14 +118,16 @@ def update_monthly_commissions(sales_rep_id, ref_date):
             PartnerTransaction.query.filter(
                 PartnerTransaction.order_id == order.id,
                 PartnerTransaction.type.in_(['commission_gross', 'sub_commission']),
-                func.to_char(PartnerTransaction.date, 'YYYY-MM') == target_month_str
+                PartnerTransaction.date >= target_month_start,
+                PartnerTransaction.date < next_month
             ).delete(synchronize_session=False)
 
             # ب) حساب صافي الفاتورة — query مباشر لتجنب cache العلاقات (مرتجعات نفس الشهر فقط)
             gross_qty = sum(item.quantity for item in order.items)
             returned_qty = db.session.query(func.sum(ReturnInvoice.total_qty)).filter(
                 ReturnInvoice.order_id == order.id,
-                func.to_char(ReturnInvoice.date, 'YYYY-MM') == target_month_str
+                ReturnInvoice.date >= target_month_start,
+                ReturnInvoice.date < next_month
             ).scalar() or 0
             net_qty = max(0, gross_qty - returned_qty)
             
@@ -161,8 +164,8 @@ def update_monthly_commissions(sales_rep_id, ref_date):
         print(f"✅ Updated monthly commissions for Partner {partner.fullname} from Sales {sales_rep.fullname}")
 
     except Exception as e:
-        db.session.rollback()
-        print(f"❌ Error: {e}")
+        print(f"❌ Error updating commissions: {e}")
+        # Note: Do not rollback here because it cancels the entire transaction.
 
 
 
