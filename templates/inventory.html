@@ -121,13 +121,28 @@
                         </span>
 
                         {% set cat_counts = namespace(data={}) %}
+                        {% set season_counts = namespace(data={}) %}
                         {% for p in products %}
                             {% set cat_name = p.model.category.name %}
+                            {% set season_name = p.model.season %}
+                            
                             {% if cat_name not in cat_counts.data %}
                                 {% set _ = cat_counts.data.update({cat_name: p.stock}) %}
                             {% else %}
                                 {% set _ = cat_counts.data.update({cat_name: cat_counts.data[cat_name] + p.stock}) %}
                             {% endif %}
+                            
+                            {% if season_name not in season_counts.data %}
+                                {% set _ = season_counts.data.update({season_name: p.stock}) %}
+                            {% else %}
+                                {% set _ = season_counts.data.update({season_name: season_counts.data[season_name] + p.stock}) %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% for season, count in season_counts.data.items() %}
+                        <span class="badge bg-secondary fs-6 py-2 px-3 shadow-sm border season-badge" onclick="toggleSeasonFilter(this, '{{ season }}')" style="cursor: pointer;">
+                            {{ season }}: <span class="fw-bold fs-5 text-white">{{ count }}</span>
+                        </span>
                         {% endfor %}
 
                         {% for cat, count in cat_counts.data.items() %}
@@ -174,7 +189,7 @@
                             </tr>
                             {% endif %}
                             {% for p in products %}
-                            <tr id="row_{{ p.id }}" class="product-row" data-category="{{ p.model.category.name }}" data-cost="{{ p.cost_price }}" data-sell="{{ p.sell_price }}" data-stock="{{ p.stock }}">
+                            <tr id="row_{{ p.id }}" class="product-row" data-category="{{ p.model.category.name }}" data-season="{{ p.model.season }}" data-cost="{{ p.cost_price }}" data-sell="{{ p.sell_price }}" data-stock="{{ p.stock }}">
                                 <td class="fw-bold text-muted">{{ p.id }}</td>
 
                                 <td>
@@ -410,13 +425,27 @@
         });
 
         // فلتر الأقسام
-        var activeCategories = new Set(); // فارغ = عرض الكل
+        var activeCategories = new Set();
+        var activeSeasons = new Set();
+
+        function toggleSeasonFilter(badge, seasonName) {
+            if (activeSeasons.has(seasonName)) {
+                activeSeasons.delete(seasonName);
+                badge.classList.remove('active');
+            } else {
+                activeSeasons.add(seasonName);
+                badge.classList.add('active');
+            }
+            applyFilters();
+        }
 
         function toggleCategoryFilter(badge, catName) {
             if (catName === 'الكل') {
-                // دوس على الإجمالي = إزالة كل الفلاتر
+                // مسح كل الفلاتر
                 activeCategories.clear();
+                activeSeasons.clear();
                 document.querySelectorAll('.cat-badge').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.season-badge').forEach(b => b.classList.remove('active'));
             } else {
                 if (activeCategories.has(catName)) {
                     activeCategories.delete(catName);
@@ -453,11 +482,15 @@
                     txtValueId.toUpperCase().indexOf(filter) > -1 ||
                     txtValueName.toUpperCase().indexOf(filter) > -1;
 
-                // فلتر الأقسام
+                // فلتر الفئة
                 var rowCat = row.getAttribute('data-category');
                 var matchesCategory = (activeCategories.size === 0) || activeCategories.has(rowCat);
 
-                var isVisible = (matchesSearch && matchesCategory);
+                // فلتر الموسم
+                var rowSeason = row.getAttribute('data-season');
+                var matchesSeason = (activeSeasons.size === 0) || activeSeasons.has(rowSeason);
+
+                var isVisible = (matchesSearch && matchesCategory && matchesSeason);
                 row.style.display = isVisible ? '' : 'none';
 
                 if (isVisible) {
