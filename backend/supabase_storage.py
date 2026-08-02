@@ -16,10 +16,17 @@ if SUPABASE_URL and SUPABASE_KEY:
 
 def upload_file_to_supabase(file_obj, filename, app_config):
     if not supabase:
-        # Fallback to local storage
-        file_path = os.path.join(app_config['UPLOAD_FOLDER'], filename)
-        file_obj.save(file_path)
-        return True, f"/static/uploads/{filename}"
+        # If we are on Vercel, local storage is read-only and will crash
+        if os.environ.get('VERCEL') or os.environ.get('VERCEL_URL'):
+            return False, "خطأ: مفاتيح رفع الصور (SUPABASE_URL و SUPABASE_KEY) غير موجودة في إعدادات Vercel. يرجى إضافتها وعمل Redeploy."
+            
+        # Fallback to local storage (for local development)
+        try:
+            file_path = os.path.join(app_config['UPLOAD_FOLDER'], filename)
+            file_obj.save(file_path)
+            return True, f"/static/uploads/{filename}"
+        except Exception as e:
+            return False, f"فشل الحفظ المحلي: {str(e)}"
     
     try:
         # Create a temporary file to save the uploaded content
