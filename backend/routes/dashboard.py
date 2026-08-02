@@ -696,3 +696,10 @@ def profile():
 
     return render_template('profile.html', user=u, mgr=mgr_data, emp=emp_data,
                            start_date=start_date_str, end_date=end_date_str)
+
+@app.route('/api/welcome_seen', methods=['POST'])
+@login_required
+def welcome_seen():
+    current_user.has_seen_winter27_welcome = True
+    db.session.commit()
+    return jsonify({'status': 'success'})

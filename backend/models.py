@@ -42,6 +42,7 @@ class User(db.Model, UserMixin):
     job_type = db.Column(db.String(20), default='fixed')
     emp_code = db.Column(db.String(20), unique=True)
     permissions = db.Column(db.Text, default="")
+    has_seen_winter27_welcome = db.Column(db.Boolean, default=False)
     manager = db.relationship('User', remote_side=[id], backref='subordinates')
     manager_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     shift_start = db.Column(db.String(10), default='13:00')

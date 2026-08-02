@@ -1,0 +1,53 @@
+{% if not current_user.has_seen_winter27_welcome %}
+<!-- Welcome Modal -->
+<div class="modal fade" id="welcomeWinterModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
+            <div class="modal-header bg-primary text-white border-0" style="background: linear-gradient(135deg, #0d6efd, #0dcaf0);">
+                <h5 class="modal-title fw-bold mx-auto">
+                    <i class="fas fa-snowflake me-2"></i> افتتاح الموسم الجديد
+                </h5>
+            </div>
+            <div class="modal-body text-center p-4" style="background-color: #f8f9fa;">
+                <h4 class="mb-4 text-primary fw-bold">مرحباً ({{ current_user.fullname }}) في بداية الموسم الشتوي الجديد! ❄️</h4>
+                <p class="fs-5 lh-lg text-dark fw-medium" style="text-align: justify; text-justify: inter-word;">
+                    اللهم إنا نسألك في هذا الموسم توفيقاً يلازم خطانا، وبركة في أوقاتنا وأعمالنا، ورزقاً حلالاً طيباً واسعاً.<br><br>
+                    اللهم اجعله موسم نجاح وازدهار، واكفنا شر ما فيه.<br><br>
+                    توكلنا على الحي الذي لا يموت.. بالتوفيق للجميع.
+                </p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4" style="background-color: #f8f9fa;">
+                <button type="button" class="btn btn-success btn-lg px-5 fw-bold shadow-sm" onclick="dismissWelcomeModal()" style="border-radius: 50px;">
+                    الدخول للنظام <i class="fas fa-rocket ms-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var welcomeModal = new bootstrap.Modal(document.getElementById('welcomeWinterModal'));
+        welcomeModal.show();
+    });
+
+    function dismissWelcomeModal() {
+        fetch('/api/welcome_seen', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(response => {
+            if(response.ok) {
+                var modalInstance = bootstrap.Modal.getInstance(document.getElementById('welcomeWinterModal'));
+                modalInstance.hide();
+            }
+        }).catch(err => {
+            console.error('Error marking welcome as seen:', err);
+            // Hide anyway so user isn't blocked
+            var modalInstance = bootstrap.Modal.getInstance(document.getElementById('welcomeWinterModal'));
+            modalInstance.hide();
+        });
+    }
+</script>
+{% endif %}
