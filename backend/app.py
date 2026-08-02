@@ -46,6 +46,7 @@ from .helpers import (general_manager_required, permission_required, permission_
 register_auth_routes(app)
 register_treasury_routes(app, general_manager_required)
 
+@app.route('/setup')
 def setup():
     with app.app_context():
         # 1. إنشاء كافة الجداول الجديدة التي لم تُنشأ بعد
