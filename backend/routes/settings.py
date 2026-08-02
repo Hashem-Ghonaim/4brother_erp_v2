@@ -57,6 +57,8 @@ def settings():
                     success, url = upload_file_to_supabase(file, filename, app.config)
                     if success:
                         setting.company_logo = url
+                    else:
+                        raise Exception(url)
 
             db.session.commit()
             flash('تم حفظ إعدادات النظام وتحديث المظهر بنجاح ✅', 'success')
