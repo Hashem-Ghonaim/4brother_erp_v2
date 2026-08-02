@@ -324,7 +324,19 @@
     <div class="pos-container">
 
         <div class="products-area">
-            <div class="cats-wrapper">
+            {% set active_seasons = [] %}
+            {% for p in products %}
+                {% set s = p.model.season or 'صيفي 2026' %}
+                {% if s not in active_seasons %}
+                    {% set _ = active_seasons.append(s) %}
+                {% endif %}
+            {% endfor %}
+            <div class="cats-wrapper" id="seasons_wrapper">
+                {% for season in active_seasons %}
+                <div class="cat-btn season-btn {% if season == 'شتوي 2027' %}active{% endif %}" onclick="filterSeason('{{ season }}', this)">{{ season }}</div>
+                {% endfor %}
+            </div>
+            <div class="cats-wrapper" id="categories_wrapper">
                 <div class="cat-btn active" onclick="filterCat('all', this)">الكل</div>
                 {% for cat in categories %}
                 <div class="cat-btn" onclick="filterCat('{{ cat.id }}', this)">{{ cat.name }}</div>
@@ -334,7 +346,7 @@
             <div class="products-grid">
                 <div class="row g-2" id="products_container">
                     {% for p in products %}
-                    <div class="col-6 col-md-4 col-xl-3 p-item" data-cat="{{ p.model.category_id }}"
+                    <div class="col-6 col-md-4 col-xl-3 p-item" data-cat="{{ p.model.category_id }}" data-season="{{ p.model.season or 'صيفي 2026' }}"
                         data-search="{{ p.model.name }} {{ p.barcode or '' }} {{ p.id }}">
 
                         <div class="product-card" id="card_{{ p.id }}"
@@ -603,8 +615,12 @@
     <script>
         let cart = [];
         let payments = []; // مصفوفة الدفعات الجديدة
+        
+        let currentCat = 'all';
+        let currentSeason = 'شتوي 2027';
 
         $(document).ready(function () {
+            applyPosFilters();
             $('.select2').select2({ width: '100%', dir: 'rtl' });
 
             // === الكود الجديد لاستكمال عرض السعر ===
@@ -636,33 +652,38 @@
         }
 
         // Filter Logic
-        function filterCat(id, btn) {
-            $('.cat-btn').removeClass('active');
+        function filterSeason(season, btn) {
+            $('.season-btn').removeClass('active');
             $(btn).addClass('active');
-            const term = $('#search_input').val().toLowerCase();
+            currentSeason = season;
+            applyPosFilters();
+        }
 
-            $('.p-item').each(function () {
-                const cat = $(this).data('cat');
-                const search = $(this).data('search').toString().toLowerCase();
-
-                const matchCat = (id === 'all' || cat == id);
-                const matchSearch = (search.includes(term));
-
-                $(this).toggle(matchCat && matchSearch);
-            });
+        function filterCat(id, btn) {
+            $('#categories_wrapper .cat-btn').removeClass('active');
+            $(btn).addClass('active');
+            currentCat = id;
+            applyPosFilters();
         }
 
         function filterProducts() {
+            applyPosFilters();
+        }
+
+        function applyPosFilters() {
             const term = $('#search_input').val().toLowerCase();
-            $('.p-item').each(function () { // تغيير اسم الكلاس هنا
-                const searchStr = $(this).data('search').toString().toLowerCase();
-                if (searchStr.includes(term)) {
-                    $(this).show();
-                } else {
-                    $(this).hide();
-                }
+            $('.p-item').each(function () {
+                const cat = $(this).data('cat');
+                const season = $(this).data('season');
+                const search = $(this).data('search').toString().toLowerCase();
+
+                const matchCat = (currentCat === 'all' || cat == currentCat);
+                const matchSeason = (season === currentSeason);
+                const matchSearch = (search.includes(term));
+
+                $(this).toggle(matchCat && matchSeason && matchSearch);
             });
-            if (term) $('.cat-btn').removeClass('active');
+            if (term) $('#categories_wrapper .cat-btn').removeClass('active');
         }
 
         // Cart Functions
