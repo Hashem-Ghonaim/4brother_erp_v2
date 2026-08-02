@@ -126,13 +126,13 @@ def dashboard():
     # === 1. حساب مبيعات اليوم الصافية ===
     # أ) إجمالي الفواتير (Gross)
     today_gross = db.session.query(func.sum(SaleOrder.final_total))\
-        .filter(func.date(SaleOrder.date) == today,
+        .filter(func.to_char(SaleOrder.date, 'YYYY-MM-DD') == today,
                 SaleOrder.user_id.in_(accessible_ids),
                 SaleOrder.is_proforma == False).scalar() or 0.0
 
     # ب) المرتجعات النقدية (Refunds) - قيمتها سالبة في الداتا بيز
     today_refunds = db.session.query(func.sum(FinancialTransaction.amount))\
-        .filter(func.date(FinancialTransaction.date) == today,
+        .filter(func.to_char(FinancialTransaction.date, 'YYYY-MM-DD') == today,
                 FinancialTransaction.type == 'refund',
                 FinancialTransaction.created_by_id.in_(accessible_ids)).scalar() or 0.0
 
@@ -141,12 +141,12 @@ def dashboard():
 
     # === 2. حساب مبيعات الشهر الصافية ===
     month_gross = db.session.query(func.sum(SaleOrder.final_total))\
-        .filter(func.strftime('%Y-%m', SaleOrder.date) == month_str,
+        .filter(func.to_char(SaleOrder.date, 'YYYY-MM') == month_str,
                 SaleOrder.user_id.in_(accessible_ids),
                 SaleOrder.is_proforma == False).scalar() or 0.0
 
     month_refunds = db.session.query(func.sum(FinancialTransaction.amount))\
-        .filter(func.strftime('%Y-%m', FinancialTransaction.date) == month_str,
+        .filter(func.to_char(FinancialTransaction.date, 'YYYY-MM') == month_str,
                 FinancialTransaction.type == 'refund',
                 FinancialTransaction.created_by_id.in_(accessible_ids)).scalar() or 0.0
 
@@ -173,7 +173,7 @@ def dashboard():
         # نستخدم جدول PartnerTransaction لحساب صافي الربح الدقيق
         trans = PartnerTransaction.query.filter(
             PartnerTransaction.partner_id == current_user.id,
-            func.strftime('%Y-%m', PartnerTransaction.date) == month_str
+            func.to_char(PartnerTransaction.date, 'YYYY-MM') == month_str
         ).all()
 
         # صافي الربح = مجموع كل الحركات (الدخل بالموجب والخصم بالسالب)
@@ -597,7 +597,7 @@ def profile():
         if not u.has_flexible_hours:
             attendance_records = Attendance.query.filter(
                 Attendance.user_id == u.id,
-                func.strftime('%Y-%m', Attendance.date) == month_str_att
+                func.to_char(Attendance.date, 'YYYY-MM') == month_str_att
             ).all()
             for rec in attendance_records:
                 if att_settings.skip_friday and rec.date.weekday() == 4: continue

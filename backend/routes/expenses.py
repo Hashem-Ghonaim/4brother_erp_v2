@@ -44,8 +44,8 @@ def expenses_details():
 
     # 2. الاستعلام الأساسي (فلترة بالتاريخ)
     query = Expense.query.filter(
-        func.date(Expense.date) >= start_date,
-        func.date(Expense.date) <= end_date
+        func.to_char(Expense.date, 'YYYY-MM-DD') >= start_date,
+        func.to_char(Expense.date, 'YYYY-MM-DD') <= end_date
     ).order_by(Expense.date.desc())
 
     # 3. تطبيق فلتر التصنيف

@@ -439,7 +439,7 @@ def recalculate_commissions():
 
         user_ids = db.session.query(SaleOrder.user_id).filter(
             SaleOrder.is_proforma == False,
-            func.strftime('%Y-%m', SaleOrder.date) == target_month_str
+            func.to_char(SaleOrder.date, 'YYYY-MM') == target_month_str
         ).distinct().all()
 
         processed = 0

@@ -301,8 +301,8 @@ def shipping_daily_report():
     # 2. جلب الفواتير المحصلة في هذه الفترة (حسب تاريخ التحصيل الفعلي مش تاريخ الفاتورة)
     orders = SaleOrder.query.filter(
         SaleOrder.shipping_status == 'settled',
-        func.date(func.coalesce(SaleOrder.shipping_settled_date, SaleOrder.date)) >= start_date,
-        func.date(func.coalesce(SaleOrder.shipping_settled_date, SaleOrder.date)) <= end_date
+        func.to_char(func.coalesce(SaleOrder.shipping_settled_date, SaleOrder.date), 'YYYY-MM-DD') >= start_date,
+        func.to_char(func.coalesce(SaleOrder.shipping_settled_date, SaleOrder.date), 'YYYY-MM-DD') <= end_date
     ).order_by(func.coalesce(SaleOrder.shipping_settled_date, SaleOrder.date).desc()).all()
 
     # 3. الحسابات
