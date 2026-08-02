@@ -324,7 +324,7 @@
     <div class="pos-container">
 
         <div class="products-area">
-            {% set active_seasons = [] %}
+            {% set active_seasons = ['شتوي 2027', 'صيفي 2026'] %}
             {% for p in products %}
                 {% set s = p.model.season or 'صيفي 2026' %}
                 {% if s not in active_seasons %}
