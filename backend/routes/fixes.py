@@ -1,3 +1,4 @@
+from sqlalchemy import cast, Date
 """
 Routes: fixes
 Auto-extracted from backend/app.py during refactoring.
@@ -229,7 +230,7 @@ def transfer_sales():
     today = date.today()
     orders = SaleOrder.query.filter(
         SaleOrder.user_id == u_from.id,
-        func.to_char(SaleOrder.date, 'YYYY-MM-DD') == today
+        cast(SaleOrder.date, Date) == today
     ).all()
 
     count = 0

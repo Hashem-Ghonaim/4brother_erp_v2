@@ -1,3 +1,4 @@
+from sqlalchemy import cast, Date
 """
 Routes: reports
 Auto-extracted from backend/app.py during refactoring.
@@ -62,8 +63,8 @@ def reports_hub():
         base_filters = [
             SaleOrder.is_proforma == False,
             SaleOrder.user_id.in_(accessible_ids),
-            func.to_char(SaleOrder.date, 'YYYY-MM-DD') >= start_date_str,
-            func.to_char(SaleOrder.date, 'YYYY-MM-DD') <= end_date_str
+            cast(SaleOrder.date, Date) >= start_date_str,
+            cast(SaleOrder.date, Date) <= end_date_str
         ]
 
         # 1. إجمالي المبيعات
@@ -159,8 +160,8 @@ def reports_hub():
     elif report_type == 'attendance':
         # جلب السجلات في الفترة المحددة
         query = Attendance.query.filter(
-            func.to_char(Attendance.date, 'YYYY-MM-DD') >= start_date_str,
-            func.to_char(Attendance.date, 'YYYY-MM-DD') <= end_date_str
+            cast(Attendance.date, Date) >= start_date_str,
+            cast(Attendance.date, Date) <= end_date_str
         )
 
         # ترتيب النتائج
@@ -215,8 +216,8 @@ def reports_hub():
             SaleOrder.is_proforma == False,
             or_(SaleOrder.is_shipping == False, SaleOrder.shipping_status == 'settled'),
             SaleOrder.user_id.in_(accessible_ids),
-            func.to_char(SaleOrder.date, 'YYYY-MM-DD') >= start_date_str,
-            func.to_char(SaleOrder.date, 'YYYY-MM-DD') <= end_date_str
+            cast(SaleOrder.date, Date) >= start_date_str,
+            cast(SaleOrder.date, Date) <= end_date_str
         ]
 
         total_rev = db.session.query(func.sum(SaleOrder.final_total - SaleOrder.shipping_fee)).filter(*sales_condition).scalar() or 0
@@ -225,8 +226,8 @@ def reports_hub():
 
         # 2. تحليل المصروفات وتجهيز بيانات الرسم البياني
         all_expenses = Expense.query.filter(
-            func.to_char(Expense.date, 'YYYY-MM-DD') >= start_date_str,
-            func.to_char(Expense.date, 'YYYY-MM-DD') <= end_date_str
+            cast(Expense.date, Date) >= start_date_str,
+            cast(Expense.date, Date) <= end_date_str
         ).all()
 
         analysis = {
@@ -268,7 +269,7 @@ def reports_hub():
         # 3. تجميع بيانات الرسم البياني (حسب بنود المصروفات)
         expenses_q = db.session.query(ExpenseCategory.name, func.sum(Expense.amount))\
             .join(Expense)\
-            .filter(func.to_char(Expense.date, 'YYYY-MM-DD') >= start_date_str, func.to_char(Expense.date, 'YYYY-MM-DD') <= end_date_str)\
+            .filter(cast(Expense.date, Date) >= start_date_str, cast(Expense.date, Date) <= end_date_str)\
             .group_by(ExpenseCategory.name).all()
 
         # تجهيز متغير chart للمتصفح
@@ -288,8 +289,8 @@ def reports_hub():
 
         total_refunds = db.session.query(func.sum(FinancialTransaction.amount)).filter(
             FinancialTransaction.type == 'refund',
-            func.to_char(FinancialTransaction.date, 'YYYY-MM-DD') >= start_date_str,
-            func.to_char(FinancialTransaction.date, 'YYYY-MM-DD') <= end_date_str
+            cast(FinancialTransaction.date, Date) >= start_date_str,
+            cast(FinancialTransaction.date, Date) <= end_date_str
         ).scalar() or 0
         total_refunds = abs(total_refunds)
 
@@ -315,7 +316,7 @@ def reports_hub():
         # المشتريات (تتأثر بالتاريخ)
         top_suppliers = db.session.query(Supplier.name, func.count(PurchaseOrder.id).label('orders_count'), func.sum(PurchaseOrder.total_cost).label('total_purchases'))\
             .join(PurchaseOrder)\
-            .filter(func.to_char(PurchaseOrder.date, 'YYYY-MM-DD') >= start_date_str, func.to_char(PurchaseOrder.date, 'YYYY-MM-DD') <= end_date_str)\
+            .filter(cast(PurchaseOrder.date, Date) >= start_date_str, cast(PurchaseOrder.date, Date) <= end_date_str)\
             .group_by(Supplier.id).order_by(text('total_purchases DESC')).limit(5).all()
 
         data = {'suppliers_debt': suppliers_debt, 'total_debt': total_debt, 'top_suppliers': top_suppliers}
@@ -330,8 +331,8 @@ def reports_hub():
             date_filter = [
                 SaleOrder.user_id == emp.id,
                 SaleOrder.is_proforma == False,
-                func.to_char(SaleOrder.date, 'YYYY-MM-DD') >= start_date_str,
-                func.to_char(SaleOrder.date, 'YYYY-MM-DD') <= end_date_str
+                cast(SaleOrder.date, Date) >= start_date_str,
+                cast(SaleOrder.date, Date) <= end_date_str
             ]
 
             total_sales = db.session.query(func.sum(SaleOrder.final_total)).filter(*date_filter).scalar() or 0
@@ -345,17 +346,17 @@ def reports_hub():
             returns_all = db.session.query(func.sum(ReturnInvoice.total_qty))\
                 .join(SaleOrder)\
                 .filter(SaleOrder.user_id == emp.id,
-                        func.to_char(ReturnInvoice.date, 'YYYY-MM-DD') >= start_date_str,
-                        func.to_char(ReturnInvoice.date, 'YYYY-MM-DD') <= end_date_str).scalar() or 0
+                        cast(ReturnInvoice.date, Date) >= start_date_str,
+                        cast(ReturnInvoice.date, Date) <= end_date_str).scalar() or 0
 
             # المرتجعات اللي حصلت في نفس الفترة لفواتير من نفس الفترة (للعمولة)
             returns_same = db.session.query(func.sum(ReturnInvoice.total_qty))\
                 .join(SaleOrder)\
                 .filter(SaleOrder.user_id == emp.id,
-                        func.to_char(ReturnInvoice.date, 'YYYY-MM-DD') >= start_date_str,
-                        func.to_char(ReturnInvoice.date, 'YYYY-MM-DD') <= end_date_str,
-                        func.to_char(SaleOrder.date, 'YYYY-MM-DD') >= start_date_str,
-                        func.to_char(SaleOrder.date, 'YYYY-MM-DD') <= end_date_str).scalar() or 0
+                        cast(ReturnInvoice.date, Date) >= start_date_str,
+                        cast(ReturnInvoice.date, Date) <= end_date_str,
+                        cast(SaleOrder.date, Date) >= start_date_str,
+                        cast(SaleOrder.date, Date) <= end_date_str).scalar() or 0
 
             net_for_tier = max(0, total_items - returns_all)
             net_for_pay = max(0, total_items - returns_same)
@@ -374,13 +375,13 @@ def reports_hub():
         top_customers = db.session.query(Customer.name, func.count(SaleOrder.id).label('visits'), func.sum(SaleOrder.final_total).label('spent'))\
             .join(SaleOrder)\
             .filter(SaleOrder.is_proforma==False, SaleOrder.user_id.in_(accessible_ids))\
-            .filter(func.to_char(SaleOrder.date, 'YYYY-MM-DD') >= start_date_str, func.to_char(SaleOrder.date, 'YYYY-MM-DD') <= end_date_str)\
+            .filter(cast(SaleOrder.date, Date) >= start_date_str, cast(SaleOrder.date, Date) <= end_date_str)\
             .group_by(Customer.id).order_by(text('spent DESC')).limit(10).all()
 
         # العملاء الجدد (في الفترة المحددة)
         new_customers = Customer.query.filter(
-            func.to_char(Customer.created_at, 'YYYY-MM-DD') >= start_date_str,
-            func.to_char(Customer.created_at, 'YYYY-MM-DD') <= end_date_str,
+            cast(Customer.created_at, Date) >= start_date_str,
+            cast(Customer.created_at, Date) <= end_date_str,
             Customer.created_by_id.in_(accessible_ids)
         ).count()
 

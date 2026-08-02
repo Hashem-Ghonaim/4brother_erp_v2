@@ -1,3 +1,4 @@
+from sqlalchemy import cast, Date
 """
 Routes: dashboard
 Auto-extracted from backend/app.py during refactoring.
@@ -126,13 +127,13 @@ def dashboard():
     # === 1. حساب مبيعات اليوم الصافية ===
     # أ) إجمالي الفواتير (Gross)
     today_gross = db.session.query(func.sum(SaleOrder.final_total))\
-        .filter(func.to_char(SaleOrder.date, 'YYYY-MM-DD') == today,
+        .filter(cast(SaleOrder.date, Date) == today,
                 SaleOrder.user_id.in_(accessible_ids),
                 SaleOrder.is_proforma == False).scalar() or 0.0
 
     # ب) المرتجعات النقدية (Refunds) - قيمتها سالبة في الداتا بيز
     today_refunds = db.session.query(func.sum(FinancialTransaction.amount))\
-        .filter(func.to_char(FinancialTransaction.date, 'YYYY-MM-DD') == today,
+        .filter(cast(FinancialTransaction.date, Date) == today,
                 FinancialTransaction.type == 'refund',
                 FinancialTransaction.created_by_id.in_(accessible_ids)).scalar() or 0.0
 

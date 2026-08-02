@@ -1,3 +1,4 @@
+from sqlalchemy import cast, Date
 """
 Routes: expenses
 Auto-extracted from backend/app.py during refactoring.
@@ -44,8 +45,8 @@ def expenses_details():
 
     # 2. الاستعلام الأساسي (فلترة بالتاريخ)
     query = Expense.query.filter(
-        func.to_char(Expense.date, 'YYYY-MM-DD') >= start_date,
-        func.to_char(Expense.date, 'YYYY-MM-DD') <= end_date
+        cast(Expense.date, Date) >= start_date,
+        cast(Expense.date, Date) <= end_date
     ).order_by(Expense.date.desc())
 
     # 3. تطبيق فلتر التصنيف

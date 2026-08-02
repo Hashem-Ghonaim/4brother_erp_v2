@@ -1,3 +1,4 @@
+from sqlalchemy import cast, Date
 """
 Routes: shipping
 Auto-extracted from backend/app.py during refactoring.
@@ -301,8 +302,8 @@ def shipping_daily_report():
     # 2. جلب الفواتير المحصلة في هذه الفترة (حسب تاريخ التحصيل الفعلي مش تاريخ الفاتورة)
     orders = SaleOrder.query.filter(
         SaleOrder.shipping_status == 'settled',
-        func.to_char(func.coalesce(SaleOrder.shipping_settled_date, SaleOrder.date), 'YYYY-MM-DD') >= start_date,
-        func.to_char(func.coalesce(SaleOrder.shipping_settled_date, SaleOrder.date), 'YYYY-MM-DD') <= end_date
+        cast(func.coalesce(SaleOrder.shipping_settled_date, SaleOrder.date), Date) >= start_date,
+        cast(func.coalesce(SaleOrder.shipping_settled_date, SaleOrder.date), Date) <= end_date
     ).order_by(func.coalesce(SaleOrder.shipping_settled_date, SaleOrder.date).desc()).all()
 
     # 3. الحسابات
