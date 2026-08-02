@@ -181,6 +181,7 @@
                     </thead>
                     <tbody>
                         {% for exp in expenses %}
+                        {% set exp_desc = exp.description or '' %}
                         <tr>
                             <td>{{ exp.date.strftime('%Y-%m-%d') }}</td>
                             <td><span class="badge bg-light text-dark border">{{ exp.category.name }}</span></td>
@@ -188,13 +189,13 @@
                             <td>
                                 {% if exp.is_shared %}
                                 <span class="badge bg-success">مصروف عام</span>
-                                {% elif 'سحب' in exp.description %}
+                                {% elif 'سحب' in exp_desc %}
                                 <span class="badge bg-danger">سحب شخصي</span>
-                                {% elif 'مشترك' in exp.description %}
+                                {% elif 'مشترك' in exp_desc %}
                                 <span class="badge bg-dark">مشترك (50/50)</span>
-                                {% elif 'خاص' in exp.description %}
+                                {% elif 'خاص' in exp_desc %}
                                 <span class="badge bg-primary">خاص بالمدير</span>
-                                {% elif 'شركاء فقط' in exp.description %}
+                                {% elif 'شركاء فقط' in exp_desc %}
                                 <span class="badge bg-secondary">شركاء فقط</span>
                                 {% else %}
                                 <span class="badge bg-light text-dark">غير محدد</span>
@@ -213,10 +214,10 @@
                             <td>
                                 <button type="button" class="btn btn-sm btn-outline-primary me-1 edit-expense-btn"
                                     data-id="{{ exp.id }}" data-category="{{ exp.category_id }}"
-                                    data-desc="{{ exp.description | e }}" data-amount="{{ exp.amount }}"
+                                    data-desc="{{ exp.description | default('', true) | e }}" data-amount="{{ exp.amount }}"
                                     data-account="{{ exp.account_id or '' }}"
-                                    data-type="{% if exp.is_shared %}general{% elif 'سحب' in exp.description %}withdrawal{% elif 'مشترك' in exp.description %}shared_50_50{% elif 'خاص' in exp.description %}private_gm{% elif 'شركاء فقط' in exp.description %}partners_only{% else %}general{% endif %}"
-                                    data-partner="{% if 'سحب' in exp.description %}{{ PartnerTransaction.query.filter(PartnerTransaction.description.like('%' ~ exp.description ~ '%'), PartnerTransaction.type == 'withdrawal').first().partner_id | default('', true) }}{% endif %}"
+                                    data-type="{% if exp.is_shared %}general{% elif 'سحب' in exp_desc %}withdrawal{% elif 'مشترك' in exp_desc %}shared_50_50{% elif 'خاص' in exp_desc %}private_gm{% elif 'شركاء فقط' in exp_desc %}partners_only{% else %}general{% endif %}"
+                                    data-partner="{% if 'سحب' in exp_desc %}{{ PartnerTransaction.query.filter(PartnerTransaction.description.like('%' ~ exp_desc ~ '%'), PartnerTransaction.type == 'withdrawal').first().partner_id | default('', true) }}{% endif %}"
                                     onclick="openEditModal(this)">
                                     <i class="fas fa-edit"></i>
                                 </button>
