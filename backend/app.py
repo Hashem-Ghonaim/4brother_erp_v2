@@ -110,22 +110,22 @@ def setup():
             # --- تحديث جدول المستخدمين (User) بالأعمدة الناقصة ---
             cols_user = [c['name'] for c in inspector.get_columns('user')]
             if 'manager_id' not in cols_user:
-                conn.execute(text("ALTER TABLE user ADD COLUMN manager_id INTEGER REFERENCES user(id)"))
+                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN manager_id INTEGER REFERENCES \"user\"(id)"))
             if 'shift_start' not in cols_user:
-                conn.execute(text("ALTER TABLE user ADD COLUMN shift_start VARCHAR(10) DEFAULT '09:00'"))
+                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN shift_start VARCHAR(10) DEFAULT '09:00'"))
             if 'shift_end' not in cols_user:
-                conn.execute(text("ALTER TABLE user ADD COLUMN shift_end VARCHAR(10) DEFAULT '17:00'"))
+                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN shift_end VARCHAR(10) DEFAULT '17:00'"))
             if 'permissions' not in cols_user:
-                conn.execute(text("ALTER TABLE user ADD COLUMN permissions TEXT DEFAULT ''"))
+                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN permissions TEXT DEFAULT ''"))
             if 'commission_value' not in cols_user:
-                conn.execute(text("ALTER TABLE user ADD COLUMN commission_value FLOAT DEFAULT 0.0"))
+                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN commission_value FLOAT DEFAULT 0.0"))
             if 'commission_rules' not in cols_user:
-                conn.execute(text("ALTER TABLE user ADD COLUMN commission_rules TEXT"))
+                conn.execute(text("ALTER TABLE \"user\" ADD COLUMN commission_rules TEXT"))
 
             # --- تحديث جدول المبيعات (SaleOrder) ---
             cols_order = [c['name'] for c in inspector.get_columns('sale_order')]
             if 'is_proforma' not in cols_order:
-                conn.execute(text("ALTER TABLE sale_order ADD COLUMN is_proforma BOOLEAN DEFAULT 0"))
+                conn.execute(text("ALTER TABLE sale_order ADD COLUMN is_proforma BOOLEAN DEFAULT false"))
             if 'shipping_notes' not in cols_order:
                 conn.execute(text("ALTER TABLE sale_order ADD COLUMN shipping_notes TEXT"))
             if 'packer_id' not in cols_order:
@@ -134,9 +134,21 @@ def setup():
             # --- تحديث جدول المصروفات (Expense) ---
             cols_expense = [c['name'] for c in inspector.get_columns('expense')]
             if 'is_shared' not in cols_expense:
-                conn.execute(text("ALTER TABLE expense ADD COLUMN is_shared BOOLEAN DEFAULT 0"))
+                conn.execute(text("ALTER TABLE expense ADD COLUMN is_shared BOOLEAN DEFAULT false"))
             if 'account_id' not in cols_expense:
                 conn.execute(text("ALTER TABLE expense ADD COLUMN account_id INTEGER REFERENCES money_account(id)"))
+            
+            # --- تحديثات المواسم (Season Migration) ---
+            tables_to_update = [
+                'expense', 'purchase_order', 'supplier_payment', 'customer_payment',
+                'sale_order', 'return_invoice', 'financial_transaction', 'partner_transaction'
+            ]
+            for table in tables_to_update:
+                if table in existing_tables:
+                    cols = [c['name'] for c in inspector.get_columns(table)]
+                    if 'season' not in cols:
+                        conn.execute(text(f"ALTER TABLE {table} ADD COLUMN season VARCHAR(50) DEFAULT 'صيفي 2026'"))
+                        conn.execute(text(f"UPDATE {table} SET season = 'صيفي 2026' WHERE season IS NULL"))
 
             conn.commit()
 
@@ -238,3 +250,14 @@ def inject_settings():
             global_company_logo=setting.company_logo
         )
     return dict(global_theme_color='#0d6efd', global_company_logo=None)
+
+@app.route('/reset_balances_danger_zone')
+@general_manager_required
+def reset_balances_danger_zone():
+    with db.engine.connect() as conn:
+        conn.execute(text('UPDATE customer SET balance = 0.0'))
+        conn.execute(text('UPDATE supplier SET balance = 0.0'))
+        conn.commit()
+    flash('?? ????? ???? ????????', 'success')
+    return redirect(url_for('dashboard.dashboard_view'))
+
