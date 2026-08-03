@@ -95,7 +95,7 @@ def update_product_image():
 
 @app.route('/inventory')
 @permission_required_any('manage_inventory', 'print_barcode', 'view_inventory')
-def inventory(): return render_template('inventory.html', products=ProductVariant.query.join(ProductModel).filter(ProductModel.season == session.get('active_season', 'شتوي 2027')).all(), user=current_user, categories=Category.query.all())
+def inventory(): return render_template('inventory.html', products=ProductVariant.query.join(ProductModel).filter(ProductModel.season == session.get('active_season', 'شتوي 2027')).order_by(ProductVariant.id).all(), user=current_user, categories=Category.query.all())
 
 
 @app.route('/verify_password_api', methods=['POST'])
