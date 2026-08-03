@@ -258,6 +258,6 @@ def reset_balances_danger_zone():
         conn.execute(text('UPDATE customer SET balance = 0.0'))
         conn.execute(text('UPDATE supplier SET balance = 0.0'))
         conn.commit()
-    flash('?? ????? ???? ????????', 'success')
+    flash('تم تصفير جميع الحسابات بنجاح', 'success')
     return redirect(url_for('dashboard'))
 
