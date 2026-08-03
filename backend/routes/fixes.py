@@ -38,11 +38,16 @@ def recalc_suppliers():
     for supp in suppliers:
         total_purchases = db.session.query(func.sum(PurchaseOrder.total_cost)).filter(PurchaseOrder.supplier_id == supp.id).scalar() or 0
         total_payments = db.session.query(func.sum(SupplierPayment.amount)).filter(SupplierPayment.supplier_id == supp.id).scalar() or 0
-        # Balance = Total Purchases - Total Payments
-        supp.balance = total_purchases - total_payments
+        
+        # Calculate returns since they are not stored in a PurchaseReturn table
+        returns = StockMovement.query.filter(StockMovement.reason.like(f"%مرتجع شراء للمورد: {supp.name}%")).all()
+        total_returns = sum(abs(r.quantity_change) * (r.variant.cost_price if r.variant else 0) for r in returns)
+        
+        # Balance = Total Purchases - Total Payments - Total Returns
+        supp.balance = total_purchases - total_payments - total_returns
         count += 1
     db.session.commit()
-    flash(f'تم إعادة حساب وإرجاع حسابات {count} موردين بنجاح بناءً على الفواتير والمدفوعات', 'success')
+    flash(f'تم إعادة حساب وإرجاع حسابات {count} موردين بنجاح بناءً على الفواتير والمدفوعات والمرتجعات', 'success')
     return redirect(url_for('suppliers'))
 
 @app.route('/fixes/move-august-to-winter')
