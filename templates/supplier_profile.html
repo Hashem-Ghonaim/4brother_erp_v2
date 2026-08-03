@@ -34,6 +34,9 @@
                 </div>
             </div>
             <div>
+                <button class="btn btn-warning btn-lg fw-bold shadow-sm text-dark me-2" data-bs-toggle="modal" data-bs-target="#editBalanceModal">
+                    <i class="fas fa-edit"></i> تعديل الرصيد
+                </button>
                 <button class="btn btn-success btn-lg fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#payModal">
                     <i class="fas fa-hand-holding-usd"></i> تسجيل سداد / تحويل
                 </button>
@@ -143,6 +146,29 @@
         <a href="/suppliers" class="btn btn-secondary">رجوع لقائمة الموردين</a>
     </div>
 
+</div>
+
+<div class="modal fade" id="editBalanceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold">تعديل رصيد المورد اليدوي</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/suppliers/{{ supplier.id }}/edit_balance" method="POST">
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-3">استخدم هذا الخيار فقط لتصحيح الرصيد يدوياً في حالة وجود أخطاء في الحسابات القديمة.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">الرصيد الصحيح (ج.م)</label>
+                        <input type="number" step="0.1" name="new_balance" value="{{ supplier.balance }}" class="form-control form-control-lg text-center fw-bold border-warning text-dark" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-warning w-100 fw-bold">تحديث الرصيد الآن</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <div class="modal fade" id="payModal" tabindex="-1">

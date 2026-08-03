@@ -144,4 +144,15 @@ def add_supplier_payment():
     db.session.commit()
     flash(f'تم تسجيل السداد وخصم {amount} من {account.name} ✅', 'success')
     return redirect(url_for('supplier_profile', id=sid))
-# === تقرير تفاصيل المصروفات الشامل ===
+
+@app.route('/suppliers/<int:id>/edit_balance', methods=['POST'])
+@permission_required('manage_inventory')
+def edit_supplier_balance(id):
+    supp = Supplier.query.get_or_404(id)
+    new_balance = float(request.form.get('new_balance', 0))
+    supp.balance = new_balance
+    db.session.commit()
+    flash(f'تم تعديل رصيد المورد {supp.name} بنجاح إلى {new_balance}', 'success')
+    return redirect(url_for('supplier_profile', id=id))
+
+# === تقارير تفصيلية للمدفوعات الموردين ===
