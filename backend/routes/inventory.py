@@ -95,7 +95,7 @@ def update_product_image():
 
 @app.route('/inventory')
 @permission_required_any('manage_inventory', 'print_barcode', 'view_inventory')
-def inventory(): return render_template('inventory.html', products=ProductVariant.query.all(), user=current_user, categories=Category.query.all())
+def inventory(): return render_template('inventory.html', products=ProductVariant.query.join(ProductModel).all(), user=current_user, categories=Category.query.all())
 
 
 @app.route('/product/edit/<int:id>', methods=['POST'])
