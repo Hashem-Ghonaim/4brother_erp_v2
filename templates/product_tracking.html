@@ -256,7 +256,7 @@
     </script>
 
 <!-- GLOBAL SEASON SELECTOR -->
-<div class="no-print" style="position: fixed; bottom: 20px; left: 20px; z-index: 9999; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 2px solid var(--primary, #0d6efd);">
+<div class="no-print" onmouseover="this.style.opacity='1'; this.style.transform='scale(1)';" onmouseout="this.style.opacity='0.4'; this.style.transform='scale(0.85)';" style="position: fixed; bottom: 85px; left: 15px; z-index: 99999; background: white; padding: 5px 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); border: 2px solid var(--primary, #0d6efd); transform: scale(0.85); transform-origin: bottom left; opacity: 0.4; transition: all 0.3s ease;">
     <form action="/set_season_post" method="POST" id="global-season-form" style="margin: 0;">
         <label for="global_season_select" class="fw-bold mb-1 d-block text-primary" style="font-size: 0.85rem;"><i class="fas fa-calendar-alt me-1"></i> الموسم الحالي</label>
         <select name="season" id="global_season_select" class="form-select form-select-sm" onchange="document.getElementById('global-season-form').submit();" style="min-width: 120px; font-weight: bold; cursor: pointer;">
