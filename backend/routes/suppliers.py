@@ -79,8 +79,8 @@ def supplier_profile(id):
 
     return render_template('supplier_profile.html',
                            supplier=supp,
-                           orders=supp.orders,
-                           payments=supp.payments,
+                           orders=sorted(supp.orders, key=lambda o: o.id, reverse=True),
+                           payments=sorted(supp.payments, key=lambda p: p.id, reverse=True),
                            accounts=accounts,
                            total_items=int(total_items)) # <--- تم إرسال الرقم هنا
 
