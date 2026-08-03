@@ -42,12 +42,12 @@ def inject_global_vars():
 @app.route('/set_season/<season>')
 def set_season(season):
     session['active_season'] = season
-    return redirect(request.referrer or url_for('dashboard.dashboard_view'))
+    return redirect(request.referrer or url_for('dashboard'))
 
 @app.route('/set_season_post', methods=['POST'])
 def set_season_post():
     session['active_season'] = request.form.get('season')
-    return redirect(request.referrer or url_for('dashboard.dashboard_view'))
+    return redirect(request.referrer or url_for('dashboard'))
 
 # --- Helpers (imported from helpers.py) ---
 from .helpers import (general_manager_required, permission_required, permission_required_any,
@@ -259,5 +259,5 @@ def reset_balances_danger_zone():
         conn.execute(text('UPDATE supplier SET balance = 0.0'))
         conn.commit()
     flash('?? ????? ???? ????????', 'success')
-    return redirect(url_for('dashboard.dashboard_view'))
+    return redirect(url_for('dashboard'))
 
