@@ -45,30 +45,26 @@ def recalc_suppliers():
     flash(f'تم إعادة حساب وإرجاع حسابات {count} موردين بنجاح بناءً على الفواتير والمدفوعات', 'success')
     return redirect(url_for('suppliers'))
 
-@app.route('/fixes/move-winter-2742-2743')
+@app.route('/fixes/move-august-to-winter')
 @general_manager_required
-def move_winter_2742_2743():
+def move_august_to_winter():
     target_season = 'شتوي 2027'
-    order_ids = [2742, 2743]
+    cutoff = datetime(2026, 8, 1)
     
-    # 1. Sale Orders
-    orders = SaleOrder.query.filter(SaleOrder.id.in_(order_ids)).all()
-    for o in orders:
-        o.season = target_season
-        
-    # 2. Partner Transactions (Commissions)
-    ptrans = PartnerTransaction.query.filter(PartnerTransaction.order_id.in_(order_ids)).all()
-    for pt in ptrans:
-        pt.season = target_season
-        
-    # 3. Financial Transactions
-    for oid in order_ids:
-        ftrans = FinancialTransaction.query.filter(FinancialTransaction.description.like(f'%#{oid}%')).all()
-        for ft in ftrans:
-            ft.season = target_season
+    models = [
+        Expense, PurchaseOrder, SupplierPayment, CustomerPayment,
+        SaleOrder, ReturnInvoice, FinancialTransaction, PartnerTransaction
+    ]
+    
+    total_moved = 0
+    for model in models:
+        records = model.query.filter(model.date >= cutoff).all()
+        for r in records:
+            r.season = target_season
+            total_moved += 1
             
     db.session.commit()
-    flash(f'تم نقل الفواتير 2742 و 2743 وعمولاتها وكل ما يتعلق بها إلى الموسم الشتوي بنجاح', 'success')
+    flash(f'تم نقل عدد {total_moved} معاملة (منذ 1/8) إلى الموسم الشتوي بنجاح', 'success')
     return redirect(url_for('dashboard'))
 
 def update_monthly_commissions(sales_rep_id, ref_date):
