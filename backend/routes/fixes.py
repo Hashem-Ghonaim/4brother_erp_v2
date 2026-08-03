@@ -33,21 +33,31 @@ from ..helpers import (general_manager_required, permission_required, permission
 @app.route('/fixes/recalc-suppliers')
 @general_manager_required
 def recalc_suppliers():
+    from flask import session
+    current_season = session.get('season', 'شتوي 2027')
+    
     suppliers = Supplier.query.all()
     count = 0
     for supp in suppliers:
-        total_purchases = db.session.query(func.sum(PurchaseOrder.total_cost)).filter(PurchaseOrder.supplier_id == supp.id).scalar() or 0
-        total_payments = db.session.query(func.sum(SupplierPayment.amount)).filter(SupplierPayment.supplier_id == supp.id).scalar() or 0
+        total_purchases = db.session.query(func.sum(PurchaseOrder.total_cost))\
+            .filter(PurchaseOrder.supplier_id == supp.id, PurchaseOrder.season == current_season).scalar() or 0
+            
+        total_payments = db.session.query(func.sum(SupplierPayment.amount))\
+            .filter(SupplierPayment.supplier_id == supp.id, SupplierPayment.season == current_season).scalar() or 0
         
-        # Calculate returns since they are not stored in a PurchaseReturn table
-        returns = StockMovement.query.filter(StockMovement.reason.like(f"%مرتجع شراء للمورد: {supp.name}%")).all()
+        # Calculate returns since they are not stored in a PurchaseReturn table (assume returns for current season are after Aug 1 2026)
+        if 'شتوي' in current_season:
+            returns = StockMovement.query.filter(StockMovement.reason.like(f"%مرتجع شراء للمورد: {supp.name}%"), StockMovement.timestamp >= datetime(2026, 8, 1)).all()
+        else:
+            returns = StockMovement.query.filter(StockMovement.reason.like(f"%مرتجع شراء للمورد: {supp.name}%"), StockMovement.timestamp < datetime(2026, 8, 1)).all()
+            
         total_returns = sum(abs(r.quantity_change) * (r.variant.cost_price if r.variant else 0) for r in returns)
         
         # Balance = Total Purchases - Total Payments - Total Returns
         supp.balance = total_purchases - total_payments - total_returns
         count += 1
     db.session.commit()
-    flash(f'تم إعادة حساب وإرجاع حسابات {count} موردين بنجاح بناءً على الفواتير والمدفوعات والمرتجعات', 'success')
+    flash(f'تم تصفية حسابات {count} موردين لتبدأ على نظيف في موسم ({current_season})', 'success')
     return redirect(url_for('suppliers'))
 
 @app.route('/fixes/move-august-to-winter')
