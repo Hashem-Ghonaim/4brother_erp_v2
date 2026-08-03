@@ -133,13 +133,14 @@ def update_monthly_commissions(sales_rep_id, ref_date):
             
             if net_qty <= 0: continue
 
-            # ج) عمولة الشريك (Gross) - 13 جنيه ثابتة
+            # ج) عمولة الشريك (Gross) - من البروفايل
+            partner_rate = float(partner.commission_value or 13.0)
             db.session.add(PartnerTransaction(
                 partner_id=partner.id,
                 order_id=order.id,
                 type='commission_gross',
-                amount=net_qty * 13.0,
-                description=f"عمولة ({net_qty} قطعة) - فاتورة مبيعات ({sales_rep.fullname})",
+                amount=net_qty * partner_rate,
+                description=f"عمولة ({net_qty} قطعة × {partner_rate}) - فاتورة مبيعات ({sales_rep.fullname})",
                 date=order.date
             ))
 
@@ -694,7 +695,9 @@ def invoices():
             actual_discount = (o.discount or 0) if net_qty > 0 else 0
 
             if is_under_partner:
-                o.est_comm = net_qty * 13.0
+                partner_obj = seller if seller.role == 'manager' else db.session.get(User, seller.manager_id)
+                p_rate = float(partner_obj.commission_value or 13.0) if partner_obj else 13.0
+                o.est_comm = net_qty * p_rate
                 o.net_comm = o.est_comm - actual_discount - o.ret_total_deduction
             else:
                 monthly_net = get_monthly_net_items(seller.id, o.date)
@@ -918,13 +921,15 @@ def invoice_commission_details(order_id):
         details['is_under_partner'] = is_under_partner
 
         if is_under_partner:
+            partner_obj = seller if seller.role == 'manager' else db.session.get(User, seller.manager_id)
+            p_rate = float(partner_obj.commission_value or 13.0) if partner_obj else 13.0
             details['calculation_method'] = 'عمولة شريك (المدير يتحمل الخصم من عمولته)'
-            details['est_comm'] = net_qty * 13.0
+            details['est_comm'] = net_qty * p_rate
             details['net_comm'] = details['est_comm'] - details['discount'] - ret_total_deduction
             details['breakdown'].append({'text': f'عدد القطع الإجمالي: {order_qty}', 'color': 'secondary'})
             if ret_total_qty > 0:
                 details['breakdown'].append({'text': f'مرتجع: -{ret_total_qty} قطعة → الصافي: {net_qty} قطعة', 'color': 'warning'})
-            details['breakdown'].append({'text': f'عمولة الشريك: {net_qty} × 13 = {details["est_comm"]} ج.م', 'color': 'success'})
+            details['breakdown'].append({'text': f'عمولة الشريك: {net_qty} × {p_rate} = {details["est_comm"]} ج.م', 'color': 'success'})
             if details['discount'] > 0:
                 details['breakdown'].append({'text': f'خصم الفاتورة (يُطرح من عمولة المدير): -{details["discount"]} ج.م', 'color': 'danger'})
             if ret_shipping_loss > 0:

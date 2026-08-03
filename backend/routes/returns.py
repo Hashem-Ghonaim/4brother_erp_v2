@@ -152,11 +152,12 @@ def add_return():
                 if mgr and mgr.role == 'manager': partner = mgr
 
             if partner:
-                # أ) إلغاء ربح الشريك (الـ 13 ج) عن القطع المرجعة
+                # أ) إلغاء ربح الشريك عن القطع المرجعة
+                partner_rate = float(partner.commission_value or 13.0)
                 db.session.add(PartnerTransaction(
                     partner_id=partner.id, order_id=order.id, type='commission_gross',
-                    amount=-(total_qty_returned * 13.0),
-                    description=f"خصم ربح قطع مرتجعة ({total_qty_returned} قطعة) - فاتورة #{order.id}"
+                    amount=-(total_qty_returned * partner_rate),
+                    description=f"خصم ربح قطع مرتجعة ({total_qty_returned} قطعة × {partner_rate}) - فاتورة #{order.id}"
                 ))
                 # ب) خصم خسائر الشحن أو التوالف من الشريك
                 if total_deduction > 0:

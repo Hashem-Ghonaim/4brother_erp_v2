@@ -133,13 +133,14 @@ def update_monthly_commissions(sales_rep_id, ref_date):
             
             if net_qty <= 0: continue
 
-            # ج) عمولة الشريك (Gross) - 13 جنيه ثابتة
+            # ج) عمولة الشريك (Gross) - من البروفايل
+            partner_rate = float(partner.commission_value or 13.0)
             db.session.add(PartnerTransaction(
                 partner_id=partner.id,
                 order_id=order.id,
                 type='commission_gross',
-                amount=net_qty * 13.0,
-                description=f"عمولة ({net_qty} قطعة) - فاتورة مبيعات ({sales_rep.fullname})",
+                amount=net_qty * partner_rate,
+                description=f"عمولة ({net_qty} قطعة × {partner_rate}) - فاتورة مبيعات ({sales_rep.fullname})",
                 date=order.date
             ))
 

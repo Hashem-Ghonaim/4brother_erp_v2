@@ -108,7 +108,7 @@ def partners_report():
             seller_name = order.sales_rep.fullname if order and order.sales_rep else '---'
             gross_qty = sum(item.quantity for item in order.items) if order else 0
             ret_qty = ret.total_qty or 0
-            amount = -(ret_qty * 13.0)
+            amount = -(ret_qty * float(p.commission_value or 13.0))
             cross_month_13_deduction += amount
             cross_month_return_details.append({
                 'amount': amount,
@@ -124,7 +124,7 @@ def partners_report():
         final_pieces = max(0, total_sold - same_month_ret)
 
         # قيمة عمولة الشريك (خام = إجمالي المبيعات × 13) مع تفاصيل الفواتير
-        gross_comm_display = total_sold * 13.0
+        gross_comm_display = total_sold * float(p.commission_value or 13.0)
         team_orders = SaleOrder.query.filter(
             SaleOrder.user_id.in_(team_ids),
             SaleOrder.is_proforma == False,
@@ -143,7 +143,7 @@ def partners_report():
             seller_name = order.sales_rep.fullname if order.sales_rep else ''
             gross_comm_details_display.append({
                 'qty': gross_qty,
-                'amount': net_qty * 13.0,
+                'amount': net_qty * float(p.commission_value or 13.0),
                 'gross_qty': gross_qty,
                 'returned_qty': returned_qty,
                 'user_name': seller_name,
@@ -679,7 +679,7 @@ def owner_settlement():
         order_net_comm = 0
         if seller:
             if is_under_partner:
-                order_est_comm = net_qty * 13.0
+                order_est_comm = net_qty * float(p.commission_value or 13.0)
                 ret_total_deduction = sum(r.total_deduction or 0 for r in order.return_invoices)
                 order_net_comm = order_est_comm - actual_discount - ret_total_deduction
             else:
