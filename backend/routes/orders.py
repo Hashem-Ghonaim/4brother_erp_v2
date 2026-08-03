@@ -183,7 +183,7 @@ def process_order():
     is_proforma = data.get('is_proforma', False)
     is_shipping = data.get('is_shipping', False)
     shipping_company_id = data.get('shipping_company_id')
-    is_office = data.get('is_office_invoice', False) # فاتورة المكتب (تكلفة + 5)
+    is_office = data.get('is_office_invoice', False) # فاتورة المكتب (تكلفة + 10)
 
     # معالجة التاريخ
     date_str = data.get('date')
@@ -263,7 +263,7 @@ def process_order():
 
         # منطق التسعير (مكتب vs عادي)
         if is_office and current_user.fullname == "أحمد عبد الفتاح":
-            unit_price = (variant.cost_price or 0) + 5
+            unit_price = (variant.cost_price or 0) + 10
         else:
             unit_price = float(item['price'])
 

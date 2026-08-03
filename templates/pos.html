@@ -523,7 +523,7 @@
                     <input class="form-check-input ms-2 mt-0" type="checkbox" id="isOfficeInvoice"
                         style="transform: scale(1.2);">
                     <label class="form-check-label fw-bold text-danger mb-0" for="isOfficeInvoice">
-                        <i class="fas fa-briefcase"></i> فاتورة مكتب (+5 ج.م تكلفة)
+                        <i class="fas fa-briefcase"></i> فاتورة مكتب (+10 ج.م تكلفة)
                     </label>
                 </div>
                 {% endif %}
@@ -749,7 +749,7 @@
                 let h = '';
                 cart.forEach((item, i) => {
                     totalQty += parseInt(item.qty) || 0;
-                    let actualPrice = isOffice ? (item.cost_price + 5) : item.price;
+                    let actualPrice = isOffice ? (item.cost_price + 10) : item.price;
                     h += `
                 <div class="cart-item">
                     <div style="flex:1">
@@ -813,7 +813,7 @@
         function calc() {
             let isOffice = $('#isOfficeInvoice').is(':checked');
             let sub = cart.reduce((a, b) => {
-                let actualPrice = isOffice ? (b.cost_price + 5) : b.price;
+                let actualPrice = isOffice ? (b.cost_price + 10) : b.price;
                 return a + (actualPrice * b.qty);
             }, 0);
 
