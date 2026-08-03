@@ -337,9 +337,9 @@
                 {% endfor %}
             </div>
             <div class="cats-wrapper" id="categories_wrapper">
-                <div class="cat-btn active" onclick="filterCat('all', this)">الكل</div>
+                <div class="cat-btn active" data-cat-id="all" onclick="filterCat('all', this)">الكل</div>
                 {% for cat in categories %}
-                <div class="cat-btn" onclick="filterCat('{{ cat.id }}', this)">{{ cat.name }}</div>
+                <div class="cat-btn" data-cat-id="{{ cat.id }}" onclick="filterCat('{{ cat.id }}', this)">{{ cat.name }}</div>
                 {% endfor %}
             </div>
 
@@ -672,17 +672,40 @@
 
         function applyPosFilters() {
             const term = $('#search_input').val().toLowerCase();
+            const availableCats = new Set();
+            
             $('.p-item').each(function () {
                 const cat = $(this).data('cat');
                 const season = $(this).data('season');
                 const search = $(this).data('search').toString().toLowerCase();
 
-                const matchCat = (currentCat === 'all' || cat == currentCat);
                 const matchSeason = (season === currentSeason);
                 const matchSearch = (search.includes(term));
+                
+                if (matchSeason && matchSearch) {
+                    availableCats.add(cat);
+                }
 
+                const matchCat = (currentCat === 'all' || cat == currentCat);
                 $(this).toggle(matchCat && matchSeason && matchSearch);
             });
+            
+            $('#categories_wrapper .cat-btn').each(function() {
+                const catId = $(this).data('cat-id');
+                if (catId === 'all') {
+                    $(this).show();
+                } else {
+                    if (availableCats.has(catId)) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                        if (currentCat == catId) {
+                            $('#categories_wrapper .cat-btn[data-cat-id="all"]').click();
+                        }
+                    }
+                }
+            });
+
             if (term) $('#categories_wrapper .cat-btn').removeClass('active');
         }
 
