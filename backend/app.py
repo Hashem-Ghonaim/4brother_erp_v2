@@ -1,7 +1,7 @@
 import os
 import json
 import random
-from flask import flash
+from flask import flash, session, request, redirect, url_for
 from werkzeug.security import generate_password_hash
 from sqlalchemy import func, text, inspect
 import re
@@ -35,8 +35,19 @@ def inject_global_vars():
     settings = SystemSetting.query.first()
     return dict(
         company_logo=settings.company_logo if settings and settings.company_logo else 'default_logo.png',
-        theme_color=settings.theme_color if settings and settings.theme_color else '#0d6efd'
+        theme_color=settings.theme_color if settings and settings.theme_color else '#0d6efd',
+        active_season=session.get('active_season', 'شتوي 2027')
     )
+
+@app.route('/set_season/<season>')
+def set_season(season):
+    session['active_season'] = season
+    return redirect(request.referrer or url_for('dashboard.dashboard_view'))
+
+@app.route('/set_season_post', methods=['POST'])
+def set_season_post():
+    session['active_season'] = request.form.get('season')
+    return redirect(request.referrer or url_for('dashboard.dashboard_view'))
 
 # --- Helpers (imported from helpers.py) ---
 from .helpers import (general_manager_required, permission_required, permission_required_any,
@@ -45,6 +56,42 @@ from .helpers import (general_manager_required, permission_required, permission_
 
 register_auth_routes(app)
 register_treasury_routes(app, general_manager_required)
+
+# ==============================================================================
+# SEASON GLOBAL FILTERING
+# ==============================================================================
+from sqlalchemy.orm import Session
+from sqlalchemy import event
+from flask import has_request_context
+
+SEASON_MODELS = [
+    Expense, PurchaseOrder, SupplierPayment, CustomerPayment, 
+    SaleOrder, ReturnInvoice, FinancialTransaction, PartnerTransaction, ProductModel
+]
+
+@event.listens_for(Session, "do_orm_execute")
+def _add_filtering_criteria(execute_state):
+    # Apply to SELECT statements automatically including relationship loads
+    if execute_state.is_select and not execute_state.is_column_load:
+        if has_request_context():
+            active_season = session.get('active_season', 'شتوي 2027')
+            # Loop over all entities in the query
+            for ext_info in execute_state.statement.column_descriptions:
+                entity = ext_info.get('entity')
+                if entity is not None and entity in SEASON_MODELS:
+                    # Apply the global season filter
+                    execute_state.statement = execute_state.statement.filter(entity.season == active_season)
+
+def _set_active_season(mapper, connection, target):
+    if has_request_context():
+        # Do not override if already set explicitly to something else
+        if not target.season or target.season == 'شتوي 2027' or target.season == 'صيفي 2026':
+            target.season = session.get('active_season', 'شتوي 2027')
+
+for model in SEASON_MODELS:
+    event.listens_for(model, 'before_insert')(_set_active_season)
+
+# ==============================================================================
 
 @app.route('/setup')
 def setup():
