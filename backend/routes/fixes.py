@@ -70,17 +70,32 @@ def move_august_to_winter():
         Expense, PurchaseOrder, SupplierPayment, CustomerPayment,
         SaleOrder, ReturnInvoice, FinancialTransaction, PartnerTransaction
     ]
-    
-    total_moved = 0
+    count = 0
     for model in models:
         records = model.query.filter(model.date >= cutoff).all()
         for r in records:
             r.season = target_season
-            total_moved += 1
+            count += 1
             
     db.session.commit()
-    flash(f'تم نقل عدد {total_moved} معاملة (منذ 1/8) إلى الموسم الشتوي بنجاح', 'success')
-    return redirect(url_for('dashboard'))
+    flash(f'تم نقل {count} معاملة (من 1 أغسطس فصاعداً) إلى موسم {target_season} بنجاح', 'success')
+    return redirect(url_for('index'))
+
+@app.route('/fixes/fix-abu-sondos-payments')
+@general_manager_required
+def fix_abu_sondos_payments():
+    # Move Abu Sondos payments on Aug 1 and Aug 2 back to Summer 2026
+    supp = Supplier.query.filter(Supplier.name.like('%سندس%')).first()
+    if supp:
+        payments = SupplierPayment.query.filter(
+            SupplierPayment.supplier_id == supp.id,
+            SupplierPayment.amount.in_([11579.5, 483750.0, 25970.0, 26420.0])
+        ).all()
+        for p in payments:
+            p.season = 'صيفي 2026'
+        db.session.commit()
+        flash('تم إرجاع مدفوعات أبو سندس الخاصة بشهر 8 إلى الموسم الصيفي بنجاح', 'success')
+    return redirect(url_for('suppliers'))
 
 def update_monthly_commissions(sales_rep_id, ref_date):
     """
