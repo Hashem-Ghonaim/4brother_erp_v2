@@ -640,14 +640,17 @@ def owner_settlement():
         net_cost = round(real_cost - returned_cost, 2)
 
         is_under_partner = False
+        partner_obj = None
         seller = order.sales_rep
         if seller:
             if seller.role == 'manager':
                 is_under_partner = True
+                partner_obj = seller
             elif seller.manager_id:
                 mgr = db.session.get(User, seller.manager_id)
                 if mgr and mgr.role == 'manager':
                     is_under_partner = True
+                    partner_obj = mgr
                     
         actual_discount = (order.discount or 0) if net_qty > 0 else 0
         
@@ -678,8 +681,8 @@ def owner_settlement():
         order_est_comm = 0
         order_net_comm = 0
         if seller:
-            if is_under_partner:
-                order_est_comm = net_qty * float(p.commission_value or 13.0)
+            if is_under_partner and partner_obj:
+                order_est_comm = net_qty * float(partner_obj.commission_value or 13.0)
                 ret_total_deduction = sum(r.total_deduction or 0 for r in order.return_invoices)
                 order_net_comm = order_est_comm - actual_discount - ret_total_deduction
             else:
