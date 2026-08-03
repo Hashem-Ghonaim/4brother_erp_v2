@@ -95,7 +95,17 @@ def update_product_image():
 
 @app.route('/inventory')
 @permission_required_any('manage_inventory', 'print_barcode', 'view_inventory')
-def inventory(): return render_template('inventory.html', products=ProductVariant.query.join(ProductModel).filter(ProductModel.season == session.get('active_season', '???? 2027')).all(), user=current_user, categories=Category.query.all())
+def inventory(): return render_template('inventory.html', products=ProductVariant.query.join(ProductModel).filter(ProductModel.season == session.get('active_season', 'شتوي 2027')).all(), user=current_user, categories=Category.query.all())
+
+
+@app.route('/verify_password_api', methods=['POST'])
+@login_required
+def verify_password_api():
+    data = request.get_json()
+    password = data.get('password', '')
+    if check_password_hash(current_user.password, password):
+        return jsonify({'success': True})
+    return jsonify({'success': False, 'message': 'كلمة السر غلط'}), 401
 
 
 @app.route('/product/edit/<int:id>', methods=['POST'])

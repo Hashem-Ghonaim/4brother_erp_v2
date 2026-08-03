@@ -84,6 +84,37 @@
             outline: 3px solid #0d6efd;
             outline-offset: 2px;
         }
+
+        /* إخفاء أعمدة التكلفة وهامش الربح بشكل افتراضي */
+        .sensitive-col {
+            display: none;
+        }
+        body.prices-revealed .sensitive-col {
+            display: table-cell;
+        }
+
+        /* زر العين */
+        .eye-toggle-btn {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .eye-toggle-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+        body.prices-revealed .eye-toggle-btn {
+            background: linear-gradient(135deg, #198754, #157347);
+        }
     </style>
 </head>
 
@@ -95,9 +126,14 @@
                 الرئيسية</a>
             <h5 class="m-0 fw-bold">📦 المخزن والمنتجات</h5>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 align-items-center">
             <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="بحث..."
                 onkeyup="filterTable()">
+            {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
+            <button type="button" class="eye-toggle-btn" id="eyeToggleBtn" onclick="showPasswordModal()" title="إظهار/إخفاء التكلفة وهامش الربح">
+                <i class="fas fa-eye-slash" id="eyeIcon"></i>
+            </button>
+            {% endif %}
             {% if user.username == 'gm_ahmed' %}
             <a href="/purchases/new" class="btn btn-success btn-sm fw-bold"><i class="fas fa-plus"></i> شراء بضاعة</a>
             {% endif %}
@@ -169,11 +205,11 @@
                                 <th>التصنيف</th>
                                 <th>الموسم</th>
                                 {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
-                                <th>التكلفة</th>
+                                <th class="sensitive-col">التكلفة</th>
                                 {% endif %}
                                 <th>سعر البيع</th>
                                 {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
-                                <th>هامش الربح</th>
+                                <th class="sensitive-col">هامش الربح</th>
                                 {% endif %}
                                 <th>المخزون</th>
                                 <th>إجراءات</th>
@@ -183,9 +219,9 @@
                             {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
                             <tr class="table-warning fw-bold fs-6">
                                 <td colspan="5" class="text-end">الإجماليات (الكمية × السعر):</td>
-                                <td id="total_cost_agg" class="text-danger">0</td>
+                                <td id="total_cost_agg" class="text-danger sensitive-col">0</td>
                                 <td id="total_sell_agg" class="text-success">0</td>
-                                <td id="total_profit_agg" class="text-primary">0</td>
+                                <td id="total_profit_agg" class="text-primary sensitive-col">0</td>
                                 <td id="total_stock_agg">0</td>
                                 <td></td>
                             </tr>
@@ -226,7 +262,7 @@
                                 {% endif %}
 
                                 {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
-                                <td class="editable fw-bold text-secondary" data-id="{{ p.id }}" data-field="cost">{{
+                                <td class="editable fw-bold text-secondary sensitive-col" data-id="{{ p.id }}" data-field="cost">{{
                                     p.cost_price }}</td>
                                 {% endif %}
 
@@ -238,7 +274,7 @@
                                 {% endif %}
 
                                 {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
-                                <td class="fw-bold text-primary profit-margin-cell">{{ (p.sell_price - p.cost_price)|round(2) }}</td>
+                                <td class="fw-bold text-primary profit-margin-cell sensitive-col">{{ (p.sell_price - p.cost_price)|round(2) }}</td>
                                 {% endif %}
 
                                 {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
@@ -534,6 +570,78 @@
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Password Modal for revealing prices -->
+{% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
+<div class="modal fade" id="passwordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header bg-dark text-white border-0" style="border-radius: 16px 16px 0 0;">
+                <h6 class="modal-title"><i class="fas fa-lock me-2"></i>تأكيد الهوية</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small mb-3 text-center">أدخل كلمة السر لإظهار التكلفة وهامش الربح</p>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-key"></i></span>
+                    <input type="password" id="pricePasswordInput" class="form-control" placeholder="كلمة السر..."
+                        onkeypress="if(event.key==='Enter') verifyAndReveal()">
+                </div>
+                <div id="passwordError" class="text-danger small mt-2 text-center" style="display:none;">
+                    <i class="fas fa-exclamation-circle"></i> كلمة السر غلط
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-dark w-100 fw-bold" onclick="verifyAndReveal()">
+                    <i class="fas fa-eye me-1"></i> إظهار الأسعار
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showPasswordModal() {
+        if (document.body.classList.contains('prices-revealed')) {
+            // Already revealed, just hide
+            document.body.classList.remove('prices-revealed');
+            document.getElementById('eyeIcon').className = 'fas fa-eye-slash';
+            return;
+        }
+        document.getElementById('pricePasswordInput').value = '';
+        document.getElementById('passwordError').style.display = 'none';
+        var modal = new bootstrap.Modal(document.getElementById('passwordModal'));
+        modal.show();
+        setTimeout(function() { document.getElementById('pricePasswordInput').focus(); }, 400);
+    }
+
+    function verifyAndReveal() {
+        var password = document.getElementById('pricePasswordInput').value;
+        if (!password) return;
+
+        fetch('/verify_password_api', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: password })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                document.body.classList.add('prices-revealed');
+                document.getElementById('eyeIcon').className = 'fas fa-eye';
+                bootstrap.Modal.getInstance(document.getElementById('passwordModal')).hide();
+            } else {
+                document.getElementById('passwordError').style.display = 'block';
+                document.getElementById('pricePasswordInput').value = '';
+                document.getElementById('pricePasswordInput').focus();
+            }
+        })
+        .catch(function() {
+            document.getElementById('passwordError').style.display = 'block';
+        });
+    }
+</script>
+{% endif %}
 
 <!-- GLOBAL SEASON SELECTOR -->
 <div style="position: fixed; bottom: 20px; left: 20px; z-index: 9999; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 2px solid var(--primary, #0d6efd);">
