@@ -45,6 +45,32 @@ def recalc_suppliers():
     flash(f'تم إعادة حساب وإرجاع حسابات {count} موردين بنجاح بناءً على الفواتير والمدفوعات', 'success')
     return redirect(url_for('suppliers'))
 
+@app.route('/fixes/move-winter-2742-2743')
+@general_manager_required
+def move_winter_2742_2743():
+    target_season = 'شتوي 2027'
+    order_ids = [2742, 2743]
+    
+    # 1. Sale Orders
+    orders = SaleOrder.query.filter(SaleOrder.id.in_(order_ids)).all()
+    for o in orders:
+        o.season = target_season
+        
+    # 2. Partner Transactions (Commissions)
+    ptrans = PartnerTransaction.query.filter(PartnerTransaction.order_id.in_(order_ids)).all()
+    for pt in ptrans:
+        pt.season = target_season
+        
+    # 3. Financial Transactions
+    for oid in order_ids:
+        ftrans = FinancialTransaction.query.filter(FinancialTransaction.description.like(f'%#{oid}%')).all()
+        for ft in ftrans:
+            ft.season = target_season
+            
+    db.session.commit()
+    flash(f'تم نقل الفواتير 2742 و 2743 وعمولاتها وكل ما يتعلق بها إلى الموسم الشتوي بنجاح', 'success')
+    return redirect(url_for('dashboard'))
+
 def update_monthly_commissions(sales_rep_id, ref_date):
     """
     دالة تعيد حساب عمولات الشهر بالكامل للموظف ومديره
