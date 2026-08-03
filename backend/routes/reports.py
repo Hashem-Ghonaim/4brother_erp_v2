@@ -117,7 +117,7 @@ def reports_hub():
         total_items_count = db.session.query(func.sum(ProductVariant.stock)).filter(ProductVariant.stock > 0).scalar() or 0
 
         # منتجات نفذت (0 أو سالب)
-        out_of_stock_count = ProductVariant.query.join(ProductModel).filter(ProductVariant.stock <= 4).filter(ProductModel.season == session.get('active_season', '???? 2027')).count()
+        out_of_stock_count = ProductVariant.query.join(ProductModel).filter(ProductVariant.stock <= 4).filter(ProductModel.season == session.get('season', '???? 2027')).count()
 
         # 3. [تصحيح] قائمة التنبيهات (تشمل النواقص + اللي خلص)
         # بنرتب تصاعدي عشان اللي رصيده 0 أو سالب يظهر الأول
@@ -421,7 +421,7 @@ def audit_system_gap():
         # الفكرة: هنقارن (أعلى سعر اشترينا بيه الصنف) مع (سعر التكلفة الحالي المسجل)
         # لو السعر الحالي أقل من سعر الشراء، ده بيعمل عجز في قيمة المخزن مقارنة بدين المورد
 
-        products = ProductVariant.query.join(ProductModel).filter(ProductVariant.stock > 0).filter(ProductModel.season == session.get('active_season', '???? 2027')).all()
+        products = ProductVariant.query.join(ProductModel).filter(ProductVariant.stock > 0).filter(ProductModel.season == session.get('season', '???? 2027')).all()
 
         report.append("<h3>1. تحليل فروقات أسعار التكلفة (Valuation Gap)</h3>")
         report.append("<table border='1' style='width:100%; border-collapse:collapse; text-align:center;'>")

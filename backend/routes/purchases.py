@@ -192,7 +192,7 @@ def new_purchase():
     return render_template('new_purchase.html',
                            suppliers=Supplier.query.all(),
                            categories=Category.query.all(),
-                           product_suggestions=ProductVariant.query.join(ProductModel).filter(ProductModel.season == session.get('active_season', '???? 2027')).all())
+                           product_suggestions=ProductVariant.query.join(ProductModel).filter(ProductModel.season == session.get('season', '???? 2027')).all())
     # =========================================================
 
 @app.route('/purchases/edit/<int:id>', methods=['GET', 'POST'])
@@ -358,7 +358,7 @@ def edit_purchase(id):
                             order=order, 
                             suppliers=Supplier.query.all(),
                             categories=Category.query.all(),
-                            product_suggestions=ProductVariant.query.join(ProductModel).filter(ProductModel.season == session.get('active_season', '???? 2027')).all())
+                            product_suggestions=ProductVariant.query.join(ProductModel).filter(ProductModel.season == session.get('season', '???? 2027')).all())
 # ===   نظام مسير الرواتب (Payroll)    ===
 
 @app.route('/purchases/<int:id>')
@@ -418,4 +418,4 @@ def purchase_return():
     # في حالة الـ GET (عرض الصفحة)
     return render_template('new_purchase_return.html',
                            suppliers=Supplier.query.all(),
-                           product_suggestions=ProductVariant.query.join(ProductModel).filter(ProductModel.season == session.get('active_season', '???? 2027')).all())
+                           product_suggestions=ProductVariant.query.join(ProductModel).filter(ProductModel.season == session.get('season', '???? 2027')).all())
