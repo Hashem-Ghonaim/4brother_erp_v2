@@ -30,6 +30,21 @@ from ..helpers import (general_manager_required, permission_required, permission
                        get_accessible_users, get_allowed_customers,
                        calculate_user_commission, calculate_distance)
 
+@app.route('/fixes/recalc-suppliers')
+@general_manager_required
+def recalc_suppliers():
+    suppliers = Supplier.query.all()
+    count = 0
+    for supp in suppliers:
+        total_purchases = db.session.query(func.sum(PurchaseOrder.total_cost)).filter(PurchaseOrder.supplier_id == supp.id).scalar() or 0
+        total_payments = db.session.query(func.sum(SupplierPayment.amount)).filter(SupplierPayment.supplier_id == supp.id).scalar() or 0
+        # Balance = Total Purchases - Total Payments
+        supp.balance = total_purchases - total_payments
+        count += 1
+    db.session.commit()
+    flash(f'تم إعادة حساب وإرجاع حسابات {count} موردين بنجاح بناءً على الفواتير والمدفوعات', 'success')
+    return redirect(url_for('suppliers'))
+
 def update_monthly_commissions(sales_rep_id, ref_date):
     """
     دالة تعيد حساب عمولات الشهر بالكامل للموظف ومديره
