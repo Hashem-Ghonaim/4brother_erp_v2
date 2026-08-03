@@ -11,7 +11,7 @@ import random
 import string
 from datetime import datetime, date, timedelta
 from functools import wraps
-from flask import render_template, request, redirect, url_for, flash, jsonify
+from flask import render_template, request, redirect, url_for, flash, jsonify, session
 from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -77,7 +77,7 @@ def pos():
     # 3. عرض الصفحة مع تمرير بيانات التعديل (لو وجدت)
     return render_template('pos.html',
                            categories=Category.query.all(),
-                           products=ProductVariant.query.join(ProductModel).all(),
+                           products=ProductVariant.query.join(ProductModel).filter(ProductModel.season == session.get('active_season', '???? 2027')).all(),
                            customers=customers,
                            shipping_companies=ShippingCompany.query.all(),
                            money_accounts=MoneyAccount.query.all(),

@@ -10,7 +10,7 @@ import random
 import string
 from datetime import datetime, date, timedelta
 from functools import wraps
-from flask import render_template, request, redirect, url_for, flash, jsonify
+from flask import render_template, request, redirect, url_for, flash, jsonify, session
 from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -95,7 +95,7 @@ def update_product_image():
 
 @app.route('/inventory')
 @permission_required_any('manage_inventory', 'print_barcode', 'view_inventory')
-def inventory(): return render_template('inventory.html', products=ProductVariant.query.join(ProductModel).all(), user=current_user, categories=Category.query.all())
+def inventory(): return render_template('inventory.html', products=ProductVariant.query.join(ProductModel).filter(ProductModel.season == session.get('active_season', '???? 2027')).all(), user=current_user, categories=Category.query.all())
 
 
 @app.route('/product/edit/<int:id>', methods=['POST'])
