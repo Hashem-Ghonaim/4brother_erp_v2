@@ -123,7 +123,7 @@
                         {% set cat_counts = namespace(data={}) %}
                         {% set season_counts = namespace(data={}) %}
                         {% for p in products %}
-                            {% if p.model %}
+                            {% if p.model and p.model.category %}
                             {% set cat_name = p.model.category.name %}
                             {% set season_name = p.model.season or 'صيفي 2026' %}
                             
@@ -137,6 +137,7 @@
                                 {% set _ = season_counts.data.update({season_name: p.stock}) %}
                             {% else %}
                                 {% set _ = season_counts.data.update({season_name: season_counts.data[season_name] + p.stock}) %}
+                            {% endif %}
                             {% endif %}
                         {% endfor %}
                         
@@ -190,7 +191,7 @@
                             </tr>
                             {% endif %}
                             {% for p in products %}
-                            {% if p.model %}
+                            {% if p.model and p.model.category %}
                             <tr id="row_{{ p.id }}" class="product-row" data-category="{{ p.model.category.name }}" data-season="{{ p.model.season or 'صيفي 2026' }}" data-cost="{{ p.cost_price }}" data-sell="{{ p.sell_price }}" data-stock="{{ p.stock }}">
                                 <td class="fw-bold text-muted">{{ p.id }}</td>
 
@@ -269,11 +270,11 @@
                                     </div>
                                 </td>
                             </tr>
+                            {% endif %}
                             {% else %}
                             <tr>
                                 <td colspan="8" class="py-5 text-muted">المخزن فارغ</td>
                             </tr>
-                            {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>
@@ -296,7 +297,6 @@
                             <option value="all">-- كل المنتجات (الكل) --</option>
                             {% for cat in categories %}
                             <option value="{{ cat.id }}">{{ cat.name }}</option>
-                            {% endif %}
                             {% endfor %}
                         </select>
                     </div>
