@@ -79,14 +79,10 @@ def supplier_profile(id):
         .filter(PurchaseOrder.supplier_id == id, PurchaseOrder.season == current_season)\
         .scalar() or 0
 
-    # تصفية الفواتير والمدفوعات للموسم الحالي فقط لتسهيل المراجعة
-    season_orders = [o for o in supp.orders if o.season == current_season]
-    season_payments = [p for p in supp.payments if p.season == current_season]
-
     return render_template('supplier_profile.html',
                            supplier=supp,
-                           orders=sorted(season_orders, key=lambda o: o.id, reverse=True),
-                           payments=sorted(season_payments, key=lambda p: p.id, reverse=True),
+                           orders=sorted(supp.orders, key=lambda o: o.id, reverse=True),
+                           payments=sorted(supp.payments, key=lambda p: p.id, reverse=True),
                            accounts=accounts,
                            total_items=int(total_items))
 
