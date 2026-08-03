@@ -67,22 +67,28 @@ def edit_supplier(id):
 @app.route('/suppliers/<int:id>')
 @permission_required('manage_inventory')
 def supplier_profile(id):
+    from flask import session
+    current_season = session.get('season', 'شتوي 2027')
+    
     supp = Supplier.query.get_or_404(id)
     accounts = MoneyAccount.query.all()
 
-    # === الإضافة الجديدة: حساب إجمالي عدد القطع ===
-    # نقوم بجمع كميات الأصناف من كل فواتير الشراء الخاصة بهذا المورد
+    # === الإضافة الجديدة: حساب إجمالي عدد القطع للموسم الحالي ===
     total_items = db.session.query(func.sum(PurchaseItem.quantity))\
         .join(PurchaseOrder)\
-        .filter(PurchaseOrder.supplier_id == id)\
+        .filter(PurchaseOrder.supplier_id == id, PurchaseOrder.season == current_season)\
         .scalar() or 0
+
+    # تصفية الفواتير والمدفوعات للموسم الحالي فقط لتسهيل المراجعة
+    season_orders = [o for o in supp.orders if o.season == current_season]
+    season_payments = [p for p in supp.payments if p.season == current_season]
 
     return render_template('supplier_profile.html',
                            supplier=supp,
-                           orders=sorted(supp.orders, key=lambda o: o.id, reverse=True),
-                           payments=sorted(supp.payments, key=lambda p: p.id, reverse=True),
+                           orders=sorted(season_orders, key=lambda o: o.id, reverse=True),
+                           payments=sorted(season_payments, key=lambda p: p.id, reverse=True),
                            accounts=accounts,
-                           total_items=int(total_items)) # <--- تم إرسال الرقم هنا
+                           total_items=int(total_items))
 
 @app.route('/suppliers/pay', methods=['POST'])
 @permission_required('manage_inventory')
