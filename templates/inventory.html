@@ -127,8 +127,12 @@
             <h5 class="m-0 fw-bold">📦 المخزن والمنتجات</h5>
         </div>
         <div class="d-flex gap-2 align-items-center">
+            <!-- Honeypot for Chrome Autofill -->
+            <input type="text" style="opacity: 0; position: absolute; left: -9999px;" autocomplete="username">
+            <input type="password" style="opacity: 0; position: absolute; left: -9999px;" autocomplete="current-password">
+            
             <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="بحث..."
-                onkeyup="filterTable()" autocomplete="new-password">
+                onkeyup="filterTable()" autocomplete="off" readonly onfocus="this.removeAttribute('readonly');">
             {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
             <button type="button" class="eye-toggle-btn" id="eyeToggleBtn" onclick="showPasswordModal()" title="إظهار/إخفاء التكلفة وهامش الربح">
                 <i class="fas fa-eye-slash" id="eyeIcon"></i>
