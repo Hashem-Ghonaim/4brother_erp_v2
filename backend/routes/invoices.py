@@ -89,7 +89,9 @@ def update_monthly_commissions(sales_rep_id, ref_date):
 
         # LOGGING
         with open('debug_comm_log.txt', 'a', encoding='utf-8') as f:
-            f.write(f"\n--- DEBUG [{target_month_str}]: {sales_rep.fullname} ---\n")
+            f.write(f"\n--- DEBUG [{target_month_str}]: {sales_rep.fullname} (ID:{sales_rep.id}) ---\n")
+            f.write(f"Partner: {partner.fullname} (ID:{partner.id})\n")
+            f.write(f"job_type: {sales_rep.job_type}, commission_value: {sales_rep.commission_value}, commission_rules: {sales_rep.commission_rules}\n")
             f.write(f"Monthly Sales: {monthly_sales}, Monthly Returns: {monthly_returns}, Net: {total_monthly_items}\n")
             f.write(f"Rate: {rate_per_item}\n")
 

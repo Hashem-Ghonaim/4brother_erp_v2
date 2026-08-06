@@ -434,12 +434,16 @@ def recalculate_commissions():
             return redirect(url_for('partners_report'))
 
         ref_date = datetime.strptime(target_month_str + '-01', '%Y-%m-%d')
+        # حساب بداية ونهاية الشهر (يعمل على PostgreSQL و SQLite)
+        month_start = ref_date.replace(day=1, hour=0, minute=0, second=0)
+        next_month = (month_start.replace(day=28) + timedelta(days=4)).replace(day=1)
 
         from ..routes.invoices import update_monthly_commissions
 
         user_ids = db.session.query(SaleOrder.user_id).filter(
             SaleOrder.is_proforma == False,
-            func.to_char(SaleOrder.date, 'YYYY-MM') == target_month_str
+            SaleOrder.date >= month_start,
+            SaleOrder.date < next_month
         ).distinct().all()
 
         processed = 0
