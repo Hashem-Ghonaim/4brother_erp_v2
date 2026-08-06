@@ -87,11 +87,14 @@ def update_monthly_commissions(sales_rep_id, ref_date):
         elif sales_rep.commission_value:
             rate_per_item = float(sales_rep.commission_value)
 
-        # LOGGING
-        with open('debug_comm_log.txt', 'a', encoding='utf-8') as f:
-            f.write(f"\n--- DEBUG [{target_month_str}]: {sales_rep.fullname} ---\n")
-            f.write(f"Monthly Sales: {monthly_sales}, Monthly Returns: {monthly_returns}, Net: {total_monthly_items}\n")
-            f.write(f"Rate: {rate_per_item}\n")
+        # LOGGING (safe for read-only filesystems like Vercel)
+        try:
+            with open('debug_comm_log.txt', 'a', encoding='utf-8') as f:
+                f.write(f"\n--- DEBUG [{target_month_str}]: {sales_rep.fullname} ---\n")
+                f.write(f"Monthly Sales: {monthly_sales}, Monthly Returns: {monthly_returns}, Net: {total_monthly_items}\n")
+                f.write(f"Rate: {rate_per_item}\n")
+        except:
+            pass  # Vercel read-only filesystem
 
         # 5. حذف التسويات القديمة (اللي ملهاش order_id) الخاصة بالشهر ده
         PartnerTransaction.query.filter(
@@ -158,8 +161,11 @@ def update_monthly_commissions(sales_rep_id, ref_date):
                     date=order.date
                 ))
 
-        with open('debug_comm_log.txt', 'a', encoding='utf-8') as f:
-            f.write(f"Total Month Commission: {total_month_comm}\n")
+        try:
+            with open('debug_comm_log.txt', 'a', encoding='utf-8') as f:
+                f.write(f"Total Month Commission: {total_month_comm}\n")
+        except:
+            pass  # Vercel read-only filesystem
 
         db.session.commit()
         print(f"✅ Updated monthly commissions for Partner {partner.fullname} from Sales {sales_rep.fullname}")
