@@ -61,7 +61,7 @@ def pos():
                             'price': item.unit_price,
                             'qty': item.quantity,
                             'stock': item.variant.stock,
-                            'cost_price': item.variant.model.cost_price if item.variant.model else 0,
+                            'cost_price': item.variant.cost_price or 0,
                             'barcode': item.variant.barcode or ''
                         })
         except Exception as e:
