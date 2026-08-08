@@ -380,7 +380,9 @@ def edit_proforma(id):
             'name': item.variant.model.name,
             'price': item.unit_price,
             'qty': item.quantity,
-            'stock': item.variant.stock # عشان الـ Validation
+            'stock': item.variant.stock, # عشان الـ Validation
+            'cost_price': item.variant.model.cost_price if item.variant.model else 0,
+            'barcode': item.variant.barcode or ''
         })
 
     # إرسال نفس البيانات التي تحتاجها صفحة POS العادية + بيانات الفاتورة
@@ -391,7 +393,7 @@ def edit_proforma(id):
 
     return render_template('pos.html',
                            categories=Category.query.all(),
-                           products=ProductVariant.query.join(ProductModel).filter(ProductModel.season == session.get('season', '???? 2027')).all(),
+                           products=ProductVariant.query.join(ProductModel).all(),
                            customers=customers,
                            shipping_companies=ShippingCompany.query.all(),
                            money_accounts=MoneyAccount.query.all(),

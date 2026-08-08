@@ -60,7 +60,9 @@ def pos():
                             'name': item.variant.model.name,
                             'price': item.unit_price,
                             'qty': item.quantity,
-                            'stock': item.variant.stock
+                            'stock': item.variant.stock,
+                            'cost_price': item.variant.model.cost_price if item.variant.model else 0,
+                            'barcode': item.variant.barcode or ''
                         })
         except Exception as e:
             print(f"Error fetching draft: {e}")
