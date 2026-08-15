@@ -149,6 +149,9 @@ def setup():
                     if 'season' not in cols:
                         conn.execute(text(f"ALTER TABLE {table} ADD COLUMN season VARCHAR(50) DEFAULT 'صيفي 2026'"))
                         conn.execute(text(f"UPDATE {table} SET season = 'صيفي 2026' WHERE season IS NULL"))
+                        
+                        if table == 'pattern_tracking':
+                            conn.execute(text("UPDATE pattern_tracking SET season = 'شتوي 2027' WHERE serial_number LIKE '%سويتشرت%' OR serial_number LIKE '%شتوي%'"))
 
             conn.commit()
 
