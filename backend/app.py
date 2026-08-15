@@ -66,7 +66,7 @@ from flask import has_request_context
 
 SEASON_MODELS = [
     Expense, PurchaseOrder, SupplierPayment, CustomerPayment, 
-    SaleOrder, ReturnInvoice, FinancialTransaction, PartnerTransaction, ProductModel
+    SaleOrder, ReturnInvoice, FinancialTransaction, PartnerTransaction, ProductModel, PatternTracking
 ]
 
 @event.listens_for(Session, "do_orm_execute")
@@ -141,7 +141,7 @@ def setup():
             # --- تحديثات المواسم (Season Migration) ---
             tables_to_update = [
                 'expense', 'purchase_order', 'supplier_payment', 'customer_payment',
-                'sale_order', 'return_invoice', 'financial_transaction', 'partner_transaction'
+                'sale_order', 'return_invoice', 'financial_transaction', 'partner_transaction', 'pattern_tracking'
             ]
             for table in tables_to_update:
                 if table in existing_tables:

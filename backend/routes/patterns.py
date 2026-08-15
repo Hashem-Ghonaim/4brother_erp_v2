@@ -110,6 +110,7 @@ def new_pattern():
     receiving_price = request.form.get('receiving_price', 0.0)
     selling_price = request.form.get('selling_price', 0.0)
     status = request.form.get('status', 'جاري التجهيز')
+    season = request.form.get('season', 'صيفي 2026')
     
     # رفع الصورة (اختياري)
     filename = None
@@ -136,7 +137,8 @@ def new_pattern():
         selling_price=float(selling_price) if selling_price else 0.0,
         quantity=int(request.form.get('quantity', 0) or 0),
         colors=request.form.get('colors', ''),
-        status=status
+        status=status,
+        season=season
     )
 
     db.session.add(new_pat)
@@ -180,6 +182,9 @@ def edit_pattern(id):
     qty_val = request.form.get('quantity')
     pat.quantity = int(qty_val) if qty_val else 0
     pat.colors = request.form.get('colors', '')
+    
+    season_val = request.form.get('season')
+    if season_val: pat.season = season_val
     
     # تحديث الصورة
     if 'image' in request.files:

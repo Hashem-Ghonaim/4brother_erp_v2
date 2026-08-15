@@ -92,6 +92,7 @@ class PatternTracking(db.Model):
     quantity = db.Column(db.Integer, default=0)
     colors = db.Column(db.String(255), nullable=True)
     status = db.Column(db.String(50), default='جاري التجهيز') # تم التسليم للمصنع - جاري التجهيز - معطلة - ملغية - تم الإستلام
+    season = db.Column(db.String(50), default='صيفي 2026')
 
 
 class Category(db.Model):
