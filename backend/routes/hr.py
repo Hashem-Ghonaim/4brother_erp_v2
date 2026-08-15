@@ -99,6 +99,30 @@ def fill_missing_attendances(month_str):
             
             current_date += timedelta(days=1)
             
+        # التوقيع التلقائي للانصراف للأيام السابقة
+        missing_checkouts = Attendance.query.filter(
+            Attendance.date <= max_end_date,
+            Attendance.check_in != None,
+            Attendance.check_out == None
+        ).all()
+        
+        for att in missing_checkouts:
+            if att.user and att.user.shift_end:
+                try:
+                    shift_end_t = datetime.strptime(att.user.shift_end, '%H:%M').time()
+                    checkout_dt = datetime.combine(att.date, shift_end_t)
+                    
+                    # معالجة الورديات التي تعبر منتصف الليل
+                    if att.user.shift_start:
+                        shift_start_t = datetime.strptime(att.user.shift_start, '%H:%M').time()
+                        if shift_end_t < shift_start_t:
+                            checkout_dt += timedelta(days=1)
+                            
+                    att.check_out = checkout_dt
+                    records_added += 1
+                except:
+                    pass
+
         if records_added > 0:
             db.session.commit()
             

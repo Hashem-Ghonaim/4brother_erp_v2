@@ -5,6 +5,7 @@ from flask import flash, session, request, redirect, url_for
 from werkzeug.security import generate_password_hash
 from sqlalchemy import func, text, inspect
 import re
+from datetime import date, datetime, timedelta
 from .core import app, db, login_manager, cairo_now, basedir, FACTORY_LAT, FACTORY_LNG, ALLOWED_RADIUS, allowed_file, BASE_DIR
 from .routes.auth import register_auth_routes
 from .routes.treasury import register_treasury_routes
@@ -154,6 +155,33 @@ def setup():
                             conn.execute(text("UPDATE pattern_tracking SET season = 'شتوي 2027' WHERE serial_number LIKE '%سويتشرت%' OR serial_number LIKE '%شتوي%'"))
 
             conn.commit()
+
+            # --- إصلاح الحضور والانصراف من 1 أغسطس ---
+            target_date = date(2026, 8, 1)
+            attendances = Attendance.query.filter(Attendance.date >= target_date, Attendance.check_in != None).all()
+            for att in attendances:
+                user = att.user
+                if not user or not user.shift_end:
+                    continue
+                try:
+                    shift_end_t = datetime.strptime(user.shift_end, '%H:%M').time()
+                    checkout_dt = datetime.combine(att.date, shift_end_t)
+                    if user.shift_start:
+                        shift_start_t = datetime.strptime(user.shift_start, '%H:%M').time()
+                        if shift_end_t < shift_start_t:
+                            checkout_dt += timedelta(days=1)
+                    
+                    needs_fix = False
+                    if not att.check_out:
+                        needs_fix = True
+                    elif att.check_out < checkout_dt:
+                        needs_fix = True
+                        
+                    if needs_fix:
+                        att.check_out = checkout_dt
+                except:
+                    pass
+            db.session.commit()
 
         # 2. إنشاء المدير العام (أحمد عبد الفتاح)
         gm = User.query.filter_by(username="gm_ahmed").first()
