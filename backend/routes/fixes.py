@@ -410,7 +410,8 @@ def recalculate_treasury():
                     FinancialTransaction.account_id == acc.id,
                     ((FinancialTransaction.account_id == None) & 
                      FinancialTransaction.description.like(f"%{acc.name}%"))
-                )).scalar() or 0.0
+                ))\
+                .filter(FinancialTransaction.date >= '2026-08-04 00:00:00').scalar() or 0.0
             
             real_balance = round(real_balance, 2)
             old_balance = round(acc.balance, 2)
@@ -430,7 +431,8 @@ def recalculate_treasury():
                     FinancialTransaction.account_id == acc.id,
                     ((FinancialTransaction.account_id == None) & 
                      FinancialTransaction.description.like(f"%{acc.name}%"))
-                )).order_by(FinancialTransaction.date.desc()).all()
+                )).filter(FinancialTransaction.date >= '2026-08-04 00:00:00')\
+                .order_by(FinancialTransaction.date.desc()).all()
 
                 report_content += f"=========================================\n"
                 report_content += f"الخزنة: {acc.name}\n"
