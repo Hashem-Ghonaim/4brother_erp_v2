@@ -93,7 +93,7 @@
                         <option value="">-- اضغط للبحث بالاسم --</option>
                         {% for v in all_variants %}
                         <option value="{{ v.id }}" {% if variant and variant.id==v.id %}selected{% endif %}>
-                            {{ v.model.category.name }} - {{ v.model.name }} (الباركود: {{ v.barcode }})
+                            {{ v.model.category.name if v.model and v.model.category else 'بدون تصنيف' }} - {{ v.model.name if v.model else 'بدون موديل' }} (الباركود: {{ v.barcode }})
                         </option>
                         {% endfor %}
                     </select>
