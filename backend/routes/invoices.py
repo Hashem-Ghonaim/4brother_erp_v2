@@ -717,11 +717,11 @@ def invoices():
         actual_discount = (o.discount or 0) if net_qty > 0 else 0
 
         # حساب ربح الشركة بالصافي بعد المرتجعات
+        revenue_for_company = o.net_total - actual_discount - (o.shipping_fee or 0)
+        
         if is_under_partner:
-            revenue_for_company = o.net_total - (o.shipping_fee or 0)
             o.company_bears_discount = False
         else:
-            revenue_for_company = o.net_total - actual_discount - (o.shipping_fee or 0)
             o.company_bears_discount = True if actual_discount > 0 else False
 
         o.gross_profit = round(revenue_for_company - o.net_cost, 2)
