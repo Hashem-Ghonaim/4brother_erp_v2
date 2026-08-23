@@ -55,7 +55,7 @@ class User(db.Model, UserMixin):
     has_flexible_hours = db.Column(db.Boolean, default=False) # مواعيد مرنة (لا يخصم تأخير/انصراف مبكر)
 
     def has_perm(self, perm):
-        if self.role == 'general_manager':
+        if self.role in ('general_manager', 'owner'):
             return True
         if not self.permissions:
             return False

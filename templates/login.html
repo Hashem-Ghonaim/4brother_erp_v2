@@ -75,7 +75,7 @@
     <div class="card login-card shadow p-4">
         <div class="text-center mb-4">
             {% if global_company_logo %}
-                <img src="{{ global_company_logo | image_url }}" style="max-height: 100px; max-width: 80%; object-fit: contain;">
+                <img src="{{ global_company_logo | image_url }}" style="max-height: 100px; max-width: 80%; object-fit: contain;" loading="lazy">
             {% else %}
                 <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
                     <i class="fas fa-cube fa-3x text-secondary"></i>

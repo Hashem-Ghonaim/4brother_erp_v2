@@ -216,9 +216,9 @@
                 <div class="header-grid">
                     <div style="width: 40%; text-align: right;">
                         {% if global_company_logo %}
-                        <img src="{{ global_company_logo | image_url }}" class="logo-img">
+                        <img src="{{ global_company_logo | image_url }}" class="logo-img" loading="lazy">
                         {% elif company_logo %}
-                        <img src="{{ company_logo | image_url }}" class="logo-img">
+                        <img src="{{ company_logo | image_url }}" class="logo-img" loading="lazy">
                         {% else %}
                         <h2 class="fw-bold text-primary m-0">اسم الشركة</h2>
                         {% endif %}

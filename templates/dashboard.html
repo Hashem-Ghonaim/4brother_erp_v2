@@ -341,10 +341,10 @@
             <div class="sidebar-header">
                 {% if global_company_logo %}
                 <img src="{{ global_company_logo | image_url }}" class="bg-white rounded p-1 mb-2"
-                    style="width: 70px; height: 70px; object-fit: contain;">
+                    style="width: 70px; height: 70px; object-fit: contain;" loading="lazy">
                 {% elif company_logo %}
                 <img src="{{ company_logo | image_url }}" class="bg-white rounded p-1 mb-2"
-                    style="width: 70px; height: 70px; object-fit: contain;">
+                    style="width: 70px; height: 70px; object-fit: contain;" loading="lazy">
                 {% else %}
                 <div class="bg-light text-dark rounded-circle d-inline-flex align-items-center justify-content-center mb-2"
                     style="width: 60px; height: 60px; font-size: 1.5rem; font-weight: bold;">

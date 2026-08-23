@@ -56,7 +56,7 @@
                         <td class="text-start">
                             {% if item.variant %}
                                 <div class="d-flex align-items-center">
-                                    <img src="{{ item.variant.model.image | image_url }}" class="rounded ms-2 border" width="40" height="40" style="object-fit: cover;">
+                                    <img src="{{ item.variant.model.image | image_url }}" class="rounded ms-2 border" width="40" height="40" style="object-fit: cover;" loading="lazy">
                                     <div>
                                         <div class="fw-bold">{{ item.variant.model.name }}</div>
                                         <small class="text-muted">{{ item.variant.model.category.name }}</small>

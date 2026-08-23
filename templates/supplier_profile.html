@@ -124,7 +124,7 @@
                                 <td>
                                     {% if pay.receipt_image %}
                                     <a href="{{ pay.receipt_image | image_url }}" target="_blank">
-                                        <img src="{{ pay.receipt_image | image_url }}" class="rounded border" width="60" height="40">
+                                        <img src="{{ pay.receipt_image | image_url }}" class="rounded border" width="60" height="40" loading="lazy">
                                     </a>
                                     {% else %}
                                     <span class="text-muted small">بدون صورة</span>

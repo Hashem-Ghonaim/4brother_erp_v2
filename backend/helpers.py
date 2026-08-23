@@ -21,7 +21,7 @@ def general_manager_required(f):
     @wraps(f)
     @login_required
     def decorated_function(*args, **kwargs):
-        if current_user.role != 'general_manager':
+        if current_user.role not in ('general_manager', 'owner'):
             return "\u063a\u064a\u0631 \u0645\u0635\u0631\u062d (\u0627\u0644\u0645\u062f\u064a\u0631 \u0627\u0644\u0639\u0627\u0645 \u0641\u0642\u0637)", 403
         return f(*args, **kwargs)
     return decorated_function
@@ -45,7 +45,7 @@ def permission_required_any(*perm_names):
         @wraps(f)
         @login_required
         def decorated_function(*args, **kwargs):
-            if not any(current_user.has_perm(p) for p in perm_names) and current_user.role != 'general_manager':
+            if not any(current_user.has_perm(p) for p in perm_names) and current_user.role not in ('general_manager', 'owner'):
                 flash('\u0639\u0641\u0648\u0627\u064b\u060c \u0644\u064a\u0633 \u0644\u062f\u064a\u0643 \u0627\u0644\u0635\u0644\u0627\u062d\u064a\u0627\u062a \u0627\u0644\u0645\u0637\u0644\u0648\u0628\u0629.', 'danger')
                 return redirect(request.referrer or url_for('dashboard'))
             return f(*args, **kwargs)

@@ -240,13 +240,13 @@
                                     <label class="img-editable" title="اضغط لتغيير الصورة">
                                         <img id="img_preview_{{ p.id }}" src="{{ p.model.image | image_url }}"
                                             class="rounded border"
-                                            style="width: 50px; height: 50px; object-fit: contain;">
+                                            style="width: 50px; height: 50px; object-fit: contain;" loading="lazy">
                                         <input type="file" class="d-none"
                                             onchange="uploadProductImage({{ p.id }}, this)" accept="image/*">
                                     </label>
                                     {% else %}
                                     <img src="{{ p.model.image | image_url }}" class="rounded border"
-                                        style="width: 50px; height: 50px; object-fit: contain;">
+                                        style="width: 50px; height: 50px; object-fit: contain;" loading="lazy">
                                     {% endif %}
                                 </td>
 
