@@ -87,7 +87,7 @@ def update_product_image():
                 else:
                     return jsonify({'success': False, 'message': 'المنتج غير موجود'}), 404
             else:
-                return jsonify({'success': False, 'message': 'فشل رفع الصورة'}), 500
+                return jsonify({'success': False, 'message': f'فشل رفع الصورة: {url}'}), 500
 
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
