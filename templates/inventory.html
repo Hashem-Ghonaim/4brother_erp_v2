@@ -373,7 +373,7 @@
                 .then(data => {
                     if (data.success) {
                         // تحديث الصورة بالرابط الجديد (نضيف وقت عشوائي عشان المتصفح مياخدش الكاش القديم)
-                        imgElement.src = data.new_image_url + '?t=' + new Date().getTime();
+                        imgElement.src = data.image_url + '?t=' + new Date().getTime();
                         imgElement.style.opacity = '1';
                         // ومضة خضراء
                         imgElement.style.border = '2px solid green';
