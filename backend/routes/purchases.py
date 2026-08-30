@@ -42,6 +42,7 @@ def new_office_purchase():
         product_ids = request.form.getlist('product_id[]')
         names = request.form.getlist('name[]')
         qtys = request.form.getlist('qty[]')
+        costs = request.form.getlist('cost[]')  # إضافة قراءة التكلفة من الفورم
         barcodes = request.form.getlist('barcode[]')
         categories = request.form.getlist('category[]')
         seasons = request.form.getlist('season[]')
@@ -119,8 +120,12 @@ def new_office_purchase():
                     db.session.rollback()
                     return redirect(request.url)
 
-            # د) تكلفة الصنف هي تكلفته الأصلية + 10
-            cost = variant.cost_price + 10
+            # د) قراءة التكلفة من الفورم (والتي تم زيادة 10 عليها في الواجهة)
+            try: cost = float(costs[i]) if i < len(costs) and costs[i].strip() else (variant.cost_price + 10)
+            except: cost = variant.cost_price + 10
+            
+            # تحديث تكلفة المنتج الأساسية في النظام
+            variant.cost_price = cost
             
             # زيادة المخزون
             variant.stock += qty

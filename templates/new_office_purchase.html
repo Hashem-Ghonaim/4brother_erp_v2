@@ -301,7 +301,10 @@
             }
         }
 
-        if (cost) tr.find('.cost-input').val(cost);
+        if (cost) {
+            let adjustedCost = parseFloat(cost) + 10;
+            tr.find('.cost-input').val(adjustedCost);
+        }
         if (sell) tr.find('.sell-input').val(sell);
         if (barcode && barcode !== 'None') tr.find('.barcode-input').val(barcode);
         
