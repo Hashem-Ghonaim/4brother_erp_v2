@@ -223,9 +223,9 @@
                 <div class="header-grid">
                     <div style="width: 40%; text-align: right;">
                         {% if global_company_logo %}
-                        <img src="{{ global_company_logo | image_url }}" class="logo-img" loading="lazy">
+                        <img src="{{ global_company_logo | image_url }}" class="logo-img">
                         {% elif company_logo %}
-                        <img src="{{ company_logo | image_url }}" class="logo-img" loading="lazy">
+                        <img src="{{ company_logo | image_url }}" class="logo-img">
                         {% else %}
                         <h2 class="fw-bold text-primary m-0">اسم الشركة</h2>
                         {% endif %}
@@ -447,10 +447,11 @@
             
             const element = document.getElementById('invoiceElement');
             const opt = { 
-                margin: 0, 
+                margin: 5, 
                 filename: 'Invoice_{{ order.id }}.pdf', 
                 image: { type: 'jpeg', quality: 0.98 }, 
-                html2canvas: { scale: 2, scrollX: 0, scrollY: 0 }, 
+                html2canvas: { scale: 2, scrollX: 0, scrollY: 0, useCORS: true }, 
+                pagebreak: { mode: 'css', avoid: ['tr', '.info-grid', '.totals-table', '.mt-auto'] },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
             };
             
