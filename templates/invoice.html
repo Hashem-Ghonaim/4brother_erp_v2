@@ -442,9 +442,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
         function downloadPDF() {
+            const wrapper = document.querySelector('.mobile-scroll-wrapper');
+            wrapper.style.overflow = 'visible'; // Prevent html2canvas cropping
+            
             const element = document.getElementById('invoiceElement');
-            const opt = { margin: 0, filename: 'Invoice_{{ order.id }}.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, windowWidth: 800 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-            html2pdf().set(opt).from(element).save();
+            const opt = { 
+                margin: 0, 
+                filename: 'Invoice_{{ order.id }}.pdf', 
+                image: { type: 'jpeg', quality: 0.98 }, 
+                html2canvas: { scale: 2, scrollX: 0, scrollY: 0 }, 
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
+            };
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                wrapper.style.overflow = ''; // Restore
+            });
         }
         function sendWhatsApp() {
             let phoneElement = document.getElementById('custPhone');
