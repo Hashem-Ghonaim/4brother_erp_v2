@@ -40,6 +40,26 @@ def image_url(filename):
         return filename
     return f"/static/uploads/{filename}"
 
+from sqlalchemy.sql import expression
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.types import String
+
+class to_char(expression.FunctionElement):
+    type = String()
+    name = 'to_char'
+
+@compiles(to_char, 'sqlite')
+def sqlite_to_char(element, compiler, **kw):
+    args = list(element.clauses)
+    if len(args) == 2:
+        col = compiler.process(args[0], **kw)
+        fmt = compiler.process(args[1], **kw)
+        if fmt in ("'YYYY-MM'", '"YYYY-MM"'):
+            return f"strftime('%Y-%m', {col})"
+        elif fmt in ("'YYYY-MM-DD'", '"YYYY-MM-DD"'):
+            return f"date({col})"
+    return compiler.visit_function(element)
+
 db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)

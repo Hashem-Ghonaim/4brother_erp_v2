@@ -906,7 +906,7 @@ def attendance_report():
 
     user_id = request.args.get('user_id')
 
-    query = Attendance.query.filter(func.strftime('%Y-%m', Attendance.date) == month_str)
+    query = Attendance.query.filter(func.to_char(Attendance.date, 'YYYY-MM') == month_str)
 
     selected_user = None
     if user_id and user_id != 'all':
@@ -995,7 +995,7 @@ def payroll():
             .join(SaleOrder)\
             .filter(SaleOrder.user_id == u.id,
                     SaleOrder.is_proforma == False,
-                    func.strftime('%Y-%m', SaleOrder.date) == month_str).scalar() or 0
+                    func.to_char(SaleOrder.date, 'YYYY-MM') == month_str).scalar() or 0
 
         # === [تعديل] خصم المرتجعات من عدد القطع ===
         # أ) مرتجعات الموسم ككل (عشان الشريحة تكون صح)
@@ -1011,14 +1011,14 @@ def payroll():
         returned_items_current_month = db.session.query(func.sum(ReturnInvoice.total_qty))\
             .join(SaleOrder)\
             .filter(SaleOrder.user_id == u.id,
-                    func.strftime('%Y-%m', ReturnInvoice.date) == month_str).scalar() or 0
+                    func.to_char(ReturnInvoice.date, 'YYYY-MM') == month_str).scalar() or 0
 
         # ج) مرتجعات نفس الشهر (البيع والمرتجع في نفس الشهر)
         same_month_returns_qty = db.session.query(func.sum(ReturnInvoice.total_qty))\
             .join(SaleOrder)\
             .filter(SaleOrder.user_id == u.id,
-                    func.strftime('%Y-%m', ReturnInvoice.date) == month_str,
-                    func.strftime('%Y-%m', SaleOrder.date) == month_str).scalar() or 0
+                    func.to_char(ReturnInvoice.date, 'YYYY-MM') == month_str,
+                    func.to_char(SaleOrder.date, 'YYYY-MM') == month_str).scalar() or 0
 
         # د) مرتجعات من أشهر سابقة (المرتجع في الشهر الحالي والبيع من شهر قديم)
         cross_month_returns_qty = max(0, returned_items_current_month - same_month_returns_qty)
@@ -1037,7 +1037,7 @@ def payroll():
             attendance_records = []
         else:
             attendance_records = Attendance.query.filter(Attendance.user_id == u.id,
-                                                       func.strftime('%Y-%m', Attendance.date) == month_str).all()
+                                                       func.to_char(Attendance.date, 'YYYY-MM') == month_str).all()
 
         attendance_deduction = 0
         attendance_details = []  # تفاصيل الجزاءات يوم بيوم
@@ -1168,7 +1168,7 @@ def payroll():
 
         # 4. جلب كافة الحركات المالية اليدوية (مكافآت، سلف، جزاءات، مرتجعات) لهذا الشهر
         hr_trans = HRTransaction.query.filter(HRTransaction.user_id == u.id,
-                                            func.strftime('%Y-%m', HRTransaction.date) == month_str).all()
+                                            func.to_char(HRTransaction.date, 'YYYY-MM') == month_str).all()
 
         bonuses = sum(t.amount for t in hr_trans if t.type == 'bonus')
         advances = sum(t.amount for t in hr_trans if t.type == 'advance')
@@ -1206,7 +1206,7 @@ def payroll():
         # 4.5 جلب الأذونات لهذا الشهر
         month_excuses = EmployeeExcuse.query.filter(
             EmployeeExcuse.user_id == u.id,
-            func.strftime('%Y-%m', EmployeeExcuse.date) == month_str
+            func.to_char(EmployeeExcuse.date, 'YYYY-MM') == month_str
         ).order_by(EmployeeExcuse.date).all()
 
         excuses_count = len(month_excuses)
