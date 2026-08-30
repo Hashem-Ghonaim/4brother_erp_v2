@@ -138,21 +138,28 @@
         }
 
         @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+            
             body {
                 background: white;
-                width: 100%;
-                height: auto;
+                margin: 0;
+                padding: 0;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
 
             .invoice-paper {
                 margin: 0;
-                width: 100%;
-                min-height: 100%;
-                height: auto;
+                width: 210mm;
+                min-height: 297mm;
                 box-shadow: none;
                 border: none;
-                padding: 10mm;
-                display: block !important;
+                border-top: 10px solid var(--main-color) !important;
+                padding: 15mm;
+                display: flex !important;
             }
 
             .mt-auto {
@@ -164,7 +171,7 @@
             }
 
             .mobile-scroll-wrapper {
-                overflow: visible;
+                overflow: visible !important;
             }
 
             /* Prevent page breaks inside important elements */
@@ -436,7 +443,7 @@
     <script>
         function downloadPDF() {
             const element = document.getElementById('invoiceElement');
-            const opt = { margin: 0, filename: 'Invoice_{{ order.id }}.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+            const opt = { margin: 0, filename: 'Invoice_{{ order.id }}.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, windowWidth: 800 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
             html2pdf().set(opt).from(element).save();
         }
         function sendWhatsApp() {
