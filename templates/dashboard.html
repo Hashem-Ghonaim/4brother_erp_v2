@@ -389,8 +389,10 @@
                     <a href="/product/tracking" class="nav-link"><i class="fas fa-route"></i> تتبع المنتجات</a>
                     {% if user.username == 'gm_ahmed' %}
                     <a href="/purchases/new" class="nav-link"><i class="fas fa-cart-plus"></i> مشتريات</a>
+                    <a href="/office_purchases/new" class="nav-link"><i class="fas fa-building-circle-check"></i> فاتورة مشتريات مكتب</a>
                     {% endif %}
                     <a href="/suppliers" class="nav-link"><i class="fas fa-truck-field"></i> الموردين</a>
+                    <a href="/office_suppliers" class="nav-link"><i class="fas fa-user-tie"></i> موردين المكاتب</a>
                     {% endif %}
 
                     {% if user.has_perm('view_patterns') %}

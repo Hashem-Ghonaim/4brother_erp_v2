@@ -130,6 +130,7 @@ class Supplier(db.Model):
     name = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(20))
     balance = db.Column(db.Float, default=0.0)
+    is_office = db.Column(db.Boolean, default=False)
 # جدول جديد لتسجيل حركات الشركاء بالتفصيل الممل
 class PartnerTransaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -168,6 +169,7 @@ class PurchaseOrder(db.Model):
     season = db.Column(db.String(50), default='شتوي 2027')
     total_cost = db.Column(db.Float, default=0.0)
     status = db.Column(db.String(20), default='received')
+    is_office = db.Column(db.Boolean, default=False)
     supplier = db.relationship('Supplier', backref='orders')
     items = db.relationship('PurchaseItem', backref='purchase_order', lazy=True, cascade="all, delete-orphan")
 

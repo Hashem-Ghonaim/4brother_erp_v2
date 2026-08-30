@@ -33,24 +33,29 @@ from ..helpers import (general_manager_required, permission_required, permission
 @app.route('/suppliers')
 @permission_required('manage_inventory')
 def suppliers():
-    all_suppliers = Supplier.query.all()
-
-    # حساب إجمالي المديونية (أي رصيد موجب يعتبر فلوس للمورد)
+    all_suppliers = Supplier.query.filter_by(is_office=False).all()
     total_debt = sum(s.balance for s in all_suppliers if s.balance > 0)
+    return render_template('suppliers.html', suppliers=all_suppliers, total_debt=total_debt, is_office=False)
 
-    return render_template('suppliers.html', suppliers=all_suppliers, total_debt=total_debt)
+@app.route('/office_suppliers')
+@permission_required('manage_inventory')
+def office_suppliers():
+    all_suppliers = Supplier.query.filter_by(is_office=True).all()
+    total_debt = sum(s.balance for s in all_suppliers if s.balance > 0)
+    return render_template('suppliers.html', suppliers=all_suppliers, total_debt=total_debt, is_office=True)
 
 @app.route('/suppliers/add', methods=['POST'])
 @permission_required('manage_inventory')
 def add_supplier():
     name = request.form.get('name')
     phone = request.form.get('phone')
+    is_office = request.form.get('is_office') == 'True'
     if name:
-        db.session.add(Supplier(name=name, phone=phone))
+        db.session.add(Supplier(name=name, phone=phone, is_office=is_office))
         db.session.commit()
         flash('تم إضافة المورد بنجاح ✅', 'success')
     else: flash('الاسم مطلوب', 'warning')
-    return redirect(url_for('suppliers'))
+    return redirect(url_for('office_suppliers' if is_office else 'suppliers'))
 
 
 @app.route('/supplier/edit/<int:id>', methods=['POST'])
@@ -61,7 +66,7 @@ def edit_supplier(id):
     supp.phone = request.form.get('phone')
     db.session.commit()
     flash('تم التحديث', 'success')
-    return redirect(url_for('suppliers'))
+    return redirect(url_for('office_suppliers' if supp.is_office else 'suppliers'))
 
 
 @app.route('/suppliers/<int:id>')

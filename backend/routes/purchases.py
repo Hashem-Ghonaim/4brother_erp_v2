@@ -29,6 +29,136 @@ from ..helpers import (general_manager_required, permission_required, permission
                        get_accessible_users, get_allowed_customers,
                        calculate_user_commission, calculate_distance)
 
+@app.route('/office_purchases/new', methods=['GET', 'POST'])
+@login_required
+def new_office_purchase():
+    if current_user.username != 'gm_ahmed':
+        flash('عفواً، ميزة إنشاء مشتريات متاحة فقط للمالك (أحمد عبد الفتاح).', 'danger')
+        return redirect(url_for('inventory'))
+    if request.method == 'POST':
+        supplier_id = request.form.get('supplier_id')
+
+        # استقبال البيانات من الفورم كقوائم
+        product_ids = request.form.getlist('product_id[]')
+        names = request.form.getlist('name[]')
+        qtys = request.form.getlist('qty[]')
+        barcodes = request.form.getlist('barcode[]')
+        categories = request.form.getlist('category[]')
+        seasons = request.form.getlist('season[]')
+
+        new_supp_name = request.form.get('new_supplier_name')
+        new_supp_phone = request.form.get('new_supplier_phone')
+
+        if not names:
+            flash('لم يتم إدخال أصناف!', 'warning')
+            return redirect(request.url)
+
+        # 1. معالجة المورد (جديد أو موجود)
+        if supplier_id == 'new' and new_supp_name:
+            new_supp = Supplier(name=new_supp_name, phone=new_supp_phone, is_office=True)
+            db.session.add(new_supp)
+            db.session.flush()
+            supplier = new_supp
+        elif supplier_id and supplier_id != 'new':
+            supplier = Supplier.query.get(supplier_id)
+        else:
+            supplier = None
+
+        # 2. إنشاء رأس الفاتورة
+        purchase_order = PurchaseOrder(created_by=current_user.id, total_cost=0.0, status='received', is_office=True)
+        if supplier:
+            purchase_order.supplier_id = supplier.id
+        db.session.add(purchase_order)
+        db.session.flush()
+
+        total_invoice_cost = 0.0
+
+        # 3. اللفة على المنتجات (Product Loop)
+        for i in range(len(names)):
+            p_name = names[i].strip()
+            if not p_name: continue
+
+            try: qty = int(qtys[i]) if qtys[i].strip() else 0
+            except: qty = 0
+
+            p_id = product_ids[i] if i < len(product_ids) else ""
+            p_barcode = barcodes[i].strip() if i < len(barcodes) else None
+            if p_barcode == "": p_barcode = None
+
+            p_category = categories[i].strip() if i < len(categories) else "عام"
+            if not p_category: p_category = "عام"
+
+            p_season = seasons[i].strip() if i < len(seasons) else "شتوي 2027"
+            if not p_season: p_season = "شتوي 2027"
+
+            # أ) تحديد الكاتيجوري أولاً
+            cat = Category.query.filter_by(name=p_category).first()
+            if not cat:
+                cat = Category(name=p_category)
+                db.session.add(cat)
+                db.session.flush()
+
+            variant = None
+
+            # ب) مطابقة المنتج
+            if p_id and p_id != "":
+                variant = ProductVariant.query.get(p_id)
+
+            if not variant and p_barcode:
+                variant = ProductVariant.query.filter_by(barcode=p_barcode).first()
+
+            if not variant:
+                model = ProductModel.query.filter_by(name=p_name, category_id=cat.id).first()
+                if model:
+                    if model.variants:
+                        variant = model.variants[0]
+                    model.season = p_season
+                else:
+                    # لا نقبل إضافة منتجات جديدة تماما من شاشة المكتب، لأن الفكرة هي تغطية نواقص موجودة
+                    flash(f'المنتج {p_name} غير موجود مسبقا في النظام. لا يمكن شراؤه من مكتب زميل.', 'danger')
+                    db.session.rollback()
+                    return redirect(request.url)
+
+            # د) تكلفة الصنف هي تكلفته الأصلية + 10
+            cost = variant.cost_price + 10
+            
+            # زيادة المخزون
+            variant.stock += qty
+
+            # تسجيل حركة المخزون
+            db.session.add(StockMovement(
+                variant_id=variant.id,
+                user_id=current_user.id,
+                quantity_change=qty,
+                reason=f"شراء مكتب فاتورة #{purchase_order.id}"
+            ))
+
+            # حساب إجمالي الفاتورة
+            item_total = cost * qty
+            total_invoice_cost += item_total
+
+            db.session.add(PurchaseItem(
+                purchase_id=purchase_order.id,
+                variant_id=variant.id,
+                quantity=qty,
+                unit_cost=cost,
+                total_cost=item_total
+            ))
+
+        # 4. تحديث إجماليات الفاتورة وحساب المورد
+        purchase_order.total_cost = total_invoice_cost
+        if supplier:
+            supplier.balance += total_invoice_cost
+
+        db.session.commit()
+
+        flash(f'تم حفظ فاتورة المكتب بنجاح ✅ (إجمالي: {total_invoice_cost} ج.م)', 'success')
+        return redirect(url_for('inventory'))
+
+    return render_template('new_office_purchase.html',
+                           suppliers=Supplier.query.filter_by(is_office=True).all(),
+                           categories=Category.query.all(),
+                           product_suggestions=ProductVariant.query.join(ProductModel).filter(ProductModel.season == session.get('active_season', 'شتوي 2027')).all())
 
 @app.route('/purchases/new', methods=['GET', 'POST'])
 @login_required
