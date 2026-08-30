@@ -124,9 +124,6 @@ def new_office_purchase():
             try: cost = float(costs[i]) if i < len(costs) and costs[i].strip() else (variant.cost_price + 10)
             except: cost = variant.cost_price + 10
             
-            # تحديث تكلفة المنتج الأساسية في النظام
-            variant.cost_price = cost
-            
             # زيادة المخزون
             variant.stock += qty
 
