@@ -61,6 +61,26 @@ def sqlite_to_char(element, compiler, **kw):
     return compiler.visit_function(element)
 
 db = SQLAlchemy(app)
+
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
+
+@event.listens_for(Engine, "connect")
+def sqlite_engine_connect(dbapi_connection, connection_record):
+    if type(dbapi_connection).__name__ == "Connection":
+        def custom_to_char(date_val, fmt):
+            if not date_val: return None
+            date_str = str(date_val)
+            if fmt == 'YYYY-MM':
+                return date_str[:7]
+            elif fmt == 'YYYY-MM-DD':
+                return date_str[:10]
+            return date_str
+        try:
+            dbapi_connection.create_function("to_char", 2, custom_to_char)
+        except Exception:
+            pass
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'

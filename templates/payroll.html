@@ -54,144 +54,183 @@
             </div>
         </form>
 
-        <div class="card shadow-sm border-0">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover text-center align-middle mb-0">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>الموظف</th>
-                                <th>النوع</th>
-                                <th>الأساسي</th>
-                                <th>العمولة</th>
-                                <th class="text-danger">مرتجعات</th>
-                                <th class="text-danger">جزاء حضور</th>
-                                <th class="text-danger">جزاء إداري</th>
-                                <th class="text-danger">سلف</th>
-                                <th class="text-success">مكافآت</th>
-                                <th class="bg-primary">الصافي</th>
-                                <th>الأذونات</th>
-                                <th>الإجراء</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% set total_base = namespace(value=0) %}
-                            {% set total_commission = namespace(value=0) %}
-                            {% set total_returns = namespace(value=0) %}
-                            {% set total_att_deduction = namespace(value=0) %}
-                            {% set total_penalties = namespace(value=0) %}
-                            {% set total_advances = namespace(value=0) %}
-                            {% set total_bonuses = namespace(value=0) %}
-                            {% set total_net = namespace(value=0) %}
 
-                            {% for e in employees %}
-                                {% set total_base.value = total_base.value + e.base %}
-                                {% set total_commission.value = total_commission.value + e.commission %}
-                                {% set total_returns.value = total_returns.value + e.returns_deduction %}
-                                {% set total_att_deduction.value = total_att_deduction.value + e.attendance_deduction %}
-                                {% set total_penalties.value = total_penalties.value + e.other_penalties %}
-                                {% set total_advances.value = total_advances.value + e.advances %}
-                                {% set total_bonuses.value = total_bonuses.value + e.bonuses %}
-                                {% set total_net.value = total_net.value + e.net_salary %}
-                            {% endfor %}
+        {% set total_base = namespace(value=0) %}
+        {% set total_commission = namespace(value=0) %}
+        {% set total_returns = namespace(value=0) %}
+        {% set total_att_deduction = namespace(value=0) %}
+        {% set total_penalties = namespace(value=0) %}
+        {% set total_advances = namespace(value=0) %}
+        {% set total_bonuses = namespace(value=0) %}
+        {% set total_net = namespace(value=0) %}
 
-                            <tr class="table-warning border-dark fw-bold fs-6">
-                                <td colspan="2" class="text-center border-end border-dark">الإجماليات الكلية:</td>
-                                <td>{{ total_base.value | round(2) }}</td>
-                                <td class="text-success">{{ total_commission.value | round(2) }}</td>
-                                <td class="text-danger">{{ total_returns.value | round(2) }}</td>
-                                <td class="text-danger">{{ total_att_deduction.value | round(2) }}</td>
-                                <td class="text-danger">{{ total_penalties.value | round(2) }}</td>
-                                <td class="text-danger">{{ total_advances.value | round(2) }}</td>
-                                <td class="text-success">{{ total_bonuses.value | round(2) }}</td>
-                                <td class="text-primary fs-5 border-start border-dark">{{ total_net.value | round(2) }} ج.م</td>
-                                <td colspan="2"></td>
-                            </tr>
-                            {% for e in employees %}
-                            <tr>
-                                <td class="fw-bold text-start ps-3">{{ e.name }}</td>
-                                <td class="small text-muted">{{ e.dist_type }}</td>
-                                <td>{{ e.base }}</td>
-                                <td class="text-success fw-bold commission-drilldown-cell" style="cursor:pointer"
-                                    data-name="{{ e.name }}"
-                                    data-gross="{{ e.gross_sales }}"
-                                    data-net="{{ e.net_sales }}"
-                                    data-same-month-returns="{{ e.same_month_returns }}"
-                                    data-cross-month-returns="{{ e.cross_month_returns }}"
-                                    data-commission="{{ e.commission }}">
-                                    {{ e.commission }}
-                                    <i class="fas fa-search-plus small ms-1 text-muted"></i>
-                                </td>
-                                <td class="text-danger fw-bold hr-drilldown-cell" style="cursor:pointer"
-                                    data-name="{{ e.name }}" data-label="مرتجعات"
-                                    data-details="{{ e.returns_details | tojson | forceescape }}">
-                                    {{ e.returns_deduction }}
-                                    {% if e.returns_deduction > 0 %}<i
-                                        class="fas fa-search-plus small ms-1 text-muted"></i>{% endif %}
-                                </td>
-                                <td class="text-danger att-deduction-cell"
-                                    style="cursor:pointer; text-decoration:underline" data-name="{{ e.name }}"
-                                    data-details="{{ e.attendance_details | tojson | forceescape }}">
-                                    {{ e.attendance_deduction }}
-                                    {% if e.attendance_deduction > 0 %}<i
-                                        class="fas fa-search-plus small ms-1 text-muted"></i>{% endif %}
-                                </td>
-                                <td class="text-danger fw-bold hr-drilldown-cell" style="cursor:pointer"
-                                    data-name="{{ e.name }}" data-label="جزاء إداري"
-                                    data-details="{{ e.penalties_details | tojson | forceescape }}">
-                                    {{ e.other_penalties }}
-                                    {% if e.other_penalties > 0 %}<i
-                                        class="fas fa-search-plus small ms-1 text-muted"></i>{% endif %}
-                                </td>
-                                <td class="text-danger hr-drilldown-cell" style="cursor:pointer"
-                                    data-name="{{ e.name }}" data-label="سلف"
-                                    data-details="{{ e.advances_details | tojson | forceescape }}">
-                                    {{ e.advances }}
-                                    {% if e.advances > 0 %}<i class="fas fa-search-plus small ms-1 text-muted"></i>{%
-                                    endif %}
-                                </td>
-                                <td class="text-success hr-drilldown-cell" style="cursor:pointer"
-                                    data-name="{{ e.name }}" data-label="مكافآت"
-                                    data-details="{{ e.bonuses_details | tojson | forceescape }}">
-                                    {{ e.bonuses }}
-                                    {% if e.bonuses > 0 %}<i class="fas fa-search-plus small ms-1 text-muted"></i>{%
-                                    endif %}
-                                </td>
-                                <td class="fw-bold fs-5 bg-light">{{ e.net_salary }} ج.م</td>
-                                <td>
-                                    {% if e.excuses_count > 0 %}
-                                    <span class="badge bg-info text-dark fw-bold excuse-drilldown-cell"
-                                        style="cursor:pointer; font-size:0.9rem;" data-name="{{ e.name }}"
-                                        data-details="{{ e.excuses_details | tojson | forceescape }}">
-                                        {{ e.excuses_count }} إذن <i class="fas fa-search-plus small ms-1"></i>
-                                    </span>
-                                    {% else %}
-                                    <span class="text-muted small">لا يوجد</span>
-                                    {% endif %}
-                                    <button class="btn btn-sm btn-outline-primary fw-bold ms-1"
-                                        onclick="showExcuseModal('{{ e.id }}', '{{ e.name }}')">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                </td>
-                                <td>
-                                    {% if e.is_paid %}
-                                    <span class="badge badge-paid p-2 w-100">
-                                        <i class="fas fa-check-circle"></i> تم الصرف
-                                    </span>
-                                    {% else %}
-                                    <button class="btn btn-sm btn-success fw-bold w-100"
-                                        onclick="paySalary('{{ e.id }}', '{{ e.net_salary }}', '{{ e.name }}', '{{ month }}', '{{ e.commission }}')">
-                                        <i class="fas fa-money-bill-wave"></i> صرف
-                                    </button>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+        {% for e in employees %}
+            {% set total_base.value = total_base.value + e.base %}
+            {% set total_commission.value = total_commission.value + e.commission %}
+            {% set total_returns.value = total_returns.value + e.returns_deduction %}
+            {% set total_att_deduction.value = total_att_deduction.value + e.attendance_deduction %}
+            {% set total_penalties.value = total_penalties.value + e.other_penalties %}
+            {% set total_advances.value = total_advances.value + e.advances %}
+            {% set total_bonuses.value = total_bonuses.value + e.bonuses %}
+            {% set total_net.value = total_net.value + e.net_salary %}
+        {% endfor %}
+
+        <div class="card shadow-sm border-0 mb-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3 text-center text-dark"><i class="fas fa-chart-line me-2"></i> الإجماليات الكلية لجميع الموظفين ({{ employees|length }})</h5>
+                <div class="row text-center g-3 justify-content-center">
+                    <div class="col-md-2"><div class="p-2 border rounded bg-white shadow-sm"><div class="small text-muted fw-bold">الأساسي</div><div class="fw-bold fs-6">{{ total_base.value | round(2) }}</div></div></div>
+                    <div class="col-md-2"><div class="p-2 border rounded bg-white shadow-sm"><div class="small text-muted fw-bold">العمولة</div><div class="fw-bold text-success fs-6">{{ total_commission.value | round(2) }}</div></div></div>
+                    <div class="col-md-2"><div class="p-2 border rounded bg-white shadow-sm"><div class="small text-muted fw-bold">استقطاعات</div><div class="fw-bold text-danger fs-6">{{ (total_returns.value + total_att_deduction.value + total_penalties.value + total_advances.value) | round(2) }}</div></div></div>
+                    <div class="col-md-2"><div class="p-2 border rounded bg-white shadow-sm"><div class="small text-muted fw-bold">مكافآت</div><div class="fw-bold text-success fs-6">{{ total_bonuses.value | round(2) }}</div></div></div>
+                    <div class="col-md-3"><div class="p-2 border rounded text-white shadow-sm" style="background-color: var(--primary, #0d6efd);"><div class="small fw-bold">صافي الرواتب للمؤسسة</div><div class="fw-bold fs-5">{{ total_net.value | round(2) }} ج.م</div></div></div>
                 </div>
             </div>
         </div>
+
+        {% for manager_group in employees|groupby('dist_type') %}
+            {% set manager_name = manager_group.grouper %}
+            {% set manager_employees = manager_group.list %}
+
+            {% set sub_base = namespace(value=0) %}
+            {% set sub_commission = namespace(value=0) %}
+            {% set sub_returns = namespace(value=0) %}
+            {% set sub_att_deduction = namespace(value=0) %}
+            {% set sub_penalties = namespace(value=0) %}
+            {% set sub_advances = namespace(value=0) %}
+            {% set sub_bonuses = namespace(value=0) %}
+            {% set sub_net = namespace(value=0) %}
+
+            {% for e in manager_employees %}
+                {% set sub_base.value = sub_base.value + e.base %}
+                {% set sub_commission.value = sub_commission.value + e.commission %}
+                {% set sub_returns.value = sub_returns.value + e.returns_deduction %}
+                {% set sub_att_deduction.value = sub_att_deduction.value + e.attendance_deduction %}
+                {% set sub_penalties.value = sub_penalties.value + e.other_penalties %}
+                {% set sub_advances.value = sub_advances.value + e.advances %}
+                {% set sub_bonuses.value = sub_bonuses.value + e.bonuses %}
+                {% set sub_net.value = sub_net.value + e.net_salary %}
+            {% endfor %}
+
+            <div class="card shadow-sm border-0 mb-5 overflow-hidden">
+                <div class="card-header text-white fw-bold py-3" style="background: linear-gradient(90deg, #1f2937, #374151);">
+                    <h5 class="m-0 d-inline-block"><i class="fas fa-user-tie me-2"></i> {{ manager_name }}</h5>
+                    <span class="badge bg-light text-dark ms-3 fs-6">{{ manager_employees|length }} موظف</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover text-center align-middle mb-0">
+                            <thead class="table-light text-secondary border-bottom border-secondary">
+                                <tr>
+                                    <th class="text-start ps-4">الموظف</th>
+                                    <th>الأساسي</th>
+                                    <th>العمولة</th>
+                                    <th class="text-danger">مرتجعات</th>
+                                    <th class="text-danger">جزاء حضور</th>
+                                    <th class="text-danger">جزاء إداري</th>
+                                    <th class="text-danger">سلف</th>
+                                    <th class="text-success">مكافآت</th>
+                                    <th class="bg-primary bg-opacity-10 fw-bold">الصافي</th>
+                                    <th>الأذونات</th>
+                                    <th>الإجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for e in manager_employees %}
+                                <tr>
+                                    <td class="fw-bold text-start ps-4">{{ e.name }}</td>
+                                    <td>{{ e.base }}</td>
+                                    <td class="text-success fw-bold commission-drilldown-cell" style="cursor:pointer"
+                                        data-name="{{ e.name }}"
+                                        data-gross="{{ e.gross_sales }}"
+                                        data-net="{{ e.net_sales }}"
+                                        data-same-month-returns="{{ e.same_month_returns }}"
+                                        data-cross-month-returns="{{ e.cross_month_returns }}"
+                                        data-commission="{{ e.commission }}">
+                                        {{ e.commission }}
+                                        <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                                    </td>
+                                    <td class="text-danger fw-bold hr-drilldown-cell" style="cursor:pointer"
+                                        data-name="{{ e.name }}" data-label="مرتجعات"
+                                        data-details="{{ e.returns_details | tojson | forceescape }}">
+                                        {{ e.returns_deduction }}
+                                        {% if e.returns_deduction > 0 %}<i class="fas fa-search-plus small ms-1 text-muted"></i>{% endif %}
+                                    </td>
+                                    <td class="text-danger att-deduction-cell"
+                                        style="cursor:pointer; text-decoration:underline" data-name="{{ e.name }}"
+                                        data-details="{{ e.attendance_details | tojson | forceescape }}">
+                                        {{ e.attendance_deduction }}
+                                        {% if e.attendance_deduction > 0 %}<i class="fas fa-search-plus small ms-1 text-muted"></i>{% endif %}
+                                    </td>
+                                    <td class="text-danger fw-bold hr-drilldown-cell" style="cursor:pointer"
+                                        data-name="{{ e.name }}" data-label="جزاء إداري"
+                                        data-details="{{ e.penalties_details | tojson | forceescape }}">
+                                        {{ e.other_penalties }}
+                                        {% if e.other_penalties > 0 %}<i class="fas fa-search-plus small ms-1 text-muted"></i>{% endif %}
+                                    </td>
+                                    <td class="text-danger hr-drilldown-cell" style="cursor:pointer"
+                                        data-name="{{ e.name }}" data-label="سلف"
+                                        data-details="{{ e.advances_details | tojson | forceescape }}">
+                                        {{ e.advances }}
+                                        {% if e.advances > 0 %}<i class="fas fa-search-plus small ms-1 text-muted"></i>{% endif %}
+                                    </td>
+                                    <td class="text-success hr-drilldown-cell" style="cursor:pointer"
+                                        data-name="{{ e.name }}" data-label="مكافآت"
+                                        data-details="{{ e.bonuses_details | tojson | forceescape }}">
+                                        {{ e.bonuses }}
+                                        {% if e.bonuses > 0 %}<i class="fas fa-search-plus small ms-1 text-muted"></i>{% endif %}
+                                    </td>
+                                    <td class="fw-bold fs-5 bg-light">{{ e.net_salary }} ج.م</td>
+                                    <td>
+                                        {% if e.excuses_count > 0 %}
+                                        <span class="badge bg-info text-dark fw-bold excuse-drilldown-cell"
+                                            style="cursor:pointer; font-size:0.9rem;" data-name="{{ e.name }}"
+                                            data-details="{{ e.excuses_details | tojson | forceescape }}">
+                                            {{ e.excuses_count }} إذن <i class="fas fa-search-plus small ms-1"></i>
+                                        </span>
+                                        {% else %}
+                                        <span class="text-muted small">لا يوجد</span>
+                                        {% endif %}
+                                        <button class="btn btn-sm btn-outline-primary fw-bold ms-1"
+                                            onclick="showExcuseModal('{{ e.id }}', '{{ e.name }}')">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </td>
+                                    <td>
+                                        {% if e.is_paid %}
+                                        <span class="badge badge-paid p-2 w-100">
+                                            <i class="fas fa-check-circle"></i> تم الصرف
+                                        </span>
+                                        {% else %}
+                                        <button class="btn btn-sm btn-success fw-bold w-100"
+                                            onclick="paySalary('{{ e.id }}', '{{ e.net_salary }}', '{{ e.name }}', '{{ month }}', '{{ e.commission }}')">
+                                            <i class="fas fa-money-bill-wave"></i> صرف
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-secondary border-dark fw-bold">
+                                <tr>
+                                    <td class="text-start ps-4 border-end border-dark">إجماليات {{ manager_name }}:</td>
+                                    <td>{{ sub_base.value | round(2) }}</td>
+                                    <td class="text-success">{{ sub_commission.value | round(2) }}</td>
+                                    <td class="text-danger">{{ sub_returns.value | round(2) }}</td>
+                                    <td class="text-danger">{{ sub_att_deduction.value | round(2) }}</td>
+                                    <td class="text-danger">{{ sub_penalties.value | round(2) }}</td>
+                                    <td class="text-danger">{{ sub_advances.value | round(2) }}</td>
+                                    <td class="text-success">{{ sub_bonuses.value | round(2) }}</td>
+                                    <td class="text-primary fs-5 border-start border-dark bg-white">{{ sub_net.value | round(2) }} ج.م</td>
+                                    <td colspan="2"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
     </div>
 
     <script>

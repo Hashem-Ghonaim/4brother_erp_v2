@@ -314,12 +314,11 @@ def revert_to_draft(order_id):
 
         for tx in financial_txs:
             if tx.description and re.search(rf'فاتورة.*#{order_id}\b', tx.description):
-                account = MoneyAccount.query.get(tx.account_id)
-                if account:
+                if tx.account_id:
                     if tx.type == 'income':
-                        account.balance = round(account.balance - tx.amount, 1)
+                        db.session.execute(text("UPDATE money_account SET balance = round(balance - :amt, 1) WHERE id = :id"), {'amt': tx.amount, 'id': tx.account_id})
                     elif tx.type == 'expense':
-                        account.balance = round(account.balance + tx.amount, 1)
+                        db.session.execute(text("UPDATE money_account SET balance = round(balance + :amt, 1) WHERE id = :id"), {'amt': tx.amount, 'id': tx.account_id})
                 db.session.delete(tx)
 
         # === 3. حذف حركات الشركاء المرتبطة بالفاتورة ===
@@ -427,15 +426,11 @@ def delete_invoice(order_id):
                 valid_financial_txs.append(tx)
 
         for tx in valid_financial_txs:
-            account = MoneyAccount.query.get(tx.account_id)
-            if account:
+            if tx.account_id:
                 if tx.type == 'income':
-                    # لو كانت الفاتورة دخل (بيع)، نطرح المبلغ من الخزنة
-                    account.balance = round(account.balance - tx.amount, 1)
+                    db.session.execute(text("UPDATE money_account SET balance = round(balance - :amt, 1) WHERE id = :id"), {'amt': tx.amount, 'id': tx.account_id})
                 elif tx.type == 'expense':
-                    # لو كانت مصروف (نادر في البيع)، نرجعه للخزنة
-                    account.balance = round(account.balance + tx.amount, 1)
-            # حذف سجل المعاملة بعد تعديل الرصيد
+                    db.session.execute(text("UPDATE money_account SET balance = round(balance + :amt, 1) WHERE id = :id"), {'amt': tx.amount, 'id': tx.account_id})
             db.session.delete(tx)
 
         # = ::::: بقية الكود كما هو مع التأكد من الحذف الصحيح ::::: =

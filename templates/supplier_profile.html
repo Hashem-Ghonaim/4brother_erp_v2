@@ -81,6 +81,11 @@
 									<a href="/purchases/{{ order.id }}" class="btn btn-sm btn-outline-primary fw-bold">
 										<i class="fas fa-eye"></i> #{{ order.id }}
 									</a>
+									{% if current_user.username == 'gm_ahmed' %}
+									<button type="button" class="btn btn-sm btn-outline-danger fw-bold ms-1" onclick="confirmInvoiceDelete({{ order.id }})">
+										<i class="fas fa-trash"></i> حذف
+									</button>
+									{% endif %}
 								</td>
                                 <td>{{ order.date.strftime('%Y-%m-%d') }}</td>
                                 <td class="fw-bold fs-5">{{ order.total_cost }}</td>
@@ -230,5 +235,51 @@
 </div>
 <!-- END GLOBAL SEASON SELECTOR -->
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmInvoiceDelete(orderId) {
+    Swal.fire({
+        title: 'تأكيد حذف الفاتورة',
+        html: '<div class="alert alert-warning text-end">' +
+              '<strong>تنبيه خطير:</strong> سيتم حذف الفاتورة نهائياً.<br>' +
+              '- سيتم نقص المخزون بجميع القطع المشتراة في الفاتورة.<br>' +
+              '- سيتم خصم إجمالي الفاتورة من مديونية المورد.' +
+              '</div>' +
+              '<p>الرجاء إدخال الرقم السري للتأكيد:</p>',
+        input: 'password',
+        inputAttributes: {
+            autocapitalize: 'off',
+            placeholder: 'الرقم السري'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'تأكيد الحذف',
+        confirmButtonColor: '#dc3545',
+        cancelButtonText: 'إلغاء',
+        showLoaderOnConfirm: true,
+        preConfirm: (pin) => {
+            if (pin !== '5525') {
+                Swal.showValidationMessage('الرقم السري غير صحيح');
+            }
+            return pin;
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/purchase_order/delete/' + orderId;
+            
+            const pinInput = document.createElement('input');
+            pinInput.type = 'hidden';
+            pinInput.name = 'pin';
+            pinInput.value = result.value;
+            
+            form.appendChild(pinInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+</script>
 </body>
 </html>

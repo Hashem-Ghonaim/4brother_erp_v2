@@ -551,3 +551,42 @@ def purchase_return():
     return render_template('new_purchase_return.html',
                            suppliers=Supplier.query.all(),
                            product_suggestions=ProductVariant.query.join(ProductModel).filter(ProductModel.season == session.get('active_season', 'شتوي 2027')).all())
+
+@app.route('/purchase_order/delete/<int:order_id>', methods=['POST'])
+@login_required
+def delete_purchase_order(order_id):
+    if current_user.username != 'gm_ahmed':
+        flash('غير مصرح لك بإجراء هذه العملية.', 'danger')
+        return redirect(request.referrer or url_for('dashboard'))
+    
+    pin = request.form.get('pin')
+    if pin != '5525':
+        flash('الرقم السري غير صحيح.', 'danger')
+        return redirect(request.referrer or url_for('dashboard'))
+
+    order = PurchaseOrder.query.get_or_404(order_id)
+    supplier = Supplier.query.get(order.supplier_id) if order.supplier_id else None
+
+    # 1. Revert Inventory
+    for item in order.items:
+        variant = ProductVariant.query.get(item.variant_id)
+        if variant:
+            variant.stock -= item.quantity
+            db.session.add(StockMovement(
+                variant_id=variant.id,
+                user_id=current_user.id,
+                quantity_change=-item.quantity,
+                reason=f"حذف فاتورة مشتريات رقم {order.id}"
+            ))
+        db.session.delete(item)
+    
+    # 2. Update Supplier Balance
+    if supplier:
+        supplier.balance -= order.total_amount
+    
+    # 3. Delete Order
+    db.session.delete(order)
+    db.session.commit()
+    
+    flash('تم حذف الفاتورة وتعديل المخزون ومديونية المورد بنجاح.', 'success')
+    return redirect(url_for('supplier_profile', id=supplier.id) if supplier else request.referrer or url_for('dashboard'))
