@@ -582,7 +582,7 @@ def delete_purchase_order(order_id):
     
     # 2. Update Supplier Balance
     if supplier:
-        supplier.balance -= order.total_amount
+        supplier.balance -= order.total_cost
     
     # 3. Delete Order
     db.session.delete(order)
