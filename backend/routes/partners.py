@@ -38,7 +38,7 @@ def partners_report():
     partners = User.query.filter_by(role='manager').all()
     report_data = []
 
-    today = date.today()
+    today = cairo_now().date()
     start_date_str = request.args.get('start_date', today.replace(day=1).strftime('%Y-%m-%d'))
     end_date_str = request.args.get('end_date', today.strftime('%Y-%m-%d'))
 

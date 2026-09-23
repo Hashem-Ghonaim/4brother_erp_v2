@@ -45,7 +45,7 @@ def reports_hub():
     report_type = request.args.get('type', 'sales')
 
     # === إعداد تواريخ الفلتر ===
-    today = date.today()
+    today = cairo_now().date()
     # الافتراضي: من أول الشهر الحالي إلى اليوم
     default_start = today.replace(day=1).strftime('%Y-%m-%d')
     default_end = today.strftime('%Y-%m-%d')
