@@ -93,7 +93,7 @@ tzdata==2025.2
 tzlocal==5.3.1
 uritemplate==4.2.0
 urllib3==2.5.0
-weasyprint==66.0https://127.0.0.1:57043/static/artifacts/cce14cf1-c93b-4886-ac50-25e8ed735e38/.user_uploaded/media_1788035895358.png?csrf=2bebd93a-e7d2-4960-ab36-9fc583b3125a
+weasyprint==66.0
 webencodings==0.5.1
 Werkzeug==3.1.3
 wsproto==1.2.0
