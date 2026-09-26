@@ -316,9 +316,9 @@ def revert_to_draft(order_id):
             if tx.description and re.search(rf'فاتورة.*#{order_id}\b', tx.description):
                 if tx.account_id:
                     if tx.type == 'income':
-                        db.session.execute(text("UPDATE money_account SET balance = round(balance - :amt, 1) WHERE id = :id"), {'amt': tx.amount, 'id': tx.account_id})
+                        db.session.execute(text("UPDATE money_account SET balance = round(CAST(balance - :amt AS numeric), 1) WHERE id = :id"), {'amt': tx.amount, 'id': tx.account_id})
                     elif tx.type == 'expense':
-                        db.session.execute(text("UPDATE money_account SET balance = round(balance + :amt, 1) WHERE id = :id"), {'amt': tx.amount, 'id': tx.account_id})
+                        db.session.execute(text("UPDATE money_account SET balance = round(CAST(balance + :amt AS numeric), 1) WHERE id = :id"), {'amt': tx.amount, 'id': tx.account_id})
                 db.session.delete(tx)
 
         # === 3. حذف حركات الشركاء المرتبطة بالفاتورة ===
@@ -428,9 +428,9 @@ def delete_invoice(order_id):
         for tx in valid_financial_txs:
             if tx.account_id:
                 if tx.type == 'income':
-                    db.session.execute(text("UPDATE money_account SET balance = round(balance - :amt, 1) WHERE id = :id"), {'amt': tx.amount, 'id': tx.account_id})
+                    db.session.execute(text("UPDATE money_account SET balance = round(CAST(balance - :amt AS numeric), 1) WHERE id = :id"), {'amt': tx.amount, 'id': tx.account_id})
                 elif tx.type == 'expense':
-                    db.session.execute(text("UPDATE money_account SET balance = round(balance + :amt, 1) WHERE id = :id"), {'amt': tx.amount, 'id': tx.account_id})
+                    db.session.execute(text("UPDATE money_account SET balance = round(CAST(balance + :amt AS numeric), 1) WHERE id = :id"), {'amt': tx.amount, 'id': tx.account_id})
             db.session.delete(tx)
 
         # = ::::: بقية الكود كما هو مع التأكد من الحذف الصحيح ::::: =
