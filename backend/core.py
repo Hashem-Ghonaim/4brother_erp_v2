@@ -36,8 +36,12 @@ app.jinja_env.globals.update(now=datetime.now)
 def image_url(filename):
     if not filename:
         return "/static/uploads/default_product.png"
-    if str(filename).startswith('http'):
-        return filename
+    filename_str = str(filename)
+    if filename_str.startswith('http'):
+        # روابط Cloudinary المعطلة — نعرض صورة بديلة بدل ما المتصفح يفضل يعمل retry ويستهلك CPU
+        if 'cloudinary' in filename_str:
+            return "/static/uploads/default_product.png"
+        return filename_str
     return f"/static/uploads/{filename}"
 
 from sqlalchemy.sql import expression

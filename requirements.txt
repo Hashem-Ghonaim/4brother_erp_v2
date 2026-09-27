@@ -103,4 +103,4 @@ zopfli==0.4.0
 pytz
 psycopg2-binary>=2.9.9
 supabase==2.31.0
-cloudinary==1.46.0
+# cloudinary==1.46.0  # معطل - تم الانتقال إلى Supabase Storage
