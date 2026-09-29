@@ -266,7 +266,7 @@ def fix_shifts():
 @general_manager_required
 def fix_commissions_manual():
     # بنجيب كل الموظفين السيلز
-    sales_reps = User.query.filter_by(role='sales').all()
+    sales_reps = User.query.filter(User.role.in_(['sales', 'sales_manager'])).all()
     count = 0
     today = cairo_now()
 

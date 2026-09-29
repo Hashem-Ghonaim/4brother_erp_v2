@@ -125,6 +125,7 @@
                         <span class="role-badge">
                             {% if node.role == 'general_manager' %}مدير عام
                             {% elif node.role == 'manager' %}مدير / شريك
+                            {% elif node.role == 'sales_manager' %}مدير مبيعات
                             {% elif node.role == 'sales' %}مبيعات
                             {% elif node.role == 'worker' %}عامل / مخزن
                             {% else %}{{ node.role }}{% endif %}
@@ -133,14 +134,14 @@
                     {% if node.children %}
                     <ul>
                         {# عرض المديرين بشكل طبيعي (أفقياً) لأنهم يمتلكون فروع خاصة بهم #}
-                        {% for child in node.children if child.role in ['manager', 'general_manager'] or child.children|length > 0 %}
+                        {% for child in node.children if child.role in ['manager', 'general_manager', 'sales_manager'] or child.children|length > 0 %}
                             {{ render_tree(child) }}
                         {% endfor %}
 
                         {# تجميع باقي الموظفين (المبيعات والعمال) تحت بعضهم رأسياً #}
                         {% set ns = namespace(non_managers=[]) %}
                         {% for child in node.children %}
-                            {% if child.role not in ['manager', 'general_manager'] and child.children|length == 0 %}
+                            {% if child.role not in ['manager', 'general_manager', 'sales_manager'] and child.children|length == 0 %}
                                 {% set _ = ns.non_managers.append(child) %}
                             {% endif %}
                         {% endfor %}

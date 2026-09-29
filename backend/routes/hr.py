@@ -61,7 +61,7 @@ def fill_missing_attendances(month_str):
         skip_saturday = settings.skip_saturday if settings else False
 
         # جلب الموظفين النشطين الليهم بصمة
-        users = User.query.filter(User.role.in_(['sales', 'worker']), User.has_flexible_hours == False).all()
+        users = User.query.filter(User.role.in_(['sales', 'sales_manager', 'worker']), User.has_flexible_hours == False).all()
         
         records_added = 0
         
@@ -755,7 +755,7 @@ def employee_profile(id):
 
     # جلب الحسابات لإرسالها للقالب
     accounts = MoneyAccount.query.all()
-    all_managers = User.query.filter(User.role.in_(['manager', 'general_manager', 'sales'])).all()
+    all_managers = User.query.filter(User.role.in_(['manager', 'general_manager', 'sales_manager'])).all()
 
     return render_template('employee_profile.html',
                            emp=emp,
@@ -982,7 +982,7 @@ def payroll():
     employees_data = []
 
     # جلب الموظفين (المديرين والسيلز والعمال)
-    users = User.query.filter(User.role.in_(['sales', 'worker', 'manager'])).all()
+    users = User.query.filter(User.role.in_(['sales', 'worker', 'manager', 'sales_manager'])).all()
 
     # تحميل إعدادات الجزاءات
     att_settings = AttendanceSettings.query.first()

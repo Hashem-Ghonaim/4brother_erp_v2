@@ -166,7 +166,7 @@ def add_return():
                         amount=-total_deduction, description=f"تحمل خسائر مرتجع فاتورة #{order.id}"
                     ))
                 # ج) استرداد عمولة السيلز (ترجع لجيب المدير)
-                if sales_rep.role == 'sales':
+                if sales_rep.role in ('sales', 'sales_manager'):
                     # حساب مبيعات الشهر الأصلي للفاتورة عشان نخصم العمولة بنفس الشريحة اللي اتحسبت بيها
                     month_start = order.date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
                     if month_start.month == 12:
