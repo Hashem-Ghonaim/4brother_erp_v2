@@ -106,6 +106,35 @@ def calculate_user_commission(user, quantity_to_pay, total_monthly_context=None)
 
     return commission
 
+def calculate_team_leader_bonus(user_id, start_dt, end_dt):
+    """
+    يحسب بونص الإدارة (1 جنيه على كل قطعة صافية مباعة من خلال الفريق)
+    """
+    team = User.query.filter_by(manager_id=user_id).all()
+    if not team:
+        return 0.0
+    
+    total_bonus = 0.0
+    for member in team:
+        gross_items = db.session.query(func.sum(SaleItem.quantity)).join(SaleOrder).filter(
+            SaleOrder.user_id == member.id, 
+            SaleOrder.is_proforma == False, 
+            SaleOrder.date >= start_dt, 
+            SaleOrder.date < end_dt
+        ).scalar() or 0
+        
+        # المرتجعات اللي حصلت في نفس الشهر لنفس الموظف
+        returned_items = db.session.query(func.sum(ReturnInvoice.total_qty)).join(SaleOrder).filter(
+            SaleOrder.user_id == member.id,
+            ReturnInvoice.date >= start_dt,
+            ReturnInvoice.date < end_dt
+        ).scalar() or 0
+        
+        net_items = max(0, gross_items - returned_items)
+        total_bonus += (net_items * 1.0) # 1 جنيه على كل قطعة
+        
+    return total_bonus
+
 def get_accessible_users():
     """
     ترجع قائمة بمعرفات المستخدمين (IDs) الذين يحق للمستخدم الحالي رؤية بياناتهم.

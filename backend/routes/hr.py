@@ -610,6 +610,12 @@ def employee_profile(id):
     if net_for_payment < 0: net_for_payment = 0
     
     commission = calculate_user_commission(emp, net_for_payment, net_for_tier)
+    
+    # 🌟 إضافة بونص إدارة الفريق (1 جنيه على مبيعات الفريق)
+    from backend.helpers import calculate_team_leader_bonus
+    team_bonus = calculate_team_leader_bonus(emp.id, month_start, month_end)
+    commission += team_bonus
+
     num_months = (end_dt.year - month_start.year) * 12 + end_dt.month - month_start.month + 1
     selected_period = f"{start_month_str}" if start_month_str == end_month_str else f"{start_month_str} إلى {end_month_str}"
     period_base_salary = (emp.base_salary or 0) * num_months
@@ -761,6 +767,7 @@ def employee_profile(id):
                            returns_percentage=(returned_orders_count / orders_count * 100) if orders_count > 0 else 0,
                            returned_items=int(returned_items),
                            commission=round(commission, 2),
+                           team_bonus=round(team_bonus, 2),
                            bonuses=bonuses,
                            deductions=real_deductions,
                            advances=advances,
@@ -960,6 +967,12 @@ def payroll():
 
     # استلام الشهر من الرابط أو افتراض الشهر الحالي
     month_str = request.args.get('month', date.today().strftime('%Y-%m'))
+    year, month = map(int, month_str.split('-'))
+    month_start = datetime(year, month, 1)
+    if month == 12:
+        month_end = datetime(year + 1, 1, 1)
+    else:
+        month_end = datetime(year, month + 1, 1)
     
     # [تحديث] ملأ أيام الغياب اللي الموظف مبصمش فيها خالص
     fill_missing_attendances(month_str)
@@ -968,8 +981,8 @@ def payroll():
     accounts = MoneyAccount.query.all()
     employees_data = []
 
-    # جلب الموظفين (سيلز وعمال) فقط
-    users = User.query.filter(User.role.in_(['sales', 'worker'])).all()
+    # جلب الموظفين (المديرين والسيلز والعمال)
+    users = User.query.filter(User.role.in_(['sales', 'worker', 'manager'])).all()
 
     # تحميل إعدادات الجزاءات
     att_settings = AttendanceSettings.query.first()
@@ -1031,6 +1044,9 @@ def payroll():
 
         # ز) حساب العمولة بناءً على الشريحة
         gross_commission = calculate_user_commission(u, net_for_payment, net_for_tier)
+        from backend.helpers import calculate_team_leader_bonus
+        team_bonus = calculate_team_leader_bonus(u.id, month_start, month_end)
+        gross_commission += team_bonus
 
         # 3. حساب جزاءات الحضور (تأخير + انصراف مبكر + غياب)
         if u.has_flexible_hours:

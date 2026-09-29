@@ -133,12 +133,18 @@
                     {% if node.children %}
                     <ul>
                         {# عرض المديرين بشكل طبيعي (أفقياً) لأنهم يمتلكون فروع خاصة بهم #}
-                        {% for child in node.children if child.role in ['manager', 'general_manager'] %}
+                        {% for child in node.children if child.role in ['manager', 'general_manager'] or child.children|length > 0 %}
                             {{ render_tree(child) }}
                         {% endfor %}
 
                         {# تجميع باقي الموظفين (المبيعات والعمال) تحت بعضهم رأسياً #}
-                        {% set non_managers = node.children | rejectattr('role', 'in', ['manager', 'general_manager']) | list %}
+                        {% set ns = namespace(non_managers=[]) %}
+                        {% for child in node.children %}
+                            {% if child.role not in ['manager', 'general_manager'] and child.children|length == 0 %}
+                                {% set _ = ns.non_managers.append(child) %}
+                            {% endif %}
+                        {% endfor %}
+                        {% set non_managers = ns.non_managers %}
                         {% if non_managers %}
                             {% set grouped = non_managers | groupby('role') %}
                             {% for role, items in grouped %}

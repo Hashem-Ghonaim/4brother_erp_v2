@@ -113,6 +113,11 @@ def user_hierarchy():
         else:
             root_users.append(u)
 
+    print("DEBUG HIERARCHY:")
+    for uid, u in users_dict.items():
+        if u['fullname'] in ['ياسمين مجدي', 'ريم وائل']:
+            print(f"{u['fullname']} -> children: {[c['fullname'] for c in u['children']]}")
+    
     return render_template('hierarchy.html', root_users=root_users)
 
 
@@ -228,6 +233,11 @@ def dashboard():
 
         stats['net_items'] = net_items_count
         stats['net_commission'] = calculate_user_commission(current_user, net_items_count, net_for_tier)
+        from backend.helpers import calculate_team_leader_bonus
+        team_bonus = calculate_team_leader_bonus(current_user.id, month_start, month_end)
+        stats['net_commission'] += team_bonus
+        stats['team_bonus'] = team_bonus
+
 
     # 4. باقي البيانات
     team_members = []

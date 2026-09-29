@@ -362,6 +362,17 @@ def reports_hub():
             net_for_pay = max(0, total_items - returns_same)
 
             commission = calculate_user_commission(emp, net_for_pay, net_for_tier)
+            from backend.helpers import calculate_team_leader_bonus
+            
+            # في تقارير HR، تواريخ البداية والنهاية يتم بناءها من start_date_str 
+            from datetime import datetime
+            s_dt = datetime.strptime(start_date_str, '%Y-%m-%d')
+            # إضافة يوم للنهاية لمحاكاة < end_dt
+            e_dt = datetime.strptime(end_date_str, '%Y-%m-%d') + timedelta(days=1)
+            
+            team_bonus = calculate_team_leader_bonus(emp.id, s_dt, e_dt)
+            commission += team_bonus
+
 
             hr_report.append({
                 'name': emp.fullname, 'role': emp.role, 'sales': total_sales,
