@@ -714,8 +714,7 @@
                                 <select name="manager_id" class="form-select border-primary bg-light">
                                     <option value="">-- اختيار الشريك أو تركها لتسجل باسمك تلقائياً --</option>
                                     {% for mgr in all_managers %}
-                                    <option value="{{ mgr.id }}">{{ mgr.fullname }} ({{ 'مدير عام' if mgr.role ==
-                                        'general_manager' else 'شريك' }})</option>
+                                    <option value="{{ mgr.id }}">{{ mgr.fullname }} ({{ 'مدير عام' if mgr.role == 'general_manager' else 'شريك' if mgr.role == 'manager' else 'مبيعات' }})</option>
                                     {% endfor %}
                                 </select>
                             </div>

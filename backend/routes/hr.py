@@ -755,7 +755,7 @@ def employee_profile(id):
 
     # جلب الحسابات لإرسالها للقالب
     accounts = MoneyAccount.query.all()
-    all_managers = User.query.filter(User.role.in_(['manager', 'general_manager'])).all()
+    all_managers = User.query.filter(User.role.in_(['manager', 'general_manager', 'sales'])).all()
 
     return render_template('employee_profile.html',
                            emp=emp,

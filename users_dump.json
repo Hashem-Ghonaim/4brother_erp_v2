@@ -1,0 +1,236 @@
+[
+    [
+        1,
+        "أحمد عبد الفتاح",
+        "gm_ahmed",
+        "general_manager"
+    ],
+    [
+        2,
+        "أحمد هشام",
+        "mgr_hesham",
+        "manager"
+    ],
+    [
+        3,
+        "أحمد وجدي",
+        "mgr_wagdy",
+        "manager"
+    ],
+    [
+        4,
+        "أحمد أبو اليزيد",
+        "mgr_yazeed",
+        "manager"
+    ],
+    [
+        5,
+        "أحمد العجان",
+        "mgr_aggan",
+        "manager"
+    ],
+    [
+        6,
+        "منار",
+        "sales_manar",
+        "sales"
+    ],
+    [
+        7,
+        "هاجر",
+        "sales_hager",
+        "sales"
+    ],
+    [
+        8,
+        "سلمى",
+        "sales_salma",
+        "sales"
+    ],
+    [
+        9,
+        "سماح",
+        "sales_samah",
+        "sales"
+    ],
+    [
+        10,
+        "ندى",
+        "sales_nada",
+        "sales"
+    ],
+    [
+        11,
+        "ياسمين مجدي",
+        "sales_yasmin",
+        "sales"
+    ],
+    [
+        12,
+        "أم مليكة",
+        "sales_omalika",
+        "sales"
+    ],
+    [
+        13,
+        "ريم وائل",
+        "sales_reem",
+        "sales"
+    ],
+    [
+        15,
+        "أدهم",
+        "w_adham",
+        "worker"
+    ],
+    [
+        19,
+        "نورة ",
+        "SC_NORA",
+        "sales"
+    ],
+    [
+        20,
+        "شهد",
+        "sales_shahd",
+        "sales"
+    ],
+    [
+        23,
+        "لارا",
+        "sales_lara",
+        "sales"
+    ],
+    [
+        24,
+        "ام محمد سوهاج ",
+        "sales_om",
+        "sales"
+    ],
+    [
+        25,
+        "ام مالك ",
+        "sales_ommalek",
+        "sales"
+    ],
+    [
+        26,
+        "Hagar",
+        "Hagar",
+        "sales"
+    ],
+    [
+        29,
+        "ايمان ",
+        "sales_eman",
+        "sales"
+    ],
+    [
+        30,
+        "حياه",
+        "Hayah",
+        "sales"
+    ],
+    [
+        32,
+        "ابتسام ",
+        "sales_ebtsam",
+        "sales"
+    ],
+    [
+        34,
+        "بوفية ",
+        "AGJSC",
+        "worker"
+    ],
+    [
+        35,
+        "ام عبداللة ",
+        "s_om",
+        "sales"
+    ],
+    [
+        36,
+        "يوسف ",
+        "S-youse",
+        "sales"
+    ],
+    [
+        37,
+        "ام ",
+        "s-om marawan",
+        "sales"
+    ],
+    [
+        38,
+        "مصطفي ",
+        "S_mostafa",
+        "sales"
+    ],
+    [
+        39,
+        "نور محمد ",
+        "s-nour",
+        "sales"
+    ],
+    [
+        40,
+        "Malak ",
+        "s-malak",
+        "sales"
+    ],
+    [
+        44,
+        "يوسف",
+        "w_youssef",
+        "worker"
+    ],
+    [
+        45,
+        "مصطفى",
+        "w_mostafa",
+        "worker"
+    ],
+    [
+        47,
+        "نور ",
+        "w_noor",
+        "worker"
+    ],
+    [
+        48,
+        "Admin",
+        "admin",
+        "owner"
+    ],
+    [
+        49,
+        "مهند",
+        "w_mohaned",
+        "worker"
+    ],
+    [
+        50,
+        "محمد مجدي",
+        "w_mohamed",
+        "worker"
+    ],
+    [
+        52,
+        "نهال ",
+        "s_nehal",
+        "sales"
+    ],
+    [
+        53,
+        "ريم",
+        "S_Reem",
+        "sales"
+    ],
+    [
+        56,
+        "هاجر حسام ",
+        "s_hagarr",
+        "sales"
+    ]
+]
