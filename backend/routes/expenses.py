@@ -133,6 +133,25 @@ def expenses():
                         description=new_expense.description, date=cairo_now()
                     ))
                     
+            elif expense_type == 'team_expense':
+                new_expense.is_shared = False
+                team_id = request.form.get('team_id')
+                if not team_id:
+                    flash('يجب اختيار الفريق', 'danger'); return redirect(url_for('expenses'))
+                
+                from backend.models import PartnerGroup
+                team = PartnerGroup.query.get(team_id)
+                new_expense.description = f"خاص بفريق ({team.name}): {description}".strip()
+                
+                partners = User.query.filter_by(partner_group_id=team.id, role='manager').all()
+                if partners and len(partners) > 0:
+                    partner_share = amount / len(partners)
+                    for p in partners:
+                        db.session.add(PartnerTransaction(
+                            partner_id=p.id, type='expense_share', amount=-partner_share,
+                            description=f"{new_expense.description} (حصة شريك)", date=cairo_now()
+                        ))
+                        
             elif expense_type == 'shared_50_50':
                 new_expense.is_shared = False
                 new_expense.description = f"مشترك (50/50): {description}".strip()
@@ -275,7 +294,10 @@ def expenses():
     
     grand_total = sum([ct.total for ct in category_totals]) if category_totals else 0
 
-    return render_template('expenses.html', categories=categories, expenses=all_expenses, partners=partners, accounts=accounts, category_totals=category_totals, grand_total=grand_total, date_from=date_from, date_to=date_to, filter_category=filter_cat, filter_type=filter_type, filter_account=filter_account, PartnerTransaction=PartnerTransaction)
+    from backend.models import PartnerGroup
+    groups = PartnerGroup.query.all()
+    
+    return render_template('expenses.html', categories=categories, expenses=all_expenses, partners=partners, accounts=accounts, category_totals=category_totals, grand_total=grand_total, date_from=date_from, date_to=date_to, filter_category=filter_cat, filter_type=filter_type, filter_account=filter_account, PartnerTransaction=PartnerTransaction, groups=groups)
 
 @app.route('/expenses/delete/<int:id>')
 @general_manager_required
@@ -396,6 +418,25 @@ def edit_expense(id):
                     description=exp.description, date=cairo_now()
                 ))
                 
+        elif expense_type == 'team_expense':
+            exp.is_shared = False
+            team_id = request.form.get('team_id')
+            if not team_id:
+                flash('يجب اختيار الفريق', 'danger'); return redirect(url_for('expenses'))
+            
+            from backend.models import PartnerGroup
+            team = PartnerGroup.query.get(team_id)
+            exp.description = f"خاص بفريق ({team.name}): {description}".strip()
+            
+            partners = User.query.filter_by(partner_group_id=team.id, role='manager').all()
+            if partners and len(partners) > 0:
+                partner_share = amount / len(partners)
+                for p in partners:
+                    db.session.add(PartnerTransaction(
+                        partner_id=p.id, type='expense_share', amount=-partner_share,
+                        description=f"{exp.description} (حصة شريك)", date=cairo_now()
+                    ))
+                    
         elif expense_type == 'shared_50_50':
             exp.is_shared = False
             exp.description = f"مشترك (50/50): {description}".strip()

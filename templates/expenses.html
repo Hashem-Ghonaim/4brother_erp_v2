@@ -40,10 +40,18 @@
                                 onchange="togglePartnerSelect()">
                                 <option value="general" class="text-success" selected>🏢 مصروف عام للشركة</option>
                                 <option value="private_gm" class="text-primary">👤 مصروف خاص بالمدير العام</option>
-                                <option value="withdrawal" class="text-danger">💸 سحب شخصي (شريك محدد)</option>
-                                <option value="shared_50_50" class="text-dark">⚖️ مشترك (50% مدير / 50% شركاء)</option>
-                                <option value="partners_only" class="text-secondary">👥 شركاء فقط (يوزع على الشركاء)
-                                </option>
+                                <option value="withdrawal" class="text-danger">💸 سحب شخصي (لأي فرد)</option>
+                                <option value="team_expense" class="text-warning">👥 خاص بفريق محدد</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3" id="teamDiv" style="display: none;">
+                            <label class="form-label fw-bold small">الفريق</label>
+                            <select name="team_id" id="team_id" class="form-select">
+                                <option value="">-- اختر الفريق --</option>
+                                {% for g in groups %}
+                                <option value="{{ g.id }}">{{ g.name }}</option>
+                                {% endfor %}
                             </select>
                         </div>
 
@@ -191,6 +199,8 @@
                                 <span class="badge bg-success">مصروف عام</span>
                                 {% elif 'سحب' in exp_desc %}
                                 <span class="badge bg-danger">سحب شخصي</span>
+                                {% elif 'فريق' in exp_desc %}
+                                <span class="badge bg-warning text-dark">خاص بفريق</span>
                                 {% elif 'مشترك' in exp_desc %}
                                 <span class="badge bg-dark">مشترك (50/50)</span>
                                 {% elif 'خاص' in exp_desc %}
@@ -216,7 +226,7 @@
                                     data-id="{{ exp.id }}" data-category="{{ exp.category_id }}"
                                     data-desc="{{ exp.description | default('', true) | e }}" data-amount="{{ exp.amount }}"
                                     data-account="{{ exp.account_id or '' }}"
-                                    data-type="{% if exp.is_shared %}general{% elif 'سحب' in exp_desc %}withdrawal{% elif 'مشترك' in exp_desc %}shared_50_50{% elif 'خاص' in exp_desc %}private_gm{% elif 'شركاء فقط' in exp_desc %}partners_only{% else %}general{% endif %}"
+                                    data-type="{% if exp.is_shared %}general{% elif 'سحب' in exp_desc %}withdrawal{% elif 'فريق' in exp_desc %}team_expense{% elif 'مشترك' in exp_desc %}shared_50_50{% elif 'خاص' in exp_desc %}private_gm{% elif 'شركاء فقط' in exp_desc %}partners_only{% else %}general{% endif %}"
                                     data-partner="{% if 'سحب' in exp_desc %}{{ PartnerTransaction.query.filter(PartnerTransaction.description.like('%' ~ exp_desc ~ '%'), PartnerTransaction.type == 'withdrawal').first().partner_id | default('', true) }}{% endif %}"
                                     onclick="openEditModal(this)">
                                     <i class="fas fa-edit"></i>
@@ -361,10 +371,20 @@
                             <select name="expense_type" id="edit_expense_type" class="form-select"
                                 onchange="toggleEditPartnerSelect()" required>
                                 <option value="general">مصروف عام للشركة</option>
-                                <option value="shared_50_50">مشترك (50% مدير + 50% شركاء)</option>
-                                <option value="partners_only">للشركاء فقط (يوزع على 4 شركاء)</option>
-                                <option value="withdrawal">سحب شخصي / سلفة لشريك</option>
+                                <option value="shared_50_50" class="d-none">مشترك (50% مدير + 50% شركاء)</option>
+                                <option value="partners_only" class="d-none">للشركاء فقط (يوزع على 4 شركاء)</option>
+                                <option value="withdrawal">سحب شخصي (لأي فرد)</option>
                                 <option value="private_gm">مصروف خاص م/أحمد</option>
+                                <option value="team_expense">خاص بفريق محدد</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3" id="editTeamDiv" style="display: none;">
+                            <label class="form-label small fw-bold">الفريق</label>
+                            <select name="team_id" id="edit_team_id" class="form-select">
+                                <option value="">-- اختر فريق --</option>
+                                {% for g in groups %}
+                                <option value="{{ g.id }}">{{ g.name }}</option>
+                                {% endfor %}
                             </select>
                         </div>
                         <div class="col-md-3" id="editPartnerDiv" style="display: none;">
@@ -408,29 +428,51 @@
     <script>
         function togglePartnerSelect() {
             const type = document.getElementById('expenseType').value;
-            const div = document.getElementById('partnerDiv');
+            const partnerDiv = document.getElementById('partnerDiv');
+            const teamDiv = document.getElementById('teamDiv');
+            const partnerSelect = document.querySelector('[name="partner_id"]');
+            const teamSelect = document.getElementById('team_id');
 
             if (type === 'withdrawal') {
-                div.style.display = 'block';
-                document.querySelector('[name="partner_id"]').required = true;
+                partnerDiv.style.display = 'block';
+                partnerSelect.required = true;
+                teamDiv.style.display = 'none';
+                teamSelect.required = false;
+            } else if (type === 'team_expense') {
+                partnerDiv.style.display = 'none';
+                partnerSelect.required = false;
+                teamDiv.style.display = 'block';
+                teamSelect.required = true;
             } else {
-                div.style.display = 'none';
-                document.querySelector('[name="partner_id"]').required = false;
+                partnerDiv.style.display = 'none';
+                partnerSelect.required = false;
+                teamDiv.style.display = 'none';
+                teamSelect.required = false;
             }
         }
 
         function toggleEditPartnerSelect() {
             const type = document.getElementById('edit_expense_type').value;
-            const div = document.getElementById('editPartnerDiv');
-            const select = document.getElementById('edit_partner_id');
+            const partnerDiv = document.getElementById('editPartnerDiv');
+            const teamDiv = document.getElementById('editTeamDiv');
+            const partnerSelect = document.getElementById('edit_partner_id');
+            const teamSelect = document.getElementById('edit_team_id');
 
             if (type === 'withdrawal') {
-                div.style.display = 'block';
-                select.required = true;
+                partnerDiv.style.display = 'block';
+                partnerSelect.required = true;
+                teamDiv.style.display = 'none';
+                teamSelect.required = false;
+            } else if (type === 'team_expense') {
+                partnerDiv.style.display = 'none';
+                partnerSelect.required = false;
+                teamDiv.style.display = 'block';
+                teamSelect.required = true;
             } else {
-                div.style.display = 'none';
-                select.required = false;
-                select.value = "";
+                partnerDiv.style.display = 'none';
+                partnerSelect.required = false;
+                teamDiv.style.display = 'none';
+                teamSelect.required = false;
             }
         }
 
