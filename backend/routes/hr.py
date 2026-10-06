@@ -770,7 +770,7 @@ def employee_profile(id):
 
     # جلب الحسابات لإرسالها للقالب
     accounts = MoneyAccount.query.all()
-    all_managers = User.query.filter(User.role.in_(['manager', 'general_manager', 'sales_manager'])).all()
+    all_managers = User.query.filter(User.role.in_(['manager', 'general_manager', 'sales_manager']), User.partner_group_id.is_(None)).all()
     from backend.models import PartnerGroup
     groups = PartnerGroup.query.all()
 

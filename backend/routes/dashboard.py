@@ -262,7 +262,7 @@ def dashboard():
 
     attendance = Attendance.query.filter_by(user_id=current_user.id, date=today).first()
 
-    all_managers = User.query.filter(User.role.in_(['manager', 'general_manager', 'sales_manager'])).all()
+    all_managers = User.query.filter(User.role.in_(['manager', 'general_manager', 'sales_manager']), User.partner_group_id.is_(None)).all()
 
     # بناء شجرة الهيكل التنظيمي للمدير العام
     # بناء شجرة الهيكل التنظيمي للمدير العام
