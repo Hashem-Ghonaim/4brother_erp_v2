@@ -39,13 +39,19 @@ def update_monthly_commissions(sales_rep_id, ref_date):
         sales_rep = User.query.get(sales_rep_id)
         if not sales_rep: return
 
-        partner = None
-        if sales_rep.role == 'manager':
-            partner = sales_rep
-        elif sales_rep.manager_id:
-            partner = User.query.get(sales_rep.manager_id)
+        partners = []
+        if getattr(sales_rep, 'partner_group_id', None):
+            partners = User.query.filter_by(role='manager', partner_group_id=sales_rep.partner_group_id).all()
+        else:
+            if sales_rep.role == 'manager':
+                partners = [sales_rep]
+            elif sales_rep.manager_id:
+                mgr = User.query.get(sales_rep.manager_id)
+                if mgr and mgr.role == 'manager':
+                    partners = [mgr]
 
-        if not partner or partner.role != 'manager': return
+        if not partners: return
+        num_partners = len(partners)
 
         # 2. تحديد حدود الشهر
         target_month_str = ref_date.strftime('%Y-%m')
@@ -98,15 +104,16 @@ def update_monthly_commissions(sales_rep_id, ref_date):
         except:
             pass  # Vercel read-only filesystem
 
-        # 5. حذف التسويات القديمة (اللي ملهاش order_id) الخاصة بالشهر ده
-        PartnerTransaction.query.filter(
-            PartnerTransaction.partner_id == partner.id,
-            PartnerTransaction.type == 'sub_commission',
-            PartnerTransaction.order_id == None,
-            PartnerTransaction.description.like(f"%{sales_rep.fullname}%"),
-            PartnerTransaction.date >= target_month_start,
-            PartnerTransaction.date < next_month
-        ).delete(synchronize_session=False)
+        # 5. حذف التسويات القديمة
+        for p in partners:
+            PartnerTransaction.query.filter(
+                PartnerTransaction.partner_id == p.id,
+                PartnerTransaction.type == 'sub_commission',
+                PartnerTransaction.order_id == None,
+                PartnerTransaction.description.like(f"%{sales_rep.fullname}%"),
+                PartnerTransaction.date >= target_month_start,
+                PartnerTransaction.date < next_month
+            ).delete(synchronize_session=False)
 
         # 6. تحديث فواتير الشهر
         monthly_orders = SaleOrder.query.filter(
@@ -139,29 +146,33 @@ def update_monthly_commissions(sales_rep_id, ref_date):
             if net_qty <= 0: continue
 
             # ج) عمولة الشريك (Gross) - من البروفايل
-            partner_rate = float(partner.commission_value or 13.0)
-            db.session.add(PartnerTransaction(
-                partner_id=partner.id,
-                order_id=order.id,
-                type='commission_gross',
-                amount=net_qty * partner_rate,
-                description=f"عمولة ({net_qty} قطعة × {partner_rate}) - فاتورة مبيعات ({sales_rep.fullname})",
-                date=order.date
-            ))
-
-            # د) عمولة الموظفة (تتخصم من الشريك)
-            if sales_rep.id != partner.id and rate_per_item > 0:
-                girl_comm = net_qty * rate_per_item
-                total_month_comm += girl_comm
-                
+            partner_rate = float(partners[0].commission_value or 13.0)
+            gross_amt = (net_qty * partner_rate) / num_partners
+            for p in partners:
                 db.session.add(PartnerTransaction(
-                    partner_id=partner.id,
+                    partner_id=p.id,
                     order_id=order.id,
-                    type='sub_commission',
-                    amount=-girl_comm,
-                    description=f"عمولة ({sales_rep.fullname}) - شهر {target_month_str} ({total_monthly_items} قطعة، فئة {rate_per_item})",
+                    type='commission_gross',
+                    amount=gross_amt,
+                    description=f"عمولة ({net_qty} قطعة × {partner_rate}) مشتركة ({num_partners}) - فاتورة مبيعات ({sales_rep.fullname})",
                     date=order.date
                 ))
+
+            # د) عمولة الموظفة (تتخصم من الشريك)
+            if (not any(p.id == sales_rep.id for p in partners)) and rate_per_item > 0:
+                girl_comm = net_qty * rate_per_item
+                total_month_comm += girl_comm
+                sub_amt = girl_comm / num_partners
+                
+                for p in partners:
+                    db.session.add(PartnerTransaction(
+                        partner_id=p.id,
+                        order_id=order.id,
+                        type='sub_commission',
+                        amount=-sub_amt,
+                        description=f"عمولة ({sales_rep.fullname}) مشتركة ({num_partners}) - شهر {target_month_str} ({total_monthly_items} قطعة، فئة {rate_per_item})",
+                        date=order.date
+                    ))
 
         try:
             with open('debug_comm_log.txt', 'a', encoding='utf-8') as f:
@@ -170,10 +181,10 @@ def update_monthly_commissions(sales_rep_id, ref_date):
             pass  # Vercel read-only filesystem
 
         db.session.commit()
-        print(f"✅ Updated monthly commissions for Partner {partner.fullname} from Sales {sales_rep.fullname}")
+        print(f"Updated monthly commissions for Partner {partners[0].fullname} from Sales {sales_rep.fullname}")
 
     except Exception as e:
-        print(f"❌ Error updating commissions: {e}")
+        print(f"Error updating commissions: {e}")
         # Note: Do not rollback here because it cancels the entire transaction.
 
 

@@ -229,13 +229,11 @@ def partners_report():
             admin_penalty_recovered = sum(safe_float(t.amount) for t in period_trans if t.type == 'admin_penalty' and safe_float(t.amount) > 0)
             admin_penalty_deducted = sum(safe_float(t.amount) for t in period_trans if t.type == 'admin_penalty' and safe_float(t.amount) <= 0)
 
-            partner_cross_month_13 = cross_month_13_deduction / num_partners
+            partner_cross_month_13 = cross_month_13_deduction / num_partners if num_partners > 0 else 0
             partner_returns = partner_cross_month_13 + return_penalty
-            partner_gross_display = gross_comm_display / num_partners
-            partner_sales_reversed_display = sales_rep_comm_reversed_display / num_partners
 
-            period_net_profit = (partner_gross_display + admin_bonus_earned + admin_penalty_recovered + 
-                                 partner_sales_reversed_display +
+            period_net_profit = (gross_comm + admin_bonus_earned + admin_penalty_recovered + 
+                                 sales_rep_comm_reversed +
                                  sales_rep_comm + discounts + partner_returns + expenses + staff_costs + 
                                  admin_bonus_paid + admin_penalty_deducted)
             period_net_cash = period_net_profit + withdrawals_period
@@ -248,10 +246,10 @@ def partners_report():
                 'sold_items': '-',
                 'sold_details': team_data['sold_details'],
                 'gross_comm': round(gross_comm, 2),
-                'gross_comm_display': round(partner_gross_display, 2),
+                'gross_comm_display': round(gross_comm, 2),
                 'gross_comm_details_display': team_data['gross_comm_details_display'],
                 'sales_rep_comm_reversed': round(sales_rep_comm_reversed, 2),
-                'sales_rep_comm_reversed_display': round(partner_sales_reversed_display, 2),
+                'sales_rep_comm_reversed_display': round(sales_rep_comm_reversed, 2),
                 'admin_bonus_earned': round(admin_bonus_earned, 2),
                 'admin_penalty_recovered': round(admin_penalty_recovered, 2),
                 'sales_rep_comm': round(sales_rep_comm, 2),

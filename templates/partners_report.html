@@ -463,25 +463,7 @@
                         {% endfor %}
                         {% endfor %}
                     </tbody>
-                    <tfoot>
-                        <tr class="grand-total">
-                            <td class="text-center fw-bold fs-5">الإجمالي</td>
-                            <td class="fw-bold text-center"><span class="sold-badge">{{ totals.sold_items }} قطعة</span></td>
-                            <td class="fw-bold">{{ totals.gross_comm_display }}</td>
-                            <td class="fw-bold">{{ totals.sales_rep_comm_reversed_display }}</td>
-                            <td class="fw-bold">{{ totals.admin_bonus_earned }}</td>
-                            <td class="fw-bold">{{ totals.admin_penalty_recovered }}</td>
-                            <td class="fw-bold">{{ totals.sales_rep_comm }}</td>
-                            <td class="fw-bold">{{ totals.returns }}</td>
-                            <td class="fw-bold">{{ totals.admin_penalty_deducted }}</td>
-                            <td class="fw-bold">{{ totals.admin_bonus_paid }}</td>
-                            <td class="fw-bold">{{ totals.discounts }}</td>
-                            <td class="fw-bold">{{ totals.staff_costs }}</td>
-                            <td class="fw-bold">{{ totals.expenses }}</td>
-                            <td class="fw-bold">{{ totals.withdrawals_period }}</td>
-                            <td class="fw-bold fs-4 {{ 'text-success' if totals.period_net_cash >= 0 else 'text-danger' }}">{{ totals.period_net_cash }} ج.م</td>
-                        </tr>
-                    </tfoot>
+
                 </table>
             </div>
         </div>

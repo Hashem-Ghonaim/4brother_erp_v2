@@ -145,26 +145,34 @@ def add_return():
 
             # 6. معالجة حسابات الشركاء (إلغاء الربح والعمولة عن القطع المرتجعة)
             sales_rep = User.query.get(order.user_id)
-            partner = None
-            if sales_rep.role == 'manager': partner = sales_rep
-            elif sales_rep.manager_id:
-                mgr = User.query.get(sales_rep.manager_id)
-                if mgr and mgr.role == 'manager': partner = mgr
+            partners = []
+            if getattr(sales_rep, 'partner_group_id', None):
+                partners = User.query.filter_by(role='manager', partner_group_id=sales_rep.partner_group_id).all()
+            else:
+                if sales_rep.role == 'manager': partners = [sales_rep]
+                elif sales_rep.manager_id:
+                    mgr = User.query.get(sales_rep.manager_id)
+                    if mgr and mgr.role == 'manager': partners = [mgr]
 
-            if partner:
+            if partners:
+                num_partners = len(partners)
                 # أ) إلغاء ربح الشريك عن القطع المرجعة
-                partner_rate = float(partner.commission_value or 13.0)
-                db.session.add(PartnerTransaction(
-                    partner_id=partner.id, order_id=order.id, type='commission_gross',
-                    amount=-(total_qty_returned * partner_rate),
-                    description=f"خصم ربح قطع مرتجعة ({total_qty_returned} قطعة × {partner_rate}) - فاتورة #{order.id}"
-                ))
+                partner_rate = float(partners[0].commission_value or 13.0)
+                deduction_amt = (total_qty_returned * partner_rate) / num_partners
+                for p in partners:
+                    db.session.add(PartnerTransaction(
+                        partner_id=p.id, order_id=order.id, type='commission_gross',
+                        amount=-deduction_amt,
+                        description=f"خصم ربح قطع مرتجعة ({total_qty_returned} قطعة × {partner_rate}) مشتركة ({num_partners}) - فاتورة #{order.id}"
+                    ))
                 # ب) خصم خسائر الشحن أو التوالف من الشريك
                 if total_deduction > 0:
-                    db.session.add(PartnerTransaction(
-                        partner_id=partner.id, order_id=order.id, type='return_penalty',
-                        amount=-total_deduction, description=f"تحمل خسائر مرتجع فاتورة #{order.id}"
-                    ))
+                    penalty_amt = total_deduction / num_partners
+                    for p in partners:
+                        db.session.add(PartnerTransaction(
+                            partner_id=p.id, order_id=order.id, type='return_penalty',
+                            amount=-penalty_amt, description=f"تحمل خسائر مرتجع مشتركة ({num_partners}) فاتورة #{order.id}"
+                        ))
                 # ج) استرداد عمولة السيلز (ترجع لجيب المدير)
                 if sales_rep.role in ('sales', 'sales_manager'):
                     # حساب مبيعات الشهر الأصلي للفاتورة عشان نخصم العمولة بنفس الشريحة اللي اتحسبت بيها
