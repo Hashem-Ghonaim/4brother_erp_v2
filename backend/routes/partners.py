@@ -37,7 +37,10 @@ def partners_report():
         return "غير مصرح", 403
         
     from ..models import PartnerGroup
-    groups = PartnerGroup.query.all()
+    if current_user.role == 'general_manager':
+        groups = PartnerGroup.query.all()
+    else:
+        groups = PartnerGroup.query.filter_by(id=current_user.partner_group_id).all()
     report_data = []
 
     today = cairo_now().date()
