@@ -784,12 +784,19 @@
                             </div>
                             <div class="col-12 mt-2">
                                 <label class="form-label small fw-bold text-primary"><i class="fas fa-users me-1"></i>
-                                    الفريق (المسؤول)</label>
-                                <select name="partner_group_id" class="form-select border-primary bg-light">
-                                    <option value="">-- اختيار الفريق --</option>
-                                    {% for g in groups %}
-                                    <option value="{{ g.id }}">{{ g.name }}</option>
-                                    {% endfor %}
+                                    الفريق / المدير المسؤول</label>
+                                <select name="responsible_entity" class="form-select border-primary bg-light">
+                                    <option value="">-- اختيار الفريق أو المدير (أو تركه فارغاً) --</option>
+                                    <optgroup label="الفرق (الشركاء)">
+                                        {% for g in groups %}
+                                        <option value="group_{{ g.id }}">{{ g.name }}</option>
+                                        {% endfor %}
+                                    </optgroup>
+                                    <optgroup label="المديرين الأفراد">
+                                        {% for mgr in all_managers %}
+                                        <option value="manager_{{ mgr.id }}">{{ mgr.fullname }} ({{ 'مدير عام' if mgr.role == 'general_manager' else 'شريك' if mgr.role == 'manager' else 'مدير مبيعات' }})</option>
+                                        {% endfor %}
+                                    </optgroup>
                                 </select>
                             </div>
                             <div class="col-6">

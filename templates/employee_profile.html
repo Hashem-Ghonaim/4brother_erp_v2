@@ -542,12 +542,19 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-primary"><i class="fas fa-users me-1"></i> الفريق (المسؤول)</label>
-                        <select name="partner_group_id" class="form-select border-primary bg-light">
+                        <label class="form-label small fw-bold text-primary"><i class="fas fa-users me-1"></i> الفريق / المدير المسؤول</label>
+                        <select name="responsible_entity" class="form-select border-primary bg-light">
                             <option value="">-- تركه بدون فريق ليكون تحت إدارة المدير العام تلقائياً --</option>
-                            {% for g in groups %}
-                            <option value="{{ g.id }}" {% if emp.partner_group_id==g.id %}selected{% endif %}>{{ g.name }}</option>
-                            {% endfor %}
+                            <optgroup label="الفرق (الشركاء)">
+                                {% for g in groups %}
+                                <option value="group_{{ g.id }}" {% if emp.partner_group_id==g.id %}selected{% endif %}>{{ g.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="المديرين الأفراد">
+                                {% for mgr in all_managers %}
+                                <option value="manager_{{ mgr.id }}" {% if emp.manager_id==mgr.id %}selected{% endif %}>{{ mgr.fullname }} ({{ 'مدير عام' if mgr.role == 'general_manager' else 'شريك' if mgr.role == 'manager' else 'مدير مبيعات' }})</option>
+                                {% endfor %}
+                            </optgroup>
                         </select>
                     </div>
 

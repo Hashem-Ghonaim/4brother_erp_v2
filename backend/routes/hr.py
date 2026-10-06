@@ -305,11 +305,18 @@ def add_team_member():
 
     emp_code = f"EMP{''.join(random.choices(string.digits, k=3))}"
 
-    partner_group_id = request.form.get('partner_group_id')
-    if partner_group_id and partner_group_id.isdigit():
-        partner_group_id = int(partner_group_id)
+    responsible_entity = request.form.get('responsible_entity', '')
+    partner_group_id = None
+    manager_id = None
+    
+    if responsible_entity.startswith('group_'):
+        partner_group_id = int(responsible_entity.replace('group_', ''))
+    elif responsible_entity.startswith('manager_'):
+        manager_id = int(responsible_entity.replace('manager_', ''))
     else:
-        partner_group_id = None
+        # Default fallback to current manager if they didn't select anything and they are a manager
+        if current_user.role in ['manager', 'general_manager']:
+            manager_id = current_user.id
 
     # --- التصحيح هنا: تغيير password_hash إلى password ---
     new_user = User(
@@ -324,7 +331,7 @@ def add_team_member():
         commission_value=comm_val,
         commission_rules=json.dumps(tiers) if tiers else None,
         partner_group_id=partner_group_id,
-        manager_id=None,
+        manager_id=manager_id,
         shift_start=shift_start,
         shift_end=shift_end,
         is_shared_salary=request.form.get('is_shared_salary') == 'on',
@@ -370,14 +377,16 @@ def update_employee_data(id):
     emp.shift_start = request.form.get('shift_start')
     emp.shift_end = request.form.get('shift_end')
 
-    partner_group_id = request.form.get('partner_group_id')
-    if partner_group_id and partner_group_id.isdigit():
-        emp.partner_group_id = int(partner_group_id)
+    responsible_entity = request.form.get('responsible_entity', '')
+    if responsible_entity.startswith('group_'):
+        emp.partner_group_id = int(responsible_entity.replace('group_', ''))
+        emp.manager_id = None
+    elif responsible_entity.startswith('manager_'):
+        emp.manager_id = int(responsible_entity.replace('manager_', ''))
+        emp.partner_group_id = None
     else:
         emp.partner_group_id = None
-        
-    # Clear legacy manager_id just in case
-    emp.manager_id = None
+        emp.manager_id = None
 
     # تحديث الشرائح (لو موجودة)
     if emp.job_type == 'tiered_sales':
