@@ -2,6 +2,11 @@ from datetime import datetime, date
 from flask_login import UserMixin
 
 from .core import db, cairo_now
+
+class PartnerGroup(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+
 class SystemSetting(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     company_name = db.Column(db.String(100), default="My ERP")
@@ -53,6 +58,9 @@ class User(db.Model, UserMixin):
     commission_rules = db.Column(db.Text, nullable=True) # قواعد الشرائح (JSON)
     is_shared_salary = db.Column(db.Boolean, default=False) # هل الموظف مشترك (الراتب مقسم)؟
     has_flexible_hours = db.Column(db.Boolean, default=False) # مواعيد مرنة (لا يخصم تأخير/انصراف مبكر)
+    
+    partner_group_id = db.Column(db.Integer, db.ForeignKey('partner_group.id'), nullable=True)
+    partner_group = db.relationship('PartnerGroup', backref='users')
 
     def has_perm(self, perm):
         if self.role in ('general_manager', 'owner'):

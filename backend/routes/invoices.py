@@ -392,7 +392,7 @@ def edit_proforma(id):
 
     return render_template('pos.html',
                            categories=Category.query.all(),
-                           products=ProductVariant.query.join(ProductModel).all(),
+                           products=ProductVariant.query.join(ProductModel).order_by(ProductVariant.id).all(),
                            customers=customers,
                            shipping_companies=ShippingCompany.query.all(),
                            money_accounts=MoneyAccount.query.all(),

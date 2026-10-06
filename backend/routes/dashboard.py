@@ -79,7 +79,7 @@ def pos():
     # 3. عرض الصفحة مع تمرير بيانات التعديل (لو وجدت)
     return render_template('pos.html',
                            categories=Category.query.all(),
-                           products=ProductVariant.query.join(ProductModel).all(),
+                           products=ProductVariant.query.join(ProductModel).order_by(ProductVariant.id).all(),
                            customers=customers,
                            shipping_companies=ShippingCompany.query.all(),
                            money_accounts=MoneyAccount.query.all(),
@@ -94,6 +94,9 @@ def user_hierarchy():
         return redirect(url_for('dashboard'))
 
     users = User.query.all()
+    from backend.models import PartnerGroup
+    groups = PartnerGroup.query.all()
+    
     # Build a tree
     users_dict = {}
     for u in users:
@@ -103,6 +106,7 @@ def user_hierarchy():
             'role': u.role,
             'username': u.username,
             'manager_id': u.manager_id,
+            'partner_group_id': u.partner_group_id,
             'children': []
         }
     
@@ -112,13 +116,20 @@ def user_hierarchy():
             users_dict[u['manager_id']]['children'].append(u)
         else:
             root_users.append(u)
-
-    print("DEBUG HIERARCHY:")
-    for uid, u in users_dict.items():
-        if u['fullname'] in ['ياسمين مجدي', 'ريم وائل']:
-            print(f"{u['fullname']} -> children: {[c['fullname'] for c in u['children']]}")
+            
+    # Also pass groups and a mapping of users by group
+    groups_dict = []
+    for g in groups:
+        group_managers = [u for uid, u in users_dict.items() if u['partner_group_id'] == g.id and u['role'] == 'manager']
+        group_sales = [u for uid, u in users_dict.items() if u['partner_group_id'] == g.id and u['role'] in ['sales', 'sales_manager']]
+        groups_dict.append({
+            'id': g.id,
+            'name': g.name,
+            'managers': group_managers,
+            'sales': group_sales
+        })
     
-    return render_template('hierarchy.html', root_users=root_users)
+    return render_template('hierarchy.html', root_users=root_users, groups=groups_dict)
 
 
 @app.route('/')

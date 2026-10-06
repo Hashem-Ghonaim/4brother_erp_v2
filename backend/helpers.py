@@ -143,19 +143,27 @@ def get_accessible_users():
     if current_user.role == 'general_manager' or current_user.emp_code == 'EMP201':
         return [u.id for u in User.query.all()]
 
+    # إذا كان المستخدم ينتمي إلى مجموعة (فريق)، يمكنه رؤية جميع أعضاء الفريق
+    if current_user.partner_group_id:
+        team = User.query.filter_by(partner_group_id=current_user.partner_group_id).all()
+        return [u.id for u in team]
+
+    # المنطق القديم لو مفيش فريق
     elif current_user.role == 'manager':
-        # مدير الفريق يرى نفسه + الموظفين الذين يدارون من قبله
         team = User.query.filter_by(manager_id=current_user.id).all()
         return [current_user.id] + [u.id for u in team]
 
     else:
-        # الموظف العادي يرى بياناته هو فقط
         return [current_user.id]
-# دالة العملاء (نزلتها زي ما هي بالظبط عشان متتأثرش)
 
 def get_allowed_customers():
-    if current_user.role in ['general_manager', 'partner']:
+    if current_user.role in ['general_manager', 'owner', 'partner'] or current_user.emp_code == 'EMP201':
         return Customer.query.order_by(Customer.id.desc()).all()
+    
+    if current_user.partner_group_id:
+        team_ids = [u.id for u in User.query.filter_by(partner_group_id=current_user.partner_group_id).all()]
+        return Customer.query.filter(Customer.created_by_id.in_(team_ids)).order_by(Customer.id.desc()).all()
+
     elif current_user.role == 'manager':
         subordinates_ids = [u.id for u in current_user.subordinates]
         subordinates_ids.append(current_user.id)

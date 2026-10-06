@@ -46,7 +46,7 @@ def public_catalog():
         products = ProductVariant.query.join(ProductModel).filter(
             ProductModel.category_id == cat.id,
             ProductVariant.stock > 0
-        ).all()
+        ).order_by(ProductVariant.id).all()
 
         # إذا كان التصنيف يحتوي على منتجات متاحة، نضيفه للقائمة
         if products:
