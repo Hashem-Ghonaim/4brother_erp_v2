@@ -643,29 +643,33 @@
                                                         <div class="fw-bold" style="color: #1e40af;">{{ g.name }}</div>
                                                     </a>
                                                     <ul>
-                                                        {% for m in g.managers %}
                                                         <li>
-                                                            <a href="/employee/{{ m.id }}">
-                                                                <div class="fw-bold">{{ m.fullname }}</div>
-                                                                <span class="role-badge">مدير / شريك</span>
-                                                            </a>
-                                                        </li>
-                                                        {% endfor %}
-                                                        
-                                                        {% if g.sales %}
-                                                        <li>
-                                                            <div class="d-flex flex-column gap-2 align-items-center" style="padding-top: 5px;">
-                                                                <div class="badge bg-secondary opacity-75 mb-1 text-wrap" style="font-size: 0.7rem; max-width: 120px;">
-                                                                    فريق المبيعات ({{ g.sales|length }})
-                                                                </div>
-                                                                {% for s in g.sales %}
-                                                                <a href="/employee/{{ s.id }}" class="w-100" style="margin: 0; border-color: #4CAF50;">
-                                                                    <div class="fw-bold">{{ s.fullname }}</div>
+                                                            <div class="d-flex gap-3 justify-content-center">
+                                                                {% for m in g.managers %}
+                                                                <a href="/employee/{{ m.id }}" style="margin: 0;">
+                                                                    <div class="fw-bold">{{ m.fullname }}</div>
+                                                                    <span class="role-badge">مدير / شريك</span>
                                                                 </a>
                                                                 {% endfor %}
                                                             </div>
+                                                            
+                                                            {% if g.sales %}
+                                                            <ul>
+                                                                <li>
+                                                                    <div class="d-flex flex-column gap-2 align-items-center" style="padding-top: 5px;">
+                                                                        <div class="badge bg-secondary opacity-75 mb-1 text-wrap" style="font-size: 0.7rem; max-width: 120px;">
+                                                                            فريق المبيعات ({{ g.sales|length }})
+                                                                        </div>
+                                                                        {% for s in g.sales %}
+                                                                        <a href="/employee/{{ s.id }}" class="w-100" style="margin: 0; border-color: #4CAF50;">
+                                                                            <div class="fw-bold">{{ s.fullname }}</div>
+                                                                        </a>
+                                                                        {% endfor %}
+                                                                    </div>
+                                                                </li>
+                                                            </ul>
+                                                            {% endif %}
                                                         </li>
-                                                        {% endif %}
                                                     </ul>
                                                 </li>
                                                 {% endfor %}
