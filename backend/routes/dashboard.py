@@ -265,13 +265,15 @@ def dashboard():
     all_managers = User.query.filter(User.role.in_(['manager', 'general_manager', 'sales_manager'])).all()
 
     # بناء شجرة الهيكل التنظيمي للمدير العام
+    # بناء شجرة الهيكل التنظيمي للمدير العام
     users_dict = {}
     for u in User.query.all():
         users_dict[u.id] = {
             'id': u.id, 'fullname': u.fullname, 'role': u.role, 
-            'username': u.username, 'manager_id': u.manager_id, 'children': []
+            'username': u.username, 'manager_id': u.manager_id, 
+            'partner_group_id': u.partner_group_id, 'children': []
         }
-    root_users = []
+    
     for uid, u in users_dict.items():
         if u['manager_id'] and u['manager_id'] in users_dict:
             users_dict[u['manager_id']]['children'].append(u)
@@ -285,6 +287,19 @@ def dashboard():
         if current_user.id in users_dict:
             root_users.append(users_dict[current_user.id])
 
+    from backend.models import PartnerGroup
+    groups = PartnerGroup.query.all()
+    groups_dict = []
+    for g in groups:
+        group_managers = [u for uid, u in users_dict.items() if u['partner_group_id'] == g.id and u['role'] == 'manager']
+        group_sales = [u for uid, u in users_dict.items() if u['partner_group_id'] == g.id and u['role'] in ['sales', 'sales_manager']]
+        groups_dict.append({
+            'id': g.id,
+            'name': g.name,
+            'managers': group_managers,
+            'sales': group_sales
+        })
+
     return render_template('dashboard.html',
                          today_sales=round(today_net_sales, 2),
                          total_sales=round(total_net_sales, 2),
@@ -295,7 +310,8 @@ def dashboard():
                          categories=Category.query.all(),
                          user=current_user,
                          all_managers=all_managers,
-                         root_users=root_users)
+                         root_users=root_users,
+                         groups=groups_dict)
 
 
 @app.route('/profile', methods=['GET', 'POST'])
