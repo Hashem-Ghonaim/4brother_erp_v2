@@ -93,7 +93,7 @@ def user_hierarchy():
         flash("غير مصرح لك بالوصول إلى هذه الصفحة", "danger")
         return redirect(url_for('dashboard'))
 
-    users = User.query.all()
+    users = User.query.filter(User.username != 'admin').all()
     from backend.models import PartnerGroup
     groups = PartnerGroup.query.all()
     
@@ -267,7 +267,7 @@ def dashboard():
     # بناء شجرة الهيكل التنظيمي للمدير العام
     # بناء شجرة الهيكل التنظيمي للمدير العام
     users_dict = {}
-    for u in User.query.all():
+    for u in User.query.filter(User.username != 'admin').all():
         users_dict[u.id] = {
             'id': u.id, 'fullname': u.fullname, 'role': u.role, 
             'username': u.username, 'manager_id': u.manager_id, 
