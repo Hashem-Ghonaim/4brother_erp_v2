@@ -317,6 +317,8 @@
                             <th colspan="7" class="bg-danger bg-opacity-75">الخصومات (Deductions)</th>
                             <th rowspan="2" class="bg-secondary bg-opacity-50">المسحوبات<br><small>(Withdrawals)</small>
                             </th>
+                            <th rowspan="2" class="bg-primary bg-opacity-50 text-white">الإيداعات<br><small>(Deposits)</small>
+                            </th>
                             <th rowspan="2" class="bg-dark text-warning">صافي الربح المستحق<br><small>(له /
                                     عليه)</small></th>
                         </tr>
@@ -387,9 +389,13 @@
                             <td class="text-danger fw-bold drilldown-cell" data-name="{{ row.name }}" data-label="المسحوبات" data-details="{{ row.withdrawals_details | tojson | forceescape }}">
                                {{ row.withdrawals_period }}
                             </td>
+                            <!-- Deposits -->
+                            <td class="text-primary fw-bold drilldown-cell" data-name="{{ row.name }}" data-label="الإيداعات" data-details="{{ row.deposits_details | tojson | forceescape }}">
+                               {{ row.deposits_period }}
+                            </td>
 
                             <!-- Net -->
-                            <td class="{{ 'profit-positive' if row.period_net_cash >= 0 else 'profit-negative' }} drilldown-formula" data-name="{{ row.name }}" data-label="صافي الربح المستحق (المعادلة)" data-formula='[{"label":"صافي الأرباح","value":{{ row.period_net_profit }}},{"label":"المسحوبات","value":-{{ row.withdrawals_period }}}]' data-result="{{ row.period_net_cash }}">
+                            <td class="{{ 'profit-positive' if row.period_net_cash >= 0 else 'profit-negative' }} drilldown-formula" data-name="{{ row.name }}" data-label="صافي الربح المستحق (المعادلة)" data-formula='[{"label":"صافي الأرباح","value":{{ row.period_net_profit }}},{"label":"المسحوبات","value":-{{ row.withdrawals_period }}},{"label":"الإيداعات","value":{{ row.deposits_period }}}]' data-result="{{ row.period_net_cash }}">
                                {{ row.period_net_cash }} ج.م
                             </td>
                         </tr>
@@ -453,9 +459,14 @@
                                {{ p.withdrawals_period }}
                                 <i class="fas fa-search-plus small ms-1 text-muted"></i>
                             </td>
+                            <!-- Deposits -->
+                            <td class="text-primary fw-bold bg-light drilldown-cell" style="cursor:pointer" data-name="{{ p.name }}" data-label="الإيداعات" data-details="{{ p.deposits_details | tojson | forceescape }}">
+                               {{ p.deposits_period }}
+                                <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                            </td>
 
                             <!-- Net -->
-                            <td class="{{ 'profit-positive' if p.period_net_cash >= 0 else 'profit-negative' }} drilldown-formula" style="cursor:pointer" data-name="{{ p.name }}" data-label="صافي الربح المستحق (المعادلة)" data-formula='[{"label":"عمولة الشريك (+13ج)","value":{{ p.gross_comm_display }}},{"label":"عمولات مستردة","value":{{ p.sales_rep_comm_reversed_display }}},{"label":"مكافآت مستحقة","value":{{ p.admin_bonus_earned }}},{"label":"جزاءات مستردة","value":{{ p.admin_penalty_recovered }}},{"label":"عمولات مبيعات","value":{{ p.sales_rep_comm }}},{"label":"مرتجعات","value":{{ p.returns }}},{"label":"جزاءات عالشريك","value":{{ p.admin_penalty_deducted }}},{"label":"مكافآت مدفوعة","value":{{ p.admin_bonus_paid }}},{"label":"خصم فواتير","value":{{ p.discounts }}},{"label":"مصاريف طاقم","value":{{ p.staff_costs }}},{"label":"مصاريف أخرى","value":{{ p.expenses }}},{"label":"المسحوبات","value":-{{ p.withdrawals_period }}}]' data-result="{{ p.period_net_cash }}">
+                            <td class="{{ 'profit-positive' if p.period_net_cash >= 0 else 'profit-negative' }} drilldown-formula" style="cursor:pointer" data-name="{{ p.name }}" data-label="صافي الربح المستحق (المعادلة)" data-formula='[{"label":"عمولة الشريك (+13ج)","value":{{ p.gross_comm_display }}},{"label":"عمولات مستردة","value":{{ p.sales_rep_comm_reversed_display }}},{"label":"مكافآت مستحقة","value":{{ p.admin_bonus_earned }}},{"label":"جزاءات مستردة","value":{{ p.admin_penalty_recovered }}},{"label":"عمولات مبيعات","value":{{ p.sales_rep_comm }}},{"label":"مرتجعات","value":{{ p.returns }}},{"label":"جزاءات عالشريك","value":{{ p.admin_penalty_deducted }}},{"label":"مكافآت مدفوعة","value":{{ p.admin_bonus_paid }}},{"label":"خصم فواتير","value":{{ p.discounts }}},{"label":"مصاريف طاقم","value":{{ p.staff_costs }}},{"label":"مصاريف أخرى","value":{{ p.expenses }}},{"label":"المسحوبات","value":-{{ p.withdrawals_period }}},{"label":"الإيداعات","value":{{ p.deposits_period }}}]' data-result="{{ p.period_net_cash }}">
                                {{ p.period_net_cash }} ج.م
                                 <i class="fas fa-calculator small ms-1 text-muted"></i>
                             </td>
@@ -484,13 +495,17 @@
                         <hr class="my-3 opacity-25">
 
                         <div class="row text-center mb-3">
-                            <div class="col-6 border-end">
+                            <div class="col-4 border-end">
                                 <small class="text-muted d-block">صافي ربح الفترة</small>
                                 <span class="text-success fw-bold">{{ p.period_net_profit }}</span>
                             </div>
-                            <div class="col-6">
+                            <div class="col-4 border-end">
                                 <small class="text-muted d-block">مسحوبات الفترة</small>
                                 <span class="text-danger fw-bold">{{ p.withdrawals_period }}</span>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted d-block">إيداعات الفترة</small>
+                                <span class="text-primary fw-bold">{{ p.deposits_period }}</span>
                             </div>
                         </div>
 

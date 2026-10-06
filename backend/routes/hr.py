@@ -558,6 +558,27 @@ def employee_profile(id):
                                 partner_id=emp.id, type='admin_penalty', amount=-amount, 
                                 description=f"جزاء إداري من المدير العام: {note}", date=cairo_now()
                             ))
+                            
+                elif t_type == 'partner_deposit':
+                    # إيداع شخصي من الشريك للشركة
+                    db.session.add(PartnerTransaction(
+                        partner_id=emp.id, type='deposit', amount=amount, 
+                        description=f"إيداع شخصي للشركة: {note}", date=cairo_now()
+                    ))
+                    # زيادة في الخزينة
+                    if account_id:
+                        account = MoneyAccount.query.get(account_id)
+                        if account:
+                            account.balance += amount
+                            db.session.add(FinancialTransaction(
+                                account_id=account.id,
+                                type='income',
+                                category='تمويل وإيداعات',
+                                amount=amount,
+                                description=f"إيداع شخصي من {emp.fullname}: {note}",
+                                created_by_id=current_user.id,
+                                date=cairo_now()
+                            ))
 
             db.session.commit()
             flash('تم تسجيل الحركة المالية بنجاح ✅', 'success')

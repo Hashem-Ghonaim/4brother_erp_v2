@@ -167,12 +167,12 @@ def partners_report():
             
             'gross_comm': 0.0, 'sales_rep_comm_reversed': 0.0, 'admin_bonus_earned': 0.0, 'admin_penalty_recovered': 0.0,
             'sales_rep_comm': 0.0, 'discounts': 0.0, 'returns': 0.0, 'expenses': 0.0, 'staff_costs': 0.0,
-            'admin_bonus_paid': 0.0, 'admin_penalty_deducted': 0.0, 'withdrawals_period': 0.0,
+            'admin_bonus_paid': 0.0, 'admin_penalty_deducted': 0.0, 'withdrawals_period': 0.0, 'deposits_period': 0.0,
             'period_net_profit': 0.0, 'period_net_cash': 0.0,
             
             'gross_comm_details': [], 'admin_bonus_earned_details': [], 'admin_penalty_recovered_details': [],
             'sales_comm_details': [], 'discounts_details': [], 'expenses_details': [], 'staff_costs_details': [],
-            'admin_bonus_paid_details': [], 'admin_penalty_deducted_details': [], 'withdrawals_details': [],
+            'admin_bonus_paid_details': [], 'admin_penalty_deducted_details': [], 'withdrawals_details': [], 'deposits_details': [],
             'partners': []
         }
         
@@ -227,6 +227,7 @@ def partners_report():
             expenses = sum(safe_float(t.amount) for t in period_trans if t.type == 'expense_share')
             staff_costs = sum(safe_float(t.amount) for t in period_trans if t.type == 'staff_expense')
             withdrawals_period = sum(safe_float(t.amount) for t in period_trans if t.type == 'withdrawal')
+            deposits_period = sum(safe_float(t.amount) for t in period_trans if t.type == 'deposit')
             admin_bonus_earned = sum(safe_float(t.amount) for t in period_trans if t.type == 'admin_bonus' and safe_float(t.amount) > 0)
             admin_bonus_paid = sum(safe_float(t.amount) for t in period_trans if t.type == 'admin_bonus' and safe_float(t.amount) <= 0)
             admin_penalty_recovered = sum(safe_float(t.amount) for t in period_trans if t.type == 'admin_penalty' and safe_float(t.amount) > 0)
@@ -239,7 +240,7 @@ def partners_report():
                                  sales_rep_comm_reversed +
                                  sales_rep_comm + discounts + partner_returns + expenses + staff_costs + 
                                  admin_bonus_paid + admin_penalty_deducted)
-            period_net_cash = period_net_profit + withdrawals_period
+            period_net_cash = period_net_profit + withdrawals_period + deposits_period
             
             grand_total_period += period_net_cash
 
@@ -275,9 +276,11 @@ def partners_report():
                 'admin_bonus_paid_details': build_details(period_trans, lambda t: t.type == 'admin_bonus' and safe_float(t.amount) <= 0),
                 'admin_penalty_deducted_details': build_details(period_trans, lambda t: t.type == 'admin_penalty' and safe_float(t.amount) <= 0),
                 'withdrawals_details': build_details(period_trans, lambda t: t.type == 'withdrawal'),
+                'deposits_details': build_details(period_trans, lambda t: t.type == 'deposit'),
 
                 'period_net_profit': round(period_net_profit, 2),
                 'withdrawals_period': round(abs(withdrawals_period), 2),
+                'deposits_period': round(deposits_period, 2),
                 'period_net_cash': round(period_net_cash, 2),
                 
                 'total_earned': round(total_earned, 2),
@@ -329,6 +332,7 @@ def partners_report():
             team_data['admin_bonus_paid'] += partner_data['admin_bonus_paid']
             team_data['admin_penalty_deducted'] += partner_data['admin_penalty_deducted']
             team_data['withdrawals_period'] += partner_data['withdrawals_period']
+            team_data['deposits_period'] += partner_data['deposits_period']
             team_data['period_net_profit'] += partner_data['period_net_profit']
             team_data['period_net_cash'] += partner_data['period_net_cash']
 
@@ -345,6 +349,7 @@ def partners_report():
             team_data['admin_bonus_paid_details'].extend(partner_data['admin_bonus_paid_details'])
             team_data['admin_penalty_deducted_details'].extend(partner_data['admin_penalty_deducted_details'])
             team_data['withdrawals_details'].extend(partner_data['withdrawals_details'])
+            team_data['deposits_details'].extend(partner_data['deposits_details'])
         
         # Round team totals
         team_data['gross_comm'] = round(team_data['gross_comm'], 2)
@@ -359,6 +364,7 @@ def partners_report():
         team_data['admin_bonus_paid'] = round(team_data['admin_bonus_paid'], 2)
         team_data['admin_penalty_deducted'] = round(team_data['admin_penalty_deducted'], 2)
         team_data['withdrawals_period'] = round(team_data['withdrawals_period'], 2)
+        team_data['deposits_period'] = round(team_data['deposits_period'], 2)
         team_data['period_net_profit'] = round(team_data['period_net_profit'], 2)
         team_data['period_net_cash'] = round(team_data['period_net_cash'], 2)
 
@@ -377,6 +383,7 @@ def partners_report():
         'staff_costs': round(sum(r['staff_costs'] for r in report_data), 2),
         'expenses': round(sum(r['expenses'] for r in report_data), 2),
         'withdrawals_period': round(sum(r['withdrawals_period'] for r in report_data), 2),
+        'deposits_period': round(sum(r['deposits_period'] for r in report_data), 2),
         'period_net_cash': round(grand_total_period, 2),
     }
     accounts = MoneyAccount.query.all()

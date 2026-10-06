@@ -128,3 +128,168 @@ Total Month Commission: 1056.0
 Monthly Sales: 3015, Monthly Returns: 40, Net: 2975
 Rate: 13.0
 Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: أحمد هشام ---
+Monthly Sales: 76, Monthly Returns: 0, Net: 76
+Rate: 15.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: أحمد هشام ---
+Monthly Sales: 76, Monthly Returns: 0, Net: 76
+Rate: 15.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: أحمد وجدي ---
+Monthly Sales: 48, Monthly Returns: 0, Net: 48
+Rate: 15.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: منار ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 0.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: لارا ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 6.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: سلمى ---
+Monthly Sales: 98, Monthly Returns: 0, Net: 98
+Rate: 0.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: مصطفي  ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 0.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: هاجر حسام  ---
+Monthly Sales: 204, Monthly Returns: 0, Net: 204
+Rate: 0.5
+Total Month Commission: 102.0
+
+--- DEBUG [2026-10]: هاجر ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 0.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: ريم ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 6.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: ميرنا ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 0.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: أحمد أبو اليزيد ---
+Monthly Sales: 257, Monthly Returns: 4, Net: 253
+Rate: 15.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: أحمد العجان ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 15.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: سماح ---
+Monthly Sales: 4, Monthly Returns: 0, Net: 4
+Rate: 0.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: ندى ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 0.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: Hagar ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 0.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: حياه ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 0.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: أحمد هشام ---
+Monthly Sales: 76, Monthly Returns: 0, Net: 76
+Rate: 15.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: أحمد وجدي ---
+Monthly Sales: 48, Monthly Returns: 0, Net: 48
+Rate: 15.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: منار ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 0.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: لارا ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 6.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: سلمى ---
+Monthly Sales: 98, Monthly Returns: 0, Net: 98
+Rate: 0.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: مصطفي  ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 0.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: هاجر حسام  ---
+Monthly Sales: 204, Monthly Returns: 0, Net: 204
+Rate: 0.5
+Total Month Commission: 102.0
+
+--- DEBUG [2026-10]: هاجر ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 0.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: ريم ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 6.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: ميرنا ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 0.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: أحمد أبو اليزيد ---
+Monthly Sales: 257, Monthly Returns: 4, Net: 253
+Rate: 15.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: أحمد العجان ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 15.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: سماح ---
+Monthly Sales: 4, Monthly Returns: 0, Net: 4
+Rate: 0.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: ندى ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 0.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: Hagar ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 0.0
+Total Month Commission: 0.0
+
+--- DEBUG [2026-10]: حياه ---
+Monthly Sales: 0, Monthly Returns: 0, Net: 0
+Rate: 0.0
+Total Month Commission: 0.0

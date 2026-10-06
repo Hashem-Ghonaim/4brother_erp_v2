@@ -252,6 +252,9 @@
                                         <option value="bonus">مكافأة 🎁</option>
                                         <option value="deduction">خصم/جزاء ⚠️</option>
                                         <option value="advance">سلفة 💸</option>
+                                        {% if current_user.role == 'general_manager' and emp.role in ['manager', 'general_manager', 'sales_manager'] %}
+                                        <option value="partner_deposit">إيداع شخصي (للشركة) 💰</option>
+                                        {% endif %}
                                     </select>
                                 </div>
                                 <div class="col-6">
@@ -261,7 +264,7 @@
                             </div>
 
                             <div class="mb-2" id="treasurySelectDiv" style="display: none;">
-                                <label class="small fw-bold text-danger">اختر الخزينة للصرف منها:</label>
+                                <label class="small fw-bold text-danger">اختر الخزينة (للصرف / أو الإيداع):</label>
                                 <select name="account_id" class="form-select border-danger">
                                     {% for acc in accounts %}
                                     <option value="{{ acc.id }}">{{ acc.name }} (رصيد: {{ acc.balance }})</option>
@@ -273,7 +276,7 @@
                                 <label class="small fw-bold">السبب / ملاحظات</label>
                                 <input type="text" name="note" class="form-control" placeholder="مثال: تأخير، تارجت...">
                             </div>
-                            <div class="text-muted small mb-2 text-center bg-light p-2 rounded"><i class="fas fa-info-circle text-primary"></i> الخصم والمكافأة تُسوى ورقيًا من الراتب آخر الشهر، أما السلفة تُصرف نقدًا من الخزينة.</div>
+                            <div class="text-muted small mb-2 text-center bg-light p-2 rounded"><i class="fas fa-info-circle text-primary"></i> الخصم والمكافأة تُسوى ورقيًا، أما السلفة والإيداع تُسمع في الخزينة.</div>
                             <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="fas fa-save me-2"></i> حفظ العملية</button>
                         </form>
                     </div>
@@ -284,7 +287,7 @@
                 function toggleTreasurySelect() {
                     var type = document.getElementById('transType').value;
                     var div = document.getElementById('treasurySelectDiv');
-                    if (type === 'advance') {
+                    if (type === 'advance' || type === 'partner_deposit') {
                         div.style.display = 'block';
                     } else {
                         div.style.display = 'none';
@@ -316,9 +319,10 @@
                                         {% elif t.type == 'deduction' %}<span class="badge bg-danger">خصم</span>
                                         {% elif t.type == 'advance' %}<span class="badge bg-warning text-dark">سلفة</span>
                                         {% elif t.type == 'salary_payment' %}<span class="badge bg-dark">قبض</span>
+                                        {% elif t.type == 'partner_deposit' %}<span class="badge bg-primary">إيداع شريك</span>
                                         {% endif %}
                                     </td>
-                                    <td class="fw-bold">{{ t.amount }}</td>
+                                    <td class="fw-bold">{% if t.type == 'partner_deposit' %}+{% endif %}{{ t.amount }}</td>
                                     <td class="small text-muted text-truncate" style="max-width: 150px;" title="{{ t.note }}">{{ t.note }}</td>
                                 </tr>
                                 {% else %}
