@@ -305,11 +305,11 @@ def add_team_member():
 
     emp_code = f"EMP{''.join(random.choices(string.digits, k=3))}"
 
-    manager_id = request.form.get('manager_id')
-    if manager_id and manager_id.isdigit():
-        manager_id = int(manager_id)
+    partner_group_id = request.form.get('partner_group_id')
+    if partner_group_id and partner_group_id.isdigit():
+        partner_group_id = int(partner_group_id)
     else:
-        manager_id = current_user.id if current_user.role in ['manager', 'general_manager'] else None
+        partner_group_id = None
 
     # --- التصحيح هنا: تغيير password_hash إلى password ---
     new_user = User(
@@ -323,7 +323,8 @@ def add_team_member():
         base_salary=base_salary,
         commission_value=comm_val,
         commission_rules=json.dumps(tiers) if tiers else None,
-        manager_id=manager_id,
+        partner_group_id=partner_group_id,
+        manager_id=None,
         shift_start=shift_start,
         shift_end=shift_end,
         is_shared_salary=request.form.get('is_shared_salary') == 'on',
@@ -369,9 +370,14 @@ def update_employee_data(id):
     emp.shift_start = request.form.get('shift_start')
     emp.shift_end = request.form.get('shift_end')
 
-    manager_id = request.form.get('manager_id')
-    if manager_id and manager_id.isdigit():
-        emp.manager_id = int(manager_id)
+    partner_group_id = request.form.get('partner_group_id')
+    if partner_group_id and partner_group_id.isdigit():
+        emp.partner_group_id = int(partner_group_id)
+    else:
+        emp.partner_group_id = None
+        
+    # Clear legacy manager_id just in case
+    emp.manager_id = None
 
     # تحديث الشرائح (لو موجودة)
     if emp.job_type == 'tiered_sales':
@@ -756,6 +762,8 @@ def employee_profile(id):
     # جلب الحسابات لإرسالها للقالب
     accounts = MoneyAccount.query.all()
     all_managers = User.query.filter(User.role.in_(['manager', 'general_manager', 'sales_manager'])).all()
+    from backend.models import PartnerGroup
+    groups = PartnerGroup.query.all()
 
     return render_template('employee_profile.html',
                            emp=emp,
@@ -781,6 +789,7 @@ def employee_profile(id):
                            current_tiers=current_tiers,
                            all_managers=all_managers,
                            accounts=accounts,
+                           groups=groups,
                            selected_period=selected_period,
                            start_month=start_month_str,
                            end_month=end_month_str)

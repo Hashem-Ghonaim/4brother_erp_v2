@@ -783,12 +783,12 @@
                                 </select>
                             </div>
                             <div class="col-12 mt-2">
-                                <label class="form-label small fw-bold text-primary"><i class="fas fa-sitemap me-1"></i>
-                                    المدير المباشر (المسؤول)</label>
-                                <select name="manager_id" class="form-select border-primary bg-light">
-                                    <option value="">-- اختيار الشريك أو تركها لتسجل باسمك تلقائياً --</option>
-                                    {% for mgr in all_managers %}
-                                    <option value="{{ mgr.id }}">{{ mgr.fullname }} ({{ 'مدير عام' if mgr.role == 'general_manager' else 'شريك' if mgr.role == 'manager' else 'مدير مبيعات' }})</option>
+                                <label class="form-label small fw-bold text-primary"><i class="fas fa-users me-1"></i>
+                                    الفريق (المسؤول)</label>
+                                <select name="partner_group_id" class="form-select border-primary bg-light">
+                                    <option value="">-- اختيار الفريق --</option>
+                                    {% for g in groups %}
+                                    <option value="{{ g.id }}">{{ g.name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
