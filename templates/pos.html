@@ -414,11 +414,9 @@
                         style="border-radius: 8px;">
                         <option value="{{ current_user.id }}" selected>بيع مباشر باسمي ({{ current_user.fullname }})
                         </option>
-                        {% for emp in all_employees %}
+                        {% for emp in allowed_sellers %}
                         {% if emp.id != current_user.id %}
-                        {% if current_user.role == 'general_manager' or emp.manager_id == current_user.id %}
                         <option value="{{ emp.id }}">تسجيل البيع باسم: {{ emp.fullname }}</option>
-                        {% endif %}
                         {% endif %}
                         {% endfor %}
                     </select>

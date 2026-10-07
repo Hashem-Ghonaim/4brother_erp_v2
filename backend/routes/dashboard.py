@@ -77,13 +77,16 @@ def pos():
     ).order_by(Customer.id.desc()).all()
 
     # 3. عرض الصفحة مع تمرير بيانات التعديل (لو وجدت)
+    allowed_sellers = User.query.filter(User.id.in_(accessible_ids)).all()
+    
     return render_template('pos.html',
                            categories=Category.query.all(),
                            products=ProductVariant.query.join(ProductModel).order_by(ProductVariant.id).all(),
                            customers=customers,
                            shipping_companies=ShippingCompany.query.all(),
                            money_accounts=MoneyAccount.query.all(),
-                           all_employees=User.query.all(),  # <--- إضافة الموظفين هنا
+                           all_employees=User.query.all(),  # <--- إضافة الموظفين هنا للتعبئة
+                           allowed_sellers=allowed_sellers,
                            edit_order_data=edit_order_data) # <--- ده المهم عشان الجافاسكريبت يشتغل
 
 @app.route('/hierarchy')
