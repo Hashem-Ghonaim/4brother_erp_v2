@@ -634,7 +634,13 @@
                                         <li>
                                             <a href="/employee/{{ root.id }}">
                                                 <div class="fw-bold">{{ root.fullname }}</div>
+                                                {% if root.role == 'general_manager' %}
                                                 <span class="role-badge">مدير عام</span>
+                                                {% elif root.role == 'manager' %}
+                                                <span class="role-badge">مدير / شريك</span>
+                                                {% else %}
+                                                <span class="role-badge">{{ root.role }}</span>
+                                                {% endif %}
                                             </a>
                                             <ul>
                                                 {% for g in groups %}

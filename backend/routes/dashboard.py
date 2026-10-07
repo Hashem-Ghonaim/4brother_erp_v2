@@ -255,7 +255,19 @@ def dashboard():
     if current_user.role == 'general_manager':
         team_members = User.query.filter(User.id != current_user.id).all()
     elif current_user.role == 'manager':
-        team_members = User.query.filter_by(manager_id=current_user.id).all()
+        # جلب الموظفين التابعين مباشرة + الموظفين التابعين لنفس الفريق
+        direct_members = User.query.filter_by(manager_id=current_user.id).all()
+        if current_user.partner_group_id:
+            group_members = User.query.filter_by(partner_group_id=current_user.partner_group_id).filter(User.id != current_user.id).all()
+            # دمج القائمتين بدون تكرار
+            member_ids = set()
+            team_members = []
+            for m in direct_members + group_members:
+                if m.id not in member_ids:
+                    member_ids.add(m.id)
+                    team_members.append(m)
+        else:
+            team_members = direct_members
 
     latest_orders = SaleOrder.query.filter(SaleOrder.user_id.in_(accessible_ids))\
         .order_by(SaleOrder.date.desc()).limit(5).all()
@@ -264,8 +276,7 @@ def dashboard():
 
     all_managers = User.query.filter(User.role.in_(['manager', 'general_manager', 'sales_manager']), User.partner_group_id.is_(None)).all()
 
-    # بناء شجرة الهيكل التنظيمي للمدير العام
-    # بناء شجرة الهيكل التنظيمي للمدير العام
+    # بناء شجرة الهيكل التنظيمي
     users_dict = {}
     for u in User.query.filter(User.username != 'admin').all():
         users_dict[u.id] = {
@@ -280,6 +291,7 @@ def dashboard():
             
     root_users = []
     if current_user.role == 'general_manager' or current_user.username == 'gm_ahmed':
+        # المدير العام يشوف الشجرة كاملة
         for uid, u in users_dict.items():
             if not u['manager_id'] or u['manager_id'] not in users_dict:
                 root_users.append(u)
@@ -291,6 +303,11 @@ def dashboard():
     groups = PartnerGroup.query.all()
     groups_dict = []
     for g in groups:
+        # لو المستخدم الحالي مدير في فريق، يشوف فريقه بس
+        if current_user.role == 'manager' and current_user.partner_group_id:
+            if g.id != current_user.partner_group_id:
+                continue  # تخطي الفرق التانية
+        
         group_managers = [u for uid, u in users_dict.items() if u['partner_group_id'] == g.id and u['role'] == 'manager']
         group_sales = [u for uid, u in users_dict.items() if u['partner_group_id'] == g.id and u['role'] in ['sales', 'sales_manager']]
         groups_dict.append({
