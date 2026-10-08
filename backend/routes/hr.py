@@ -1383,7 +1383,20 @@ def payroll():
             manager_name = "المدير العام"
             if u.manager_id:
                 m = db.session.get(User, u.manager_id)
-                if m: manager_name = m.fullname
+                if m:
+                    current_m = m
+                    group_found = False
+                    while current_m:
+                        if current_m.partner_group:
+                            manager_name = current_m.partner_group.name
+                            group_found = True
+                            break
+                        if current_m.manager_id:
+                            current_m = db.session.get(User, current_m.manager_id)
+                        else:
+                            break
+                    if not group_found:
+                        manager_name = m.fullname
             dist_type = f"خاص ({manager_name})"
 
         # تجميع البيانات لإرسالها لملف HTML
