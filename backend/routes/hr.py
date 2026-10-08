@@ -27,7 +27,7 @@ from ..models import (
 )
 from ..helpers import (general_manager_required, permission_required, permission_required_any,
                        get_accessible_users, get_allowed_customers,
-                       calculate_user_commission, calculate_distance)
+                       calculate_user_commission, calculate_distance, calculate_team_leader_bonus)
 
 
 def fill_missing_attendances(month_str):
@@ -1102,8 +1102,8 @@ def payroll():
     accounts = MoneyAccount.query.all()
     employees_data = []
 
-    # جلب الموظفين (المديرين والسيلز والعمال)
-    users = User.query.filter(User.role.in_(['sales', 'worker', 'manager', 'sales_manager'])).all()
+    # جلب الموظفين (السيلز والعمال ومديري المبيعات) مع استبعاد الشركاء (manager)
+    users = User.query.filter(User.role.in_(['sales', 'worker', 'sales_manager'])).all()
 
     # تحميل إعدادات الجزاءات
     att_settings = AttendanceSettings.query.first()
@@ -1353,8 +1353,13 @@ def payroll():
             'note': ex.note or '---'
         } for ex in month_excuses]
 
+        # 4.6 بونص الإدارة (للبنات - مديري المبيعات)
+        team_bonus = 0.0
+        if u.role == 'sales_manager':
+            team_bonus = calculate_team_leader_bonus(u.id, month_start, month_end)
+
         # 5. المعادلة النهائية الشاملة للاستحقاقات والاستقطاعات
-        total_income = (u.base_salary or 0) + gross_commission + bonuses
+        total_income = (u.base_salary or 0) + gross_commission + bonuses + team_bonus
         total_deductions = total_returns_deduction + attendance_deduction + advances + other_penalties
 
         net_salary = total_income - total_deductions
@@ -1400,6 +1405,7 @@ def payroll():
             'advances_details': advances_details,
             'bonuses': round(bonuses, 2),
             'bonuses_details': bonuses_details,
+            'team_bonus': round(team_bonus, 2),
             'net_salary': round(max(0, net_salary), 2),
             'is_paid': is_paid,
             'excuses_count': excuses_count,

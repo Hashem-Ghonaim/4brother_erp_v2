@@ -109,6 +109,8 @@
                 {% set sub_penalties.value = sub_penalties.value + e.other_penalties %}
                 {% set sub_advances.value = sub_advances.value + e.advances %}
                 {% set sub_bonuses.value = sub_bonuses.value + e.bonuses %}
+                {% set sub_team_bonus = namespace(value=0) if not sub_team_bonus else sub_team_bonus %}
+                {% set sub_team_bonus.value = sub_team_bonus.value + e.team_bonus %}
                 {% set sub_net.value = sub_net.value + e.net_salary %}
             {% endfor %}
 
@@ -130,6 +132,7 @@
                                     <th class="text-danger">جزاء إداري</th>
                                     <th class="text-danger">سلف</th>
                                     <th class="text-success">مكافآت</th>
+                                    <th class="text-success">بونص الإدارة</th>
                                     <th class="bg-primary bg-opacity-10 fw-bold">الصافي</th>
                                     <th>الأذونات</th>
                                     <th>الإجراء</th>
@@ -180,6 +183,9 @@
                                         {{ e.bonuses }}
                                         {% if e.bonuses > 0 %}<i class="fas fa-search-plus small ms-1 text-muted"></i>{% endif %}
                                     </td>
+                                    <td class="text-success fw-bold">
+                                        {{ e.team_bonus }}
+                                    </td>
                                     <td class="fw-bold fs-5 bg-light">{{ e.net_salary }} ج.م</td>
                                     <td>
                                         {% if e.excuses_count > 0 %}
@@ -221,6 +227,7 @@
                                     <td class="text-danger">{{ sub_penalties.value | round(2) }}</td>
                                     <td class="text-danger">{{ sub_advances.value | round(2) }}</td>
                                     <td class="text-success">{{ sub_bonuses.value | round(2) }}</td>
+                                    <td class="text-success">{{ sub_team_bonus.value | round(2) }}</td>
                                     <td class="text-primary fs-5 border-start border-dark bg-white">{{ sub_net.value | round(2) }} ج.م</td>
                                     <td colspan="2"></td>
                                 </tr>
