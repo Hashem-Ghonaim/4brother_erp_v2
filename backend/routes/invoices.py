@@ -401,6 +401,8 @@ def edit_proforma(id):
         or_(Customer.created_by_id.in_(accessible_ids), Customer.name == "عميل نقدي")
     ).order_by(Customer.id.desc()).all()
 
+    allowed_sellers = User.query.filter(User.id.in_(accessible_ids)).all()
+
     return render_template('pos.html',
                            categories=Category.query.all(),
                            products=ProductVariant.query.join(ProductModel).order_by(ProductVariant.id).all(),
@@ -408,6 +410,7 @@ def edit_proforma(id):
                            shipping_companies=ShippingCompany.query.all(),
                            money_accounts=MoneyAccount.query.all(),
                            all_employees=User.query.all(),
+                           allowed_sellers=allowed_sellers,
                            # المتغير الجديد المهم جداً 👇
                            edit_order_data=order_data)
 
