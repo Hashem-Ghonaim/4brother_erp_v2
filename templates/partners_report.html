@@ -748,51 +748,30 @@
                 if (!details || details.length === 0) {
                     document.getElementById('drilldown_body').innerHTML = '<div class="text-center text-muted p-4 fs-5">لا توجد فواتير في الفترة المحددة</div>';
                 } else {
-                    const groups = {};
-                    details.forEach(d => {
-                        const key = d.user_name || '---';
-                        if (!groups[key]) groups[key] = [];
-                        groups[key].push(d);
-                    });
                     let allRows = '';
                     let grandGrossQty = 0;
                     let grandReturnedQty = 0;
                     let grandAmount = 0;
-                    let idx = 0;
-                    const orderedKeys = Object.keys(groups);
-                    orderedKeys.forEach((userName) => {
-                        const items = groups[userName];
-                        let userGrossQty = 0;
-                        let userReturnedQty = 0;
-                        let userAmount = 0;
-                        items.forEach(d => {
-                            idx++;
-                            userGrossQty += d.gross_qty;
-                            userReturnedQty += d.returned_qty;
-                            userAmount += d.amount;
-                            const invoiceLink = d.order_id
-                                ? `<a href="/invoice/print/${d.order_id}" target="_blank" class="text-decoration-none fw-bold"><i class="fas fa-file-invoice small me-1"></i>${d.invoice_label}</a>`
-                                : d.invoice_label;
-                            allRows += `<tr>
-                                <td class="text-muted small">${idx}</td>
-                                <td>${d.user_name}</td>
-                                <td>${d.date}</td>
-                                <td>${invoiceLink}</td>
-                                <td class="text-start small">${d.desc}</td>
-                                <td class="fw-bold">${d.gross_qty}</td>
-                                <td class="fw-bold text-danger">${d.returned_qty}</td>
-                                <td class="fw-bold text-success">${d.amount.toFixed(2)}</td>
-                            </tr>`;
-                        });
-                        allRows += `<tr class="table-secondary fw-bold">
-                            <td colspan="5" class="text-start ps-4">إجمالي ${userName}</td>
-                            <td>${userGrossQty}</td>
-                            <td>${userReturnedQty}</td>
-                            <td class="text-success">${userAmount.toFixed(2)}</td>
+                    
+                    details.forEach((d, idx) => {
+                        grandGrossQty += d.gross_qty;
+                        grandReturnedQty += d.returned_qty;
+                        grandAmount += d.amount;
+                        
+                        const invoiceLink = d.order_id
+                            ? `<a href="/invoice/print/${d.order_id}" target="_blank" class="text-decoration-none fw-bold"><i class="fas fa-file-invoice small me-1"></i>${d.invoice_label}</a>`
+                            : d.invoice_label;
+                            
+                        allRows += `<tr>
+                            <td class="text-muted small">${idx + 1}</td>
+                            <td>${d.user_name}</td>
+                            <td>${d.date}</td>
+                            <td>${invoiceLink}</td>
+                            <td class="text-start small">${d.desc}</td>
+                            <td class="fw-bold">${d.gross_qty}</td>
+                            <td class="fw-bold text-danger">${d.returned_qty}</td>
+                            <td class="fw-bold text-success">${d.amount.toFixed(2)}</td>
                         </tr>`;
-                        grandGrossQty += userGrossQty;
-                        grandReturnedQty += userReturnedQty;
-                        grandAmount += userAmount;
                     });
                     document.getElementById('drilldown_body').innerHTML = `
                         <table class="table table-sm table-bordered text-center mb-0">

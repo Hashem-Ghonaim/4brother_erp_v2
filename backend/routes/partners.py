@@ -146,7 +146,8 @@ def partners_report():
                     'amount': comm_amount, 'user_name': seller_name,
                     'desc': f"فاتورة #{order.id} ({gross_qty} قطعة) - {seller_name}",
                     'date': order.date.strftime('%Y-%m-%d'), 'order_id': order.id,
-                    'invoice_label': f"فاتورة #{order.id}"
+                    'invoice_label': f"فاتورة #{order.id}",
+                    'gross_qty': gross_qty, 'returned_qty': returned_qty
                 })
 
         team_data = {
