@@ -27,7 +27,7 @@ from ..models import (
 )
 from ..helpers import (general_manager_required, permission_required, permission_required_any,
                        get_accessible_users, get_allowed_customers,
-                       calculate_user_commission, calculate_distance)
+                       calculate_user_commission, calculate_distance, calculate_team_leader_bonus)
 
 
 @app.route('/partners/report')
@@ -165,7 +165,7 @@ def partners_report():
             'sales_comm_reversed_details': sales_reversed_comm_details,
             'returns_details': cross_month_return_details,
             
-            'gross_comm': 0.0, 'sales_rep_comm_reversed': 0.0, 'admin_bonus_earned': 0.0, 'admin_penalty_recovered': 0.0,
+            'gross_comm': 0.0, 'sales_rep_comm_reversed': 0.0, 'admin_bonus_earned': 0.0, 'admin_penalty_recovered': 0.0, 'team_bonus': 0.0,
             'sales_rep_comm': 0.0, 'discounts': 0.0, 'returns': 0.0, 'expenses': 0.0, 'staff_costs': 0.0,
             'admin_bonus_paid': 0.0, 'admin_penalty_deducted': 0.0, 'withdrawals_period': 0.0, 'deposits_period': 0.0,
             'period_net_profit': 0.0, 'period_net_cash': 0.0,
@@ -236,8 +236,10 @@ def partners_report():
             partner_cross_month_13 = cross_month_13_deduction / num_partners if num_partners > 0 else 0
             partner_returns = partner_cross_month_13 + return_penalty
 
+            team_bonus = calculate_team_leader_bonus(p.id, start_datetime, end_datetime)
+
             period_net_profit = (gross_comm + admin_bonus_earned + admin_penalty_recovered + 
-                                 sales_rep_comm_reversed +
+                                 sales_rep_comm_reversed + team_bonus +
                                  sales_rep_comm + discounts + partner_returns + expenses + staff_costs + 
                                  admin_bonus_paid + admin_penalty_deducted)
             period_net_cash = period_net_profit + withdrawals_period + deposits_period
@@ -263,6 +265,7 @@ def partners_report():
                 'staff_costs': round(staff_costs, 2),
                 'admin_bonus_paid': round(admin_bonus_paid, 2),
                 'admin_penalty_deducted': round(admin_penalty_deducted, 2),
+                'team_bonus': round(team_bonus, 2),
                 
                 'gross_comm_details': build_details(period_trans, lambda t: t.type == 'commission_gross' and safe_float(t.amount) > 0),
                 'admin_bonus_earned_details': build_details(period_trans, lambda t: t.type == 'admin_bonus' and safe_float(t.amount) > 0),
@@ -335,6 +338,7 @@ def partners_report():
             team_data['deposits_period'] += partner_data['deposits_period']
             team_data['period_net_profit'] += partner_data['period_net_profit']
             team_data['period_net_cash'] += partner_data['period_net_cash']
+            team_data['team_bonus'] += partner_data['team_bonus']
 
             # Aggregate details to team level for popups
             team_data['gross_comm_details'].extend(partner_data['gross_comm_details'])

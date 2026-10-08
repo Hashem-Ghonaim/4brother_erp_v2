@@ -313,7 +313,7 @@
                     <thead>
                         <tr>
                             <th rowspan="2" class="text-start ps-4">الشريك</th>
-                            <th colspan="5" class="bg-success bg-opacity-75">الإيرادات (Dues)</th>
+                            <th colspan="6" class="bg-success bg-opacity-75">الإيرادات (Dues)</th>
                             <th colspan="7" class="bg-danger bg-opacity-75">الخصومات (Deductions)</th>
                             <th rowspan="2" class="bg-secondary bg-opacity-50">المسحوبات<br><small>(Withdrawals)</small>
                             </th>
@@ -327,6 +327,7 @@
                             <th class="small">عمولة الشريك (+13ج)</th>
                             <th class="small">عمولات مستردة</th>
                             <th class="small">مكافآت مستحقة</th>
+                            <th class="small">بونص الإدارة</th>
                             <th class="small">جزاءات مستردة</th>
                             <th class="small">عمولات مبيعات</th>
                             <th class="small">مرتجعـات</th>
@@ -357,6 +358,9 @@
                             </td>
                             <td class="drilldown-cell val-pos " data-name="{{ row.name }}" data-label="مكافآت مستحقة" data-details="{{ row.admin_bonus_earned_details | tojson | forceescape }}">
                                {{ row.admin_bonus_earned }}
+                            </td>
+                            <td class="val-pos " data-name="{{ row.name }}">
+                               {{ row.team_bonus }}
                             </td>
                             <td class="drilldown-cell val-pos " data-name="{{ row.name }}" data-label="جزاءات مستردة" data-details="{{ row.admin_penalty_recovered_details | tojson | forceescape }}">
                                {{ row.admin_penalty_recovered }}
@@ -418,6 +422,9 @@
                             <td class="drilldown-cell val-pos " style="cursor:pointer" data-name="{{ p.name }}" data-label="مكافآت مستحقة" data-details="{{ p.admin_bonus_earned_details | tojson | forceescape }}">
                                {{ p.admin_bonus_earned }}
                                 <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                            </td>
+                            <td class="val-pos " data-name="{{ p.name }}">
+                               {{ p.team_bonus }}
                             </td>
                             <td class="drilldown-cell val-pos " style="cursor:pointer" data-name="{{ p.name }}" data-label="جزاءات مستردة" data-details="{{ p.admin_penalty_recovered_details | tojson | forceescape }}">
                                {{ p.admin_penalty_recovered }}
