@@ -164,7 +164,7 @@ def add_return():
             if partners:
                 num_partners = len(partners)
                 # أ) إلغاء ربح الشريك عن القطع المرجعة
-                partner_rate = float(partners[0].commission_value or 13.0)
+                partner_rate = float(partners[0].commission_value or 15.0)
                 deduction_amt = (total_qty_returned * partner_rate) / num_partners
                 for p in partners:
                     db.session.add(PartnerTransaction(

@@ -324,7 +324,7 @@
                         </tr>
                         <tr>
                             <th class="small">القطع المباعة</th>
-                            <th class="small">عمولة الشريك (+13ج)</th>
+                            <th class="small">عمولة الشريك (+15ج)</th>
                             <th class="small">عمولات مستردة</th>
                             <th class="small">مكافآت مستحقة</th>
                             <th class="small">بونص الإدارة</th>
@@ -473,7 +473,7 @@
                             </td>
 
                             <!-- Net -->
-                            <td class="{{ 'profit-positive' if p.period_net_cash >= 0 else 'profit-negative' }} drilldown-formula" style="cursor:pointer" data-name="{{ p.name }}" data-label="صافي الربح المستحق (المعادلة)" data-formula='[{"label":"عمولة الشريك (+13ج)","value":{{ p.gross_comm_display }}},{"label":"عمولات مستردة","value":{{ p.sales_rep_comm_reversed_display }}},{"label":"مكافآت مستحقة","value":{{ p.admin_bonus_earned }}},{"label":"جزاءات مستردة","value":{{ p.admin_penalty_recovered }}},{"label":"عمولات مبيعات","value":{{ p.sales_rep_comm }}},{"label":"مرتجعات","value":{{ p.returns }}},{"label":"جزاءات عالشريك","value":{{ p.admin_penalty_deducted }}},{"label":"مكافآت مدفوعة","value":{{ p.admin_bonus_paid }}},{"label":"خصم فواتير","value":{{ p.discounts }}},{"label":"مصاريف طاقم","value":{{ p.staff_costs }}},{"label":"مصاريف أخرى","value":{{ p.expenses }}},{"label":"المسحوبات","value":-{{ p.withdrawals_period }}},{"label":"الإيداعات","value":{{ p.deposits_period }}}]' data-result="{{ p.period_net_cash }}">
+                            <td class="{{ 'profit-positive' if p.period_net_cash >= 0 else 'profit-negative' }} drilldown-formula" style="cursor:pointer" data-name="{{ p.name }}" data-label="صافي الربح المستحق (المعادلة)" data-formula='[{"label":"عمولة الشريك (+15ج)","value":{{ p.gross_comm_display }}},{"label":"عمولات مستردة","value":{{ p.sales_rep_comm_reversed_display }}},{"label":"مكافآت مستحقة","value":{{ p.admin_bonus_earned }}},{"label":"جزاءات مستردة","value":{{ p.admin_penalty_recovered }}},{"label":"عمولات مبيعات","value":{{ p.sales_rep_comm }}},{"label":"مرتجعات","value":{{ p.returns }}},{"label":"جزاءات عالشريك","value":{{ p.admin_penalty_deducted }}},{"label":"مكافآت مدفوعة","value":{{ p.admin_bonus_paid }}},{"label":"خصم فواتير","value":{{ p.discounts }}},{"label":"مصاريف طاقم","value":{{ p.staff_costs }}},{"label":"مصاريف أخرى","value":{{ p.expenses }}},{"label":"المسحوبات","value":-{{ p.withdrawals_period }}},{"label":"الإيداعات","value":{{ p.deposits_period }}}]' data-result="{{ p.period_net_cash }}">
                                {{ p.period_net_cash }} ج.م
                                 <i class="fas fa-calculator small ms-1 text-muted"></i>
                             </td>
@@ -743,7 +743,7 @@
                 const totalQty = parseInt(cell.getAttribute('data-total-qty'));
                 const totalAmount = parseFloat(cell.getAttribute('data-total-amount'));
 
-                document.getElementById('drilldown_title').innerText = `عمولة الشريك (+13ج) — ${name}`;
+                document.getElementById('drilldown_title').innerText = `عمولة الشريك (+15ج) — ${name}`;
 
                 if (!details || details.length === 0) {
                     document.getElementById('drilldown_body').innerHTML = '<div class="text-center text-muted p-4 fs-5">لا توجد فواتير في الفترة المحددة</div>';

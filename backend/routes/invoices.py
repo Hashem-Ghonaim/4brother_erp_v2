@@ -146,7 +146,7 @@ def update_monthly_commissions(sales_rep_id, ref_date):
             if net_qty <= 0: continue
 
             # ج) عمولة الشريك (Gross) - من البروفايل
-            partner_rate = float(partners[0].commission_value or 13.0)
+            partner_rate = float(partners[0].commission_value or 15.0)
             gross_amt = (net_qty * partner_rate) / num_partners
             for p in partners:
                 db.session.add(PartnerTransaction(
@@ -715,7 +715,7 @@ def invoices():
 
             if is_under_partner:
                 partner_obj = seller if seller.role == 'manager' else db.session.get(User, seller.manager_id)
-                p_rate = float(partner_obj.commission_value or 13.0) if partner_obj else 13.0
+                p_rate = float(partner_obj.commission_value or 15.0) if partner_obj else 15.0
                 o.est_comm = net_qty * p_rate
                 o.net_comm = o.est_comm - actual_discount - o.ret_total_deduction
             else:
@@ -941,7 +941,7 @@ def invoice_commission_details(order_id):
 
         if is_under_partner:
             partner_obj = seller if seller.role == 'manager' else db.session.get(User, seller.manager_id)
-            p_rate = float(partner_obj.commission_value or 13.0) if partner_obj else 13.0
+            p_rate = float(partner_obj.commission_value or 15.0) if partner_obj else 15.0
             details['calculation_method'] = 'عمولة شريك (المدير يتحمل الخصم من عمولته)'
             details['est_comm'] = net_qty * p_rate
             details['net_comm'] = details['est_comm'] - details['discount'] - ret_total_deduction

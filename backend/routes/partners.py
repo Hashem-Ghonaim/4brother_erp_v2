@@ -112,10 +112,11 @@ def partners_report():
             ReturnInvoice.date >= start_datetime,
             ReturnInvoice.date <= end_datetime
         ).all()
+        cross_month_deduction_rate = float(group_partners[0].commission_value or 15.0)
         cross_month_13_deduction = 0
         cross_month_return_details = []
         for ret in cross_month_return_invoices:
-            deduction = ret.total_qty * 13
+            deduction = ret.total_qty * cross_month_deduction_rate
             cross_month_13_deduction -= deduction
             cross_month_return_details.append({
                 'amount': -deduction, 'user_name': ret.order.sales_rep.fullname if ret.order.sales_rep else '---',
@@ -137,7 +138,7 @@ def partners_report():
             gross_qty = sum(item.quantity for item in order.items)
             returned_qty = sum(r.total_qty for r in order.return_invoices if r.date.strftime('%Y-%m') == target_month_str)
             net_qty = max(0, gross_qty - returned_qty)
-            comm_amount = net_qty * 15
+            comm_amount = net_qty * cross_month_deduction_rate
             if comm_amount > 0:
                 gross_comm_display += comm_amount
                 seller_name = order.sales_rep.fullname if order.sales_rep else "---"
