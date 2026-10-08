@@ -170,6 +170,7 @@ def partners_report():
             'gross_comm': 0.0, 'sales_rep_comm_reversed': 0.0, 'admin_bonus_earned': 0.0, 'admin_penalty_recovered': 0.0,
             'sales_rep_comm': 0.0, 'discounts': 0.0, 'returns': 0.0, 'expenses': 0.0, 'staff_costs': 0.0,
             'admin_bonus_paid': 0.0, 'admin_penalty_deducted': 0.0, 'withdrawals_period': 0.0, 'deposits_period': 0.0,
+            'liquidation_adjustment': 0.0,
             'period_net_profit': 0.0, 'period_net_cash': 0.0,
             
             'gross_comm_details': [], 'admin_bonus_earned_details': [], 'admin_penalty_recovered_details': [],
@@ -234,6 +235,7 @@ def partners_report():
             admin_bonus_paid = sum(safe_float(t.amount) for t in period_trans if t.type == 'admin_bonus' and safe_float(t.amount) <= 0)
             admin_penalty_recovered = sum(safe_float(t.amount) for t in period_trans if t.type == 'admin_penalty' and safe_float(t.amount) > 0)
             admin_penalty_deducted = sum(safe_float(t.amount) for t in period_trans if t.type == 'admin_penalty' and safe_float(t.amount) <= 0)
+            liquidation_adjustment = sum(safe_float(t.amount) for t in period_trans if t.type == 'liquidation_adjustment')
 
             partner_cross_month_13 = cross_month_13_deduction / num_partners if num_partners > 0 else 0
             partner_returns = partner_cross_month_13 + return_penalty
@@ -241,7 +243,7 @@ def partners_report():
             period_net_profit = (gross_comm + admin_bonus_earned + admin_penalty_recovered + 
                                  sales_rep_comm_reversed +
                                  sales_rep_comm + discounts + partner_returns + expenses + staff_costs + 
-                                 admin_bonus_paid + admin_penalty_deducted)
+                                 admin_bonus_paid + admin_penalty_deducted + liquidation_adjustment)
             period_net_cash = period_net_profit + withdrawals_period + deposits_period
             
             grand_total_period += period_net_cash
@@ -265,7 +267,7 @@ def partners_report():
                 'staff_costs': round(staff_costs, 2),
                 'admin_bonus_paid': round(admin_bonus_paid, 2),
                 'admin_penalty_deducted': round(admin_penalty_deducted, 2),
-                'admin_penalty_deducted': round(admin_penalty_deducted, 2),
+                'liquidation_adjustment': round(liquidation_adjustment, 2),
                 
                 'gross_comm_details': build_details(period_trans, lambda t: t.type == 'commission_gross' and safe_float(t.amount) > 0),
                 'admin_bonus_earned_details': build_details(period_trans, lambda t: t.type == 'admin_bonus' and safe_float(t.amount) > 0),
@@ -280,6 +282,7 @@ def partners_report():
                 'admin_penalty_deducted_details': build_details(period_trans, lambda t: t.type == 'admin_penalty' and safe_float(t.amount) <= 0),
                 'withdrawals_details': build_details(period_trans, lambda t: t.type == 'withdrawal'),
                 'deposits_details': build_details(period_trans, lambda t: t.type == 'deposit'),
+                'liquidation_adjustment_details': build_details(period_trans, lambda t: t.type == 'liquidation_adjustment'),
 
                 'period_net_profit': round(period_net_profit, 2),
                 'withdrawals_period': round(abs(withdrawals_period), 2),
@@ -334,6 +337,7 @@ def partners_report():
             team_data['staff_costs'] += partner_data['staff_costs']
             team_data['admin_bonus_paid'] += partner_data['admin_bonus_paid']
             team_data['admin_penalty_deducted'] += partner_data['admin_penalty_deducted']
+            team_data['liquidation_adjustment'] += partner_data['liquidation_adjustment']
             team_data['withdrawals_period'] += partner_data['withdrawals_period']
             team_data['deposits_period'] += partner_data['deposits_period']
             team_data['period_net_profit'] += partner_data['period_net_profit']
@@ -353,6 +357,9 @@ def partners_report():
             team_data['admin_penalty_deducted_details'].extend(partner_data['admin_penalty_deducted_details'])
             team_data['withdrawals_details'].extend(partner_data['withdrawals_details'])
             team_data['deposits_details'].extend(partner_data['deposits_details'])
+            if 'liquidation_adjustment_details' not in team_data:
+                team_data['liquidation_adjustment_details'] = []
+            team_data['liquidation_adjustment_details'].extend(partner_data['liquidation_adjustment_details'])
         
         def aggregate_details(d_list):
             agg = {}
@@ -1069,3 +1076,71 @@ def partner_settlement_all():
         flash(f'❌ حدث خطأ: {str(e)}', 'danger')
 
     return redirect(url_for('partners_report'))
+
+@app.route('/api/liquidation_adjustment', methods=['POST'])
+@login_required
+def set_liquidation_adjustment():
+    if current_user.role not in ['general_manager', 'owner']:
+        return jsonify({'success': False, 'message': 'غير مصرح'}), 403
+
+    data = request.json
+    group_id_str = data.get('group_id', '')
+    if not str(group_id_str).startswith('group_'):
+        return jsonify({'success': False, 'message': 'معرف المجموعة غير صحيح'}), 400
+        
+    group_id = int(str(group_id_str).replace('group_', ''))
+    
+    try:
+        amount = float(data.get('amount', 0))
+    except ValueError:
+        amount = 0.0
+
+    desc = data.get('description', '')
+    month = data.get('month', '') # format: YYYY-MM
+    
+    if not month:
+        return jsonify({'success': False, 'message': 'الشهر غير محدد'}), 400
+        
+    group = PartnerGroup.query.get(group_id)
+    if not group or not group.users:
+        return jsonify({'success': False, 'message': 'المجموعة غير موجودة أو فارغة'}), 404
+        
+    # Pick the first user in the group to hold this adjustment transaction
+    first_partner_id = group.users[0].id
+    
+    from datetime import datetime
+    import calendar
+    start_date = datetime.strptime(f"{month}-01", "%Y-%m-%d")
+    _, last_day = calendar.monthrange(start_date.year, start_date.month)
+    end_date = start_date.replace(day=last_day, hour=23, minute=59, second=59)
+    
+    existing = PartnerTransaction.query.filter(
+        PartnerTransaction.partner_id == first_partner_id,
+        PartnerTransaction.type == 'liquidation_adjustment',
+        PartnerTransaction.date >= start_date,
+        PartnerTransaction.date <= end_date
+    ).first()
+    
+    if amount == 0 and not desc:
+        if existing:
+            db.session.delete(existing)
+    else:
+        if existing:
+            existing.amount = amount
+            existing.description = desc
+        else:
+            new_adj = PartnerTransaction(
+                partner_id=first_partner_id,
+                type='liquidation_adjustment',
+                amount=amount,
+                description=desc,
+                date=start_date
+            )
+            db.session.add(new_adj)
+        
+    try:
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500

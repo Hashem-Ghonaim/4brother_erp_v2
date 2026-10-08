@@ -319,6 +319,8 @@
                             </th>
                             <th rowspan="2" class="bg-primary bg-opacity-50 text-white">الإيداعات<br><small>(Deposits)</small>
                             </th>
+                            <th rowspan="2" class="bg-warning bg-opacity-25 text-dark" style="min-width: 140px;">تعديل التصفية<br><small>(Adjustment)</small>
+                            </th>
                             <th rowspan="2" class="bg-dark text-warning">صافي الربح المستحق<br><small>(له /
                                     عليه)</small></th>
                         </tr>
@@ -393,9 +395,19 @@
                             <td class="text-primary fw-bold drilldown-cell" data-name="{{ row.name }}" data-label="الإيداعات" data-details="{{ row.deposits_details | tojson | forceescape }}">
                                {{ row.deposits_period }}
                             </td>
+                            <!-- Adjustment -->
+                            <td class="text-warning fw-bold bg-light" onclick="event.stopPropagation();">
+                                <div class="input-group input-group-sm mb-1">
+                                    <input type="number" class="form-control text-center" id="adj_amount_{{ row.id }}" value="{{ row.liquidation_adjustment }}" placeholder="المبلغ">
+                                </div>
+                                <div class="input-group input-group-sm mb-1">
+                                    <input type="text" class="form-control text-center" id="adj_desc_{{ row.id }}" value="{{ row.liquidation_adjustment_details[0].desc if row.liquidation_adjustment_details else '' }}" placeholder="ملاحظات">
+                                </div>
+                                <button class="btn btn-sm btn-outline-warning w-100 py-0" onclick="saveAdjustment('{{ row.id }}')"><i class="fas fa-save"></i> حفظ التعديل</button>
+                            </td>
 
                             <!-- Net -->
-                            <td class="{{ 'profit-positive' if row.period_net_cash >= 0 else 'profit-negative' }} drilldown-formula" data-name="{{ row.name }}" data-label="صافي الربح المستحق (المعادلة)" data-formula='[{"label":"صافي الأرباح","value":{{ row.period_net_profit }}},{"label":"المسحوبات","value":-{{ row.withdrawals_period }}},{"label":"الإيداعات","value":{{ row.deposits_period }}}]' data-result="{{ row.period_net_cash }}">
+                            <td class="{{ 'profit-positive' if row.period_net_cash >= 0 else 'profit-negative' }} drilldown-formula" data-name="{{ row.name }}" data-label="صافي الربح المستحق (المعادلة)" data-formula='[{"label":"صافي الأرباح (بدون التعديل)","value":{{ row.period_net_profit - row.liquidation_adjustment }}},{"label":"تعديل التصفية","value":{{ row.liquidation_adjustment }}},{"label":"المسحوبات","value":-{{ row.withdrawals_period }}},{"label":"الإيداعات","value":{{ row.deposits_period }}}]' data-result="{{ row.period_net_cash }}">
                                {{ row.period_net_cash }} ج.م
                             </td>
                         </tr>
@@ -464,9 +476,14 @@
                                {{ p.deposits_period }}
                                 <i class="fas fa-search-plus small ms-1 text-muted"></i>
                             </td>
+                            <!-- Adjustment -->
+                            <td class="text-warning fw-bold bg-light drilldown-cell" style="cursor:pointer" data-name="{{ p.name }}" data-label="تعديل التصفية" data-details="{{ p.liquidation_adjustment_details | tojson | forceescape }}">
+                               {{ p.liquidation_adjustment }}
+                                <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                            </td>
 
                             <!-- Net -->
-                            <td class="{{ 'profit-positive' if p.period_net_cash >= 0 else 'profit-negative' }} drilldown-formula" style="cursor:pointer" data-name="{{ p.name }}" data-label="صافي الربح المستحق (المعادلة)" data-formula='[{"label":"عمولة الشريك (+15ج)","value":{{ p.gross_comm_display }}},{"label":"عمولات مستردة","value":{{ p.sales_rep_comm_reversed_display }}},{"label":"مكافآت مستحقة","value":{{ p.admin_bonus_earned }}},{"label":"جزاءات مستردة","value":{{ p.admin_penalty_recovered }}},{"label":"عمولات مبيعات","value":{{ p.sales_rep_comm }}},{"label":"مرتجعات","value":{{ p.returns }}},{"label":"جزاءات عالشريك","value":{{ p.admin_penalty_deducted }}},{"label":"مكافآت مدفوعة","value":{{ p.admin_bonus_paid }}},{"label":"خصم فواتير","value":{{ p.discounts }}},{"label":"مصاريف طاقم","value":{{ p.staff_costs }}},{"label":"مصاريف أخرى","value":{{ p.expenses }}},{"label":"المسحوبات","value":-{{ p.withdrawals_period }}},{"label":"الإيداعات","value":{{ p.deposits_period }}}]' data-result="{{ p.period_net_cash }}">
+                            <td class="{{ 'profit-positive' if p.period_net_cash >= 0 else 'profit-negative' }} drilldown-formula" style="cursor:pointer" data-name="{{ p.name }}" data-label="صافي الربح المستحق (المعادلة)" data-formula='[{"label":"عمولة الشريك (+15ج)","value":{{ p.gross_comm_display }}},{"label":"عمولات مستردة","value":{{ p.sales_rep_comm_reversed_display }}},{"label":"مكافآت مستحقة","value":{{ p.admin_bonus_earned }}},{"label":"جزاءات مستردة","value":{{ p.admin_penalty_recovered }}},{"label":"عمولات مبيعات","value":{{ p.sales_rep_comm }}},{"label":"مرتجعات","value":{{ p.returns }}},{"label":"جزاءات عالشريك","value":{{ p.admin_penalty_deducted }}},{"label":"مكافآت مدفوعة","value":{{ p.admin_bonus_paid }}},{"label":"خصم فواتير","value":{{ p.discounts }}},{"label":"مصاريف طاقم","value":{{ p.staff_costs }}},{"label":"مصاريف أخرى","value":{{ p.expenses }}},{"label":"تعديل التصفية","value":{{ p.liquidation_adjustment }}},{"label":"المسحوبات","value":-{{ p.withdrawals_period }}},{"label":"الإيداعات","value":{{ p.deposits_period }}}]' data-result="{{ p.period_net_cash }}">
                                {{ p.period_net_cash }} ج.م
                                 <i class="fas fa-calculator small ms-1 text-muted"></i>
                             </td>
@@ -1169,6 +1186,36 @@
                 icon.classList.add('fa-chevron-down');
             }
         }
+        function saveAdjustment(groupId) {
+            event.stopPropagation();
+            const amount = document.getElementById('adj_amount_' + groupId).value;
+            const desc = document.getElementById('adj_desc_' + groupId).value;
+            const monthStr = '{{ target_month_str }}';
+            
+            fetch('/api/liquidation_adjustment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    group_id: groupId,
+                    month: monthStr,
+                    amount: amount,
+                    description: desc
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    location.reload();
+                } else {
+                    alert('حدث خطأ: ' + (data.message || 'غير معروف'));
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('حدث خطأ في الاتصال بالسيرفر');
+            });
+        }
     </script>
-
 </html>
