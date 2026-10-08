@@ -167,7 +167,7 @@ def partners_report():
             'sales_comm_reversed_details': sales_reversed_comm_details,
             'returns_details': cross_month_return_details,
             
-            'gross_comm': 0.0, 'sales_rep_comm_reversed': 0.0, 'admin_bonus_earned': 0.0, 'admin_penalty_recovered': 0.0, 'team_bonus': 0.0,
+            'gross_comm': 0.0, 'sales_rep_comm_reversed': 0.0, 'admin_bonus_earned': 0.0, 'admin_penalty_recovered': 0.0,
             'sales_rep_comm': 0.0, 'discounts': 0.0, 'returns': 0.0, 'expenses': 0.0, 'staff_costs': 0.0,
             'admin_bonus_paid': 0.0, 'admin_penalty_deducted': 0.0, 'withdrawals_period': 0.0, 'deposits_period': 0.0,
             'period_net_profit': 0.0, 'period_net_cash': 0.0,
@@ -338,7 +338,6 @@ def partners_report():
             team_data['deposits_period'] += partner_data['deposits_period']
             team_data['period_net_profit'] += partner_data['period_net_profit']
             team_data['period_net_cash'] += partner_data['period_net_cash']
-            team_data['team_bonus'] += partner_data['team_bonus']
 
             # Aggregate details to team level for popups
             team_data['gross_comm_details'].extend(partner_data['gross_comm_details'])
