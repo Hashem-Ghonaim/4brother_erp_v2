@@ -178,6 +178,10 @@ def partners_report():
         
         num_partners = len(group_partners)
         
+        # Calculate total team bonus for the group to be split equally
+        total_group_bonus = sum(calculate_team_leader_bonus(p.id, start_datetime, end_datetime) for p in group_partners)
+        shared_team_bonus = total_group_bonus / num_partners if num_partners > 0 else 0
+        
         for p in group_partners:
             current_balance = db.session.query(func.sum(PartnerTransaction.amount)).filter_by(partner_id=p.id).scalar() or 0.0
             period_trans = PartnerTransaction.query.filter(
@@ -236,7 +240,7 @@ def partners_report():
             partner_cross_month_13 = cross_month_13_deduction / num_partners if num_partners > 0 else 0
             partner_returns = partner_cross_month_13 + return_penalty
 
-            team_bonus = calculate_team_leader_bonus(p.id, start_datetime, end_datetime)
+            team_bonus = shared_team_bonus
 
             period_net_profit = (gross_comm + admin_bonus_earned + admin_penalty_recovered + 
                                  sales_rep_comm_reversed + team_bonus +
