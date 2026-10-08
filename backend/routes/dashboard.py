@@ -46,6 +46,7 @@ def pos():
                 edit_order_data = {
                     'id': order.id,
                     'customer_id': order.customer_id,
+                    'user_id': order.user_id,
                     'discount': order.discount or 0,
                     'paid_upfront': order.paid_upfront or 0,
                     'is_shipping': order.is_shipping,
