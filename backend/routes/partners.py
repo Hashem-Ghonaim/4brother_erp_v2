@@ -1084,11 +1084,14 @@ def set_liquidation_adjustment():
         return jsonify({'success': False, 'message': 'غير مصرح'}), 403
 
     data = request.json
-    group_id_str = data.get('group_id', '')
-    if not str(group_id_str).startswith('group_'):
-        return jsonify({'success': False, 'message': 'معرف المجموعة غير صحيح'}), 400
+    partner_id = data.get('partner_id')
+    if not partner_id:
+        return jsonify({'success': False, 'message': 'معرف الشريك غير موجود'}), 400
         
-    group_id = int(str(group_id_str).replace('group_', ''))
+    try:
+        partner_id = int(partner_id)
+    except ValueError:
+        return jsonify({'success': False, 'message': 'معرف الشريك غير صحيح'}), 400
     
     try:
         amount = float(data.get('amount', 0))
@@ -1101,13 +1104,6 @@ def set_liquidation_adjustment():
     if not month:
         return jsonify({'success': False, 'message': 'الشهر غير محدد'}), 400
         
-    group = PartnerGroup.query.get(group_id)
-    if not group or not group.users:
-        return jsonify({'success': False, 'message': 'المجموعة غير موجودة أو فارغة'}), 404
-        
-    # Pick the first user in the group to hold this adjustment transaction
-    first_partner_id = group.users[0].id
-    
     from datetime import datetime
     import calendar
     start_date = datetime.strptime(f"{month}-01", "%Y-%m-%d")
@@ -1115,7 +1111,7 @@ def set_liquidation_adjustment():
     end_date = start_date.replace(day=last_day, hour=23, minute=59, second=59)
     
     existing = PartnerTransaction.query.filter(
-        PartnerTransaction.partner_id == first_partner_id,
+        PartnerTransaction.partner_id == partner_id,
         PartnerTransaction.type == 'liquidation_adjustment',
         PartnerTransaction.date >= start_date,
         PartnerTransaction.date <= end_date
@@ -1130,7 +1126,7 @@ def set_liquidation_adjustment():
             existing.description = desc
         else:
             new_adj = PartnerTransaction(
-                partner_id=first_partner_id,
+                partner_id=partner_id,
                 type='liquidation_adjustment',
                 amount=amount,
                 description=desc,

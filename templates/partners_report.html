@@ -396,14 +396,8 @@
                                {{ row.deposits_period }}
                             </td>
                             <!-- Adjustment -->
-                            <td class="text-warning fw-bold bg-light" onclick="event.stopPropagation();">
-                                <div class="input-group input-group-sm mb-1">
-                                    <input type="number" class="form-control text-center" id="adj_amount_{{ row.id }}" value="{{ row.liquidation_adjustment }}" placeholder="المبلغ">
-                                </div>
-                                <div class="input-group input-group-sm mb-1">
-                                    <input type="text" class="form-control text-center" id="adj_desc_{{ row.id }}" value="{{ row.liquidation_adjustment_details[0].desc if row.liquidation_adjustment_details else '' }}" placeholder="ملاحظات">
-                                </div>
-                                <button class="btn btn-sm btn-outline-warning w-100 py-0" onclick="saveAdjustment('{{ row.id }}')"><i class="fas fa-save"></i> حفظ التعديل</button>
+                            <td class="text-warning fw-bold bg-light drilldown-cell" data-name="{{ row.name }}" data-label="تعديل التصفية" data-details="{{ row.liquidation_adjustment_details | tojson | forceescape }}">
+                               {{ row.liquidation_adjustment }}
                             </td>
 
                             <!-- Net -->
@@ -477,9 +471,14 @@
                                 <i class="fas fa-search-plus small ms-1 text-muted"></i>
                             </td>
                             <!-- Adjustment -->
-                            <td class="text-warning fw-bold bg-light drilldown-cell" style="cursor:pointer" data-name="{{ p.name }}" data-label="تعديل التصفية" data-details="{{ p.liquidation_adjustment_details | tojson | forceescape }}">
-                               {{ p.liquidation_adjustment }}
-                                <i class="fas fa-search-plus small ms-1 text-muted"></i>
+                            <td class="text-warning fw-bold bg-light">
+                                <div class="input-group input-group-sm mb-1">
+                                    <input type="number" class="form-control text-center" id="adj_amount_partner_{{ p.id }}" value="{{ p.liquidation_adjustment }}" placeholder="المبلغ">
+                                </div>
+                                <div class="input-group input-group-sm mb-1">
+                                    <input type="text" class="form-control text-center" id="adj_desc_partner_{{ p.id }}" value="{{ p.liquidation_adjustment_details[0].desc if p.liquidation_adjustment_details else '' }}" placeholder="ملاحظات">
+                                </div>
+                                <button class="btn btn-sm btn-outline-warning w-100 py-0" onclick="saveAdjustmentPartner('{{ p.id }}')"><i class="fas fa-save"></i> حفظ التعديل</button>
                             </td>
 
                             <!-- Net -->
@@ -1186,10 +1185,10 @@
                 icon.classList.add('fa-chevron-down');
             }
         }
-        function saveAdjustment(groupId) {
+        function saveAdjustmentPartner(partnerId) {
             event.stopPropagation();
-            const amount = document.getElementById('adj_amount_' + groupId).value;
-            const desc = document.getElementById('adj_desc_' + groupId).value;
+            const amount = document.getElementById('adj_amount_partner_' + partnerId).value;
+            const desc = document.getElementById('adj_desc_partner_' + partnerId).value;
             const monthStr = '{{ target_month_str }}';
             
             fetch('/api/liquidation_adjustment', {
@@ -1198,7 +1197,7 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    group_id: groupId,
+                    partner_id: partnerId,
                     month: monthStr,
                     amount: amount,
                     description: desc
