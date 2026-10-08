@@ -729,9 +729,11 @@ def employee_profile(id):
     
     commission = calculate_user_commission(emp, net_for_payment, net_for_tier)
     
-    # 🌟 إضافة بونص إدارة الفريق (1 جنيه على مبيعات الفريق)
+    # 🌟 إضافة بونص إدارة الفريق (1 جنيه على مبيعات الفريق لمديري المبيعات فقط)
     from backend.helpers import calculate_team_leader_bonus
-    team_bonus = calculate_team_leader_bonus(emp.id, month_start, month_end)
+    team_bonus = 0
+    if emp.role == 'sales_manager':
+        team_bonus = calculate_team_leader_bonus(emp.id, month_start, month_end)
     commission += team_bonus
 
     num_months = (end_dt.year - month_start.year) * 12 + end_dt.month - month_start.month + 1
@@ -1165,8 +1167,9 @@ def payroll():
 
         # ز) حساب العمولة بناءً على الشريحة
         gross_commission = calculate_user_commission(u, net_for_payment, net_for_tier)
-        from backend.helpers import calculate_team_leader_bonus
-        team_bonus = calculate_team_leader_bonus(u.id, month_start, month_end)
+        team_bonus = 0
+        if u.role == 'sales_manager':
+            team_bonus = calculate_team_leader_bonus(u.id, month_start, month_end)
         gross_commission += team_bonus
 
         # 3. حساب جزاءات الحضور (تأخير + انصراف مبكر + غياب)
