@@ -351,6 +351,30 @@ def partners_report():
             team_data['withdrawals_details'].extend(partner_data['withdrawals_details'])
             team_data['deposits_details'].extend(partner_data['deposits_details'])
         
+        def aggregate_details(d_list):
+            agg = {}
+            for d in d_list:
+                k = (d.get('order_id'), d.get('date'), d.get('desc'))
+                if k not in agg:
+                    agg[k] = d.copy()
+                else:
+                    agg[k]['amount'] += d.get('amount', 0)
+                    agg[k]['amount'] = round(agg[k]['amount'], 2)
+            return list(agg.values())
+
+        team_data['gross_comm_details'] = aggregate_details(team_data['gross_comm_details'])
+        team_data['admin_bonus_earned_details'] = aggregate_details(team_data['admin_bonus_earned_details'])
+        team_data['admin_penalty_recovered_details'] = aggregate_details(team_data['admin_penalty_recovered_details'])
+        team_data['sales_comm_details'] = aggregate_details(team_data['sales_comm_details'])
+        team_data['discounts_details'] = aggregate_details(team_data['discounts_details'])
+        team_data['returns_details'] = aggregate_details(team_data['returns_details'])
+        team_data['expenses_details'] = aggregate_details(team_data['expenses_details'])
+        team_data['staff_costs_details'] = aggregate_details(team_data['staff_costs_details'])
+        team_data['admin_bonus_paid_details'] = aggregate_details(team_data['admin_bonus_paid_details'])
+        team_data['admin_penalty_deducted_details'] = aggregate_details(team_data['admin_penalty_deducted_details'])
+        team_data['withdrawals_details'] = aggregate_details(team_data['withdrawals_details'])
+        team_data['deposits_details'] = aggregate_details(team_data['deposits_details'])
+
         # Round team totals
         team_data['gross_comm'] = round(team_data['gross_comm'], 2)
         team_data['sales_rep_comm_reversed'] = round(team_data['sales_rep_comm_reversed'], 2)

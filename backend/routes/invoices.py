@@ -333,7 +333,7 @@ def revert_to_draft(order_id):
                 db.session.delete(tx)
 
         # === 3. حذف حركات الشركاء المرتبطة بالفاتورة ===
-        db.session.execute(text("DELETE FROM partner_transaction WHERE order_id = :oid"), {'oid': order_id})
+        PartnerTransaction.query.filter_by(order_id=order_id).delete(synchronize_session=False)
 
         # === 4. حذف سجلات HR المرتبطة بالفاتورة ===
         hr_txs = HRTransaction.query.filter(
@@ -473,7 +473,7 @@ def delete_invoice(order_id):
             if htx.note and re.search(rf'فاتورة.*#{order_id}\b', htx.note):
                 db.session.delete(htx)
                 
-        db.session.execute(text("DELETE FROM partner_transaction WHERE order_id = :oid"), {'oid': order_id})
+        PartnerTransaction.query.filter_by(order_id=order_id).delete(synchronize_session=False)
         db.session.execute(text("DELETE FROM return_invoice WHERE order_id = :oid"), {'oid': order_id})
 
         # 4. حذف الأصناف والفاتورة
