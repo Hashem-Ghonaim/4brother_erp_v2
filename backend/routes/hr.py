@@ -419,6 +419,79 @@ def delete_employee(id):
     return redirect(url_for('dashboard'))
 
 
+@app.route('/employee/transaction/delete/<int:tx_id>', methods=['POST'])
+@login_required
+def delete_hr_transaction(tx_id):
+    if current_user.role != 'general_manager':
+        return "غير مصرح", 403
+    tx = HRTransaction.query.get_or_404(tx_id)
+    emp_id = tx.user_id
+    
+    try:
+        # 1. Undo FinancialTransactions
+        ftxs = FinancialTransaction.query.filter_by(hr_transaction_id=tx.id).all()
+        for ftx in ftxs:
+            if ftx.account_id:
+                acc = MoneyAccount.query.get(ftx.account_id)
+                if acc:
+                    if ftx.type == 'expense':
+                        acc.balance += abs(ftx.amount)
+                    elif ftx.type == 'income':
+                        acc.balance -= abs(ftx.amount)
+            db.session.delete(ftx)
+            
+        # 2. Undo PartnerTransactions
+        PartnerTransaction.query.filter_by(hr_transaction_id=tx.id).delete()
+        
+        # 3. Delete HRTransaction
+        db.session.delete(tx)
+        db.session.commit()
+        flash('تم حذف الحركة المالية بنجاح وتم إلغاء تأثيراتها.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'خطأ أثناء الحذف: {e}', 'danger')
+        
+    return redirect(url_for('employee_profile', id=emp_id))
+
+@app.route('/employee/transaction/edit/<int:tx_id>', methods=['POST'])
+@login_required
+def edit_hr_transaction(tx_id):
+    if current_user.role != 'general_manager':
+        return "غير مصرح", 403
+        
+    tx = HRTransaction.query.get_or_404(tx_id)
+    emp_id = tx.user_id
+
+    # First delete the original transaction
+    try:
+        # 1. Undo FinancialTransactions
+        ftxs = FinancialTransaction.query.filter_by(hr_transaction_id=tx.id).all()
+        for f in ftxs:
+            if f.account_id:
+                acc = MoneyAccount.query.get(f.account_id)
+                if acc:
+                    if f.type == 'expense':
+                        acc.balance += abs(f.amount)
+                    elif f.type == 'income':
+                        acc.balance -= abs(f.amount)
+            db.session.delete(f)
+            
+        # 2. Undo PartnerTransactions
+        PartnerTransaction.query.filter_by(hr_transaction_id=tx.id).delete()
+        
+        # 3. Delete HRTransaction
+        db.session.delete(tx)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        flash(f'خطأ أثناء التعديل (إلغاء القديم): {e}', 'danger')
+        return redirect(url_for('employee_profile', id=emp_id))
+        
+    # redirect with code 307 preserves the POST method and form data!
+    # it passes the POST data straight into the standard POST /employee/<id>
+    return redirect(url_for('employee_profile', id=emp_id), code=307)
+
+
 @app.route('/employee/<int:id>', methods=['GET', 'POST'])
 @login_required
 def employee_profile(id):
@@ -436,13 +509,15 @@ def employee_profile(id):
             account_id = request.form.get('account_id') # استقبال رقم الخزنة
 
             # 1. تسجيل الحركة في ملف الموظف
-            db.session.add(HRTransaction(
+            hr_tx = HRTransaction(
                 user_id=emp.id,
                 type=t_type,
                 amount=amount,
                 note=note,
                 date=cairo_now()
-            ))
+            )
+            db.session.add(hr_tx)
+            db.session.flush()
 
             # 2. التأثير على المدير المباشر
             payer_partner = None
@@ -463,7 +538,8 @@ def employee_profile(id):
                                 db.session.add(PartnerTransaction(
                                     partner_id=gm.id, type='staff_expense',
                                     amount=-(amount / 2),
-                                    description=f"سلفة موظف مشترك 50% ({emp.fullname}): {note}"
+                                    description=f"سلفة موظف مشترك 50% ({emp.fullname}): {note}",
+                                    hr_transaction_id=hr_tx.id
                                 ))
                             if managers:
                                 share = (amount / 2) / len(managers)
@@ -471,21 +547,24 @@ def employee_profile(id):
                                     db.session.add(PartnerTransaction(
                                         partner_id=m.id, type='staff_expense',
                                         amount=-share,
-                                        description=f"سلفة موظف مشترك - حصة شريك ({emp.fullname}): {note}"
+                                        description=f"سلفة موظف مشترك - حصة شريك ({emp.fullname}): {note}",
+                                        hr_transaction_id=hr_tx.id
                                     ))
                         else:
                             db.session.add(PartnerTransaction(
                                 partner_id=payer_partner.id,
                                 type='staff_expense',
                                 amount=-amount,
-                                description=f"سلفة للموظف ({emp.fullname}): {note}"
+                                description=f"سلفة للموظف ({emp.fullname}): {note}",
+                                hr_transaction_id=hr_tx.id
                             ))
                     elif emp.id == payer_partner.id: # لو المدير نفسه هو اللي ساحب
                         db.session.add(PartnerTransaction(
                             partner_id=payer_partner.id,
                             type='withdrawal',
                             amount=-amount,
-                            description=f"سحب شخصي: {note}"
+                            description=f"سحب شخصي: {note}",
+                            hr_transaction_id=hr_tx.id
                         ))
 
                     # 2. خصم المبلغ من الخزينة المحددة
@@ -500,7 +579,8 @@ def employee_profile(id):
                                 amount=-amount,
                                 description=f"صرف سلفة نقدية لـ {emp.fullname}",
                                 created_by_id=current_user.id,
-                                date=cairo_now()
+                                date=cairo_now(),
+                                hr_transaction_id=hr_tx.id
                             ))
                     else:
                         cash_acc = MoneyAccount.query.filter_by(type='cash').first()
@@ -513,7 +593,8 @@ def employee_profile(id):
                                 amount=-amount,
                                 description=f"سلفة نقدية لـ {emp.fullname}",
                                 created_by_id=current_user.id,
-                                date=cairo_now()
+                                date=cairo_now(),
+                                hr_transaction_id=hr_tx.id
                             ))
 
                 elif t_type == 'bonus':
@@ -523,18 +604,18 @@ def employee_profile(id):
                             gm = User.query.filter_by(role='general_manager').first()
                             managers = User.query.filter_by(role='manager').all()
                             if gm:
-                                db.session.add(PartnerTransaction(partner_id=gm.id, type='admin_bonus', amount=-(amount / 2), description=f"مكافأة موظف مشترك 50% ({emp.fullname}): {note}"))
+                                db.session.add(PartnerTransaction(partner_id=gm.id, type='admin_bonus', amount=-(amount / 2), description=f"مكافأة موظف مشترك 50% ({emp.fullname}): {note}", hr_transaction_id=hr_tx.id))
                             if managers:
                                 share = (amount / 2) / len(managers)
                                 for m in managers:
-                                    db.session.add(PartnerTransaction(partner_id=m.id, type='admin_bonus', amount=-share, description=f"مكافأة موظف مشترك - حصة شريك ({emp.fullname}): {note}"))
+                                    db.session.add(PartnerTransaction(partner_id=m.id, type='admin_bonus', amount=-share, description=f"مكافأة موظف مشترك - حصة شريك ({emp.fullname}): {note}", hr_transaction_id=hr_tx.id))
                         else:
-                            db.session.add(PartnerTransaction(partner_id=payer_partner.id, type='admin_bonus', amount=-amount, description=f"مكافأة للموظف ({emp.fullname}): {note}"))
+                            db.session.add(PartnerTransaction(partner_id=payer_partner.id, type='admin_bonus', amount=-amount, description=f"مكافأة للموظف ({emp.fullname}): {note}", hr_transaction_id=hr_tx.id))
                     else:
                         # مكافأة للمدير نفسه (Partner Bonus)
                         db.session.add(PartnerTransaction(
                             partner_id=emp.id, type='admin_bonus', amount=amount, 
-                            description=f"مكافأة إدارية من المدير العام: {note}", date=cairo_now()
+                            description=f"مكافأة إدارية من المدير العام: {note}", date=cairo_now(), hr_transaction_id=hr_tx.id
                         ))
 
                 elif t_type == 'deduction':
@@ -545,25 +626,25 @@ def employee_profile(id):
                                 gm = User.query.filter_by(role='general_manager').first()
                                 managers = User.query.filter_by(role='manager').all()
                                 if gm:
-                                    db.session.add(PartnerTransaction(partner_id=gm.id, type='admin_penalty', amount=(amount / 2), description=f"خصم موظف مشترك 50% ({emp.fullname}): {note}"))
+                                    db.session.add(PartnerTransaction(partner_id=gm.id, type='admin_penalty', amount=(amount / 2), description=f"خصم موظف مشترك 50% ({emp.fullname}): {note}", hr_transaction_id=hr_tx.id))
                                 if managers:
                                     share = (amount / 2) / len(managers)
                                     for m in managers:
-                                        db.session.add(PartnerTransaction(partner_id=m.id, type='admin_penalty', amount=share, description=f"خصم موظف مشترك - حصة شريك ({emp.fullname}): {note}"))
+                                        db.session.add(PartnerTransaction(partner_id=m.id, type='admin_penalty', amount=share, description=f"خصم موظف مشترك - حصة شريك ({emp.fullname}): {note}", hr_transaction_id=hr_tx.id))
                             else:
-                                db.session.add(PartnerTransaction(partner_id=payer_partner.id, type='admin_penalty', amount=amount, description=f"خصم/جزاء على ({emp.fullname}): {note}"))
+                                db.session.add(PartnerTransaction(partner_id=payer_partner.id, type='admin_penalty', amount=amount, description=f"خصم/جزاء على ({emp.fullname}): {note}", hr_transaction_id=hr_tx.id))
                         else:
                             # خصم من المدير نفسه (Partner Penalty)
                             db.session.add(PartnerTransaction(
                                 partner_id=emp.id, type='admin_penalty', amount=-amount, 
-                                description=f"جزاء إداري من المدير العام: {note}", date=cairo_now()
+                                description=f"جزاء إداري من المدير العام: {note}", date=cairo_now(), hr_transaction_id=hr_tx.id
                             ))
                             
                 elif t_type == 'partner_deposit':
                     # إيداع شخصي من الشريك للشركة
                     db.session.add(PartnerTransaction(
                         partner_id=emp.id, type='deposit', amount=amount, 
-                        description=f"إيداع شخصي للشركة: {note}", date=cairo_now()
+                        description=f"إيداع شخصي للشركة: {note}", date=cairo_now(), hr_transaction_id=hr_tx.id
                     ))
                     # زيادة في الخزينة
                     if account_id:
@@ -577,7 +658,8 @@ def employee_profile(id):
                                 amount=amount,
                                 description=f"إيداع شخصي من {emp.fullname}: {note}",
                                 created_by_id=current_user.id,
-                                date=cairo_now()
+                                date=cairo_now(),
+                                hr_transaction_id=hr_tx.id
                             ))
 
             db.session.commit()

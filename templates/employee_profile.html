@@ -308,6 +308,9 @@
                                     <th>النوع</th>
                                     <th>المبلغ</th>
                                     <th>البيان</th>
+                                    {% if current_user.role == 'general_manager' %}
+                                    <th>إجراءات</th>
+                                    {% endif %}
                                 </tr>
                             </thead>
                             <tbody>
@@ -324,10 +327,18 @@
                                     </td>
                                     <td class="fw-bold">{% if t.type == 'partner_deposit' %}+{% endif %}{{ t.amount }}</td>
                                     <td class="small text-muted text-truncate" style="max-width: 150px;" title="{{ t.note }}">{{ t.note }}</td>
+                                    {% if current_user.role == 'general_manager' %}
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editHRTransaction({{ t.id }}, '{{ t.type }}', {{ t.amount }}, '{{ t.note }}')"><i class="fas fa-edit"></i></button>
+                                        <form action="/employee/transaction/delete/{{ t.id }}" method="POST" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف هذه الحركة؟ سيتم إلغاء تأثيرها من الخزينة وحسابات الشركاء.');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                        </form>
+                                    </td>
+                                    {% endif %}
                                 </tr>
                                 {% else %}
                                 <tr>
-                                    <td colspan="4" class="text-muted small py-3">لا توجد حركات مسجلة</td>
+                                    <td colspan="{% if current_user.role == 'general_manager' %}5{% else %}4{% endif %}" class="text-muted small py-3">لا توجد حركات مسجلة</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -655,7 +666,76 @@
             document.getElementById('tiers_div').style.display = (val === 'tiered_sales') ? 'block' : 'none';
             document.getElementById('fixed_comm_div').style.display = (val === 'tiered_sales') ? 'none' : 'block';
         }
+
+        function editHRTransaction(id, type, amount, note, account_id) {
+            document.getElementById('edit_tx_id').value = id;
+            document.getElementById('edit_tx_type').value = type;
+            document.getElementById('edit_tx_amount').value = amount;
+            document.getElementById('edit_tx_note').value = note;
+            
+            toggleEditTreasury(type);
+
+            document.getElementById('editTxForm').action = "/employee/transaction/edit/" + id;
+            new bootstrap.Modal(document.getElementById('editTxModal')).show();
+        }
+
+        function toggleEditTreasury(val) {
+            document.getElementById('editTreasurySelectDiv').style.display = (val === 'advance' || val === 'partner_deposit') ? 'block' : 'none';
+        }
     </script>
+
+    <!-- Modal Edit Transaction -->
+    <div class="modal fade" id="editTxModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form id="editTxForm" method="POST">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning">
+                        <h5 class="modal-title"><i class="fas fa-edit me-2"></i> تعديل الحركة المالية</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <input type="hidden" id="edit_tx_id" name="tx_id">
+                        
+                        <div class="mb-3">
+                            <label class="fw-bold small mb-2 text-primary">نوع الحركة</label>
+                            <select name="type" id="edit_tx_type" class="form-select border-primary" onchange="toggleEditTreasury(this.value)" required>
+                                <option value="bonus">مكافأة (+)</option>
+                                <option value="deduction">خصم / جزاء (-)</option>
+                                <option value="advance">سلفة نقداً (-)</option>
+                                <option value="partner_deposit">إيداع شريك (+)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="editTreasurySelectDiv" style="display: none;">
+                            <label class="fw-bold small mb-2 text-danger">تحديد الخزينة (للسلف أو الإيداعات)</label>
+                            <select name="account_id" id="edit_account_id" class="form-select border-danger">
+                                {% for acc in accounts %}
+                                <option value="{{ acc.id }}">{{ acc.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="fw-bold small mb-2 text-primary">المبلغ</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-primary"><i class="fas fa-pound-sign"></i></span>
+                                <input type="number" step="0.01" name="amount" id="edit_tx_amount" class="form-control border-primary" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="fw-bold small mb-2 text-primary">تفاصيل / بيان الحركة</label>
+                            <input type="text" name="note" id="edit_tx_note" class="form-control border-primary" placeholder="اكتب سبب المكافأة أو الخصم...">
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-warning px-4 fw-bold">حفظ التعديلات <i class="fas fa-save ms-2"></i></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
 
 <!-- GLOBAL SEASON SELECTOR -->

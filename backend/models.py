@@ -149,6 +149,7 @@ class PartnerTransaction(db.Model):
     season = db.Column(db.String(50), default='شتوي 2027')
     description = db.Column(db.String(255))
     date = db.Column(db.DateTime, default=cairo_now)
+    hr_transaction_id = db.Column(db.Integer, db.ForeignKey('hr_transaction.id'), nullable=True)
 
     # العلاقات
     # لاحظ: نحدد foreign_keys هنا لأن الجدول فيه علاقة مع User
@@ -311,6 +312,7 @@ class FinancialTransaction(db.Model):
     description = db.Column(db.Text)
     date = db.Column(db.DateTime, default=datetime.now)
     created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    hr_transaction_id = db.Column(db.Integer, db.ForeignKey('hr_transaction.id'), nullable=True)
 
     # === الإضافة الجديدة 👇 ===
     account_id = db.Column(db.Integer, db.ForeignKey('money_account.id'), nullable=True)
