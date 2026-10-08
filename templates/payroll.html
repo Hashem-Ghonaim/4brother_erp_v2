@@ -99,6 +99,7 @@
             {% set sub_penalties = namespace(value=0) %}
             {% set sub_advances = namespace(value=0) %}
             {% set sub_bonuses = namespace(value=0) %}
+            {% set sub_team_bonus = namespace(value=0) %}
             {% set sub_net = namespace(value=0) %}
 
             {% for e in manager_employees %}
@@ -109,7 +110,6 @@
                 {% set sub_penalties.value = sub_penalties.value + e.other_penalties %}
                 {% set sub_advances.value = sub_advances.value + e.advances %}
                 {% set sub_bonuses.value = sub_bonuses.value + e.bonuses %}
-                {% set sub_team_bonus = namespace(value=0) if not sub_team_bonus else sub_team_bonus %}
                 {% set sub_team_bonus.value = sub_team_bonus.value + e.team_bonus %}
                 {% set sub_net.value = sub_net.value + e.net_salary %}
             {% endfor %}
