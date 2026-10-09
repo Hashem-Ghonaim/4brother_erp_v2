@@ -235,7 +235,7 @@ def partners_report():
             admin_bonus_paid = sum(safe_float(t.amount) for t in period_trans if t.type == 'admin_bonus' and safe_float(t.amount) <= 0)
             admin_penalty_recovered = sum(safe_float(t.amount) for t in period_trans if t.type == 'admin_penalty' and safe_float(t.amount) > 0)
             admin_penalty_deducted = sum(safe_float(t.amount) for t in period_trans if t.type == 'admin_penalty' and safe_float(t.amount) <= 0)
-            liquidation_adjustment = sum(safe_float(t.amount) for t in period_trans if t.type == 'liquidation_adjustment')
+            liquidation_adjustment = sum(safe_float(t.amount) for t in all_trans if t.type == 'liquidation_adjustment')
 
             partner_cross_month_13 = cross_month_13_deduction / num_partners if num_partners > 0 else 0
             partner_returns = partner_cross_month_13 + return_penalty
@@ -282,7 +282,7 @@ def partners_report():
                 'admin_penalty_deducted_details': build_details(period_trans, lambda t: t.type == 'admin_penalty' and safe_float(t.amount) <= 0),
                 'withdrawals_details': build_details(period_trans, lambda t: t.type == 'withdrawal'),
                 'deposits_details': build_details(period_trans, lambda t: t.type == 'deposit'),
-                'liquidation_adjustment_details': build_details(period_trans, lambda t: t.type == 'liquidation_adjustment'),
+                'liquidation_adjustment_details': build_details(all_trans, lambda t: t.type == 'liquidation_adjustment'),
 
                 'period_net_profit': round(period_net_profit, 2),
                 'withdrawals_period': round(abs(withdrawals_period), 2),
@@ -1099,22 +1099,11 @@ def set_liquidation_adjustment():
         amount = 0.0
 
     desc = data.get('description', '')
-    month = data.get('month', '') # format: YYYY-MM
     
-    if not month:
-        return jsonify({'success': False, 'message': 'الشهر غير محدد'}), 400
-        
-    from datetime import datetime
-    import calendar
-    start_date = datetime.strptime(f"{month}-01", "%Y-%m-%d")
-    _, last_day = calendar.monthrange(start_date.year, start_date.month)
-    end_date = start_date.replace(day=last_day, hour=23, minute=59, second=59)
-    
+    # البحث عن تعديل موجود مسبقاً لهذا الشريك (ثابت - مش مرتبط بشهر)
     existing = PartnerTransaction.query.filter(
         PartnerTransaction.partner_id == partner_id,
-        PartnerTransaction.type == 'liquidation_adjustment',
-        PartnerTransaction.date >= start_date,
-        PartnerTransaction.date <= end_date
+        PartnerTransaction.type == 'liquidation_adjustment'
     ).first()
     
     if amount == 0 and not desc:
@@ -1130,7 +1119,7 @@ def set_liquidation_adjustment():
                 type='liquidation_adjustment',
                 amount=amount,
                 description=desc,
-                date=start_date
+                date=cairo_now()
             )
             db.session.add(new_adj)
         

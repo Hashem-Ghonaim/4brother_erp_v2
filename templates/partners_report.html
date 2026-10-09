@@ -1189,7 +1189,6 @@
             event.stopPropagation();
             const amount = document.getElementById('adj_amount_partner_' + partnerId).value;
             const desc = document.getElementById('adj_desc_partner_' + partnerId).value;
-            const monthStr = '{{ target_month_str }}';
             
             fetch('/api/liquidation_adjustment', {
                 method: 'POST',
@@ -1198,7 +1197,6 @@
                 },
                 body: JSON.stringify({
                     partner_id: partnerId,
-                    month: monthStr,
                     amount: amount,
                     description: desc
                 })
