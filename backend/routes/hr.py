@@ -1433,6 +1433,116 @@ def payroll():
 
     return render_template('payroll.html', employees=employees_data, month=month_str, accounts=accounts)
 
+
+@app.route('/api/payroll/commission_breakdown')
+@login_required
+def api_commission_breakdown():
+    user_id = request.args.get('user_id', type=int)
+    month_str = request.args.get('month', '')
+
+    if not user_id or not month_str:
+        return jsonify({'success': False, 'message': 'بيانات غير مكتملة'}), 400
+
+    u = db.session.get(User, user_id)
+    if not u:
+        return jsonify({'success': False, 'message': 'الموظف غير موجود'}), 404
+
+    # 1. فواتير المبيعات (الشهر الحالي)
+    sales_orders = SaleOrder.query.filter(
+        SaleOrder.user_id == u.id,
+        SaleOrder.is_proforma == False,
+        func.to_char(SaleOrder.date, 'YYYY-MM') == month_str
+    ).order_by(SaleOrder.date.desc()).all()
+
+    sales_list = []
+    total_sales_qty = 0
+    total_sales_amount = 0.0
+    for o in sales_orders:
+        qty = sum(it.quantity for it in o.items)
+        total_sales_qty += qty
+        total_sales_amount += (o.final_total or 0.0)
+        sales_list.append({
+            'id': o.id,
+            'date': o.date.strftime('%Y-%m-%d %I:%M %p') if o.date else '---',
+            'customer': o.customer.name if o.customer else 'عميل نقدي',
+            'qty': int(qty),
+            'amount': round(o.final_total or 0.0, 2),
+            'is_shipping': o.is_shipping,
+            'shipping_type': ('شحن (' + (o.courier.name if o.courier else 'شركة شحن') + ')') if o.is_shipping else 'مكتب (تسليم محلي)'
+        })
+
+    # 2. مرتجعات من مبيعات نفس الشهر
+    same_month_ret = ReturnInvoice.query.join(SaleOrder).filter(
+        SaleOrder.user_id == u.id,
+        func.to_char(ReturnInvoice.date, 'YYYY-MM') == month_str,
+        func.to_char(SaleOrder.date, 'YYYY-MM') == month_str
+    ).order_by(ReturnInvoice.date.desc()).all()
+
+    same_month_list = []
+    total_same_qty = 0
+    total_same_deduction = 0.0
+    for r in same_month_ret:
+        qty = r.total_qty or 0
+        total_same_qty += qty
+        total_same_deduction += (r.total_deduction or 0.0)
+        same_month_list.append({
+            'id': r.id,
+            'date': r.date.strftime('%Y-%m-%d') if r.date else '---',
+            'order_id': r.order_id,
+            'order_date': r.order.date.strftime('%Y-%m-%d') if r.order and r.order.date else '---',
+            'customer': r.order.customer.name if r.order and r.order.customer else '---',
+            'qty': int(qty),
+            'deduction': round(r.total_deduction or 0.0, 2),
+            'notes': r.notes or '---'
+        })
+
+    # 3. مرتجعات من مبيعات أشهر سابقة
+    cross_month_ret = ReturnInvoice.query.join(SaleOrder).filter(
+        SaleOrder.user_id == u.id,
+        func.to_char(ReturnInvoice.date, 'YYYY-MM') == month_str,
+        func.to_char(SaleOrder.date, 'YYYY-MM') != month_str
+    ).order_by(ReturnInvoice.date.desc()).all()
+
+    cross_month_list = []
+    total_cross_qty = 0
+    total_cross_deduction = 0.0
+    for r in cross_month_ret:
+        qty = r.total_qty or 0
+        total_cross_qty += qty
+        total_cross_deduction += (r.total_deduction or 0.0)
+        cross_month_list.append({
+            'id': r.id,
+            'date': r.date.strftime('%Y-%m-%d') if r.date else '---',
+            'order_id': r.order_id,
+            'order_date': r.order.date.strftime('%Y-%m-%d') if r.order and r.order.date else '---',
+            'customer': r.order.customer.name if r.order and r.order.customer else '---',
+            'qty': int(qty),
+            'deduction': round(r.total_deduction or 0.0, 2),
+            'notes': r.notes or '---'
+        })
+
+    return jsonify({
+        'success': True,
+        'user_name': u.fullname,
+        'month': month_str,
+        'sales_orders': sales_list,
+        'same_month_returns': same_month_list,
+        'cross_month_returns': cross_month_list,
+        'totals': {
+            'sales_qty': total_sales_qty,
+            'sales_orders_count': len(sales_list),
+            'sales_amount': round(total_sales_amount, 2),
+            'same_returns_qty': total_same_qty,
+            'same_returns_count': len(same_month_list),
+            'same_returns_deduction': round(total_same_deduction, 2),
+            'cross_returns_qty': total_cross_qty,
+            'cross_returns_count': len(cross_month_list),
+            'cross_returns_deduction': round(total_cross_deduction, 2),
+            'net_qty': total_sales_qty - total_same_qty - total_cross_qty
+        }
+    })
+
+
 @app.route('/debug_users_info')
 def debug_users_info():
     users = User.query.all()

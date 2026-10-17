@@ -32,6 +32,16 @@
         .swal2-select {
             font-size: 0.9rem !important;
         }
+
+        .commission-card-interactive {
+            transition: all 0.2s ease !important;
+        }
+
+        .commission-card-interactive:hover {
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+            border-color: #0d6efd !important;
+        }
     </style>
 </head>
 
@@ -144,6 +154,8 @@
                                     <td class="fw-bold text-start ps-4">{{ e.name }}</td>
                                     <td>{{ e.base }}</td>
                                     <td class="text-success fw-bold commission-drilldown-cell" style="cursor:pointer"
+                                        data-user-id="{{ e.id }}"
+                                        data-month="{{ month }}"
                                         data-name="{{ e.name }}"
                                         data-gross="{{ e.gross_sales }}"
                                         data-net="{{ e.net_sales }}"
@@ -354,11 +366,11 @@
         }
     </script>
 
-    <!-- Attendance Deduction Details Modal -->
+    <!-- Attendance Deduction & Commission Details Modal -->
     <div class="modal fade" id="attDetailsModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-danger text-white">
+                <div class="modal-header bg-danger text-white" id="att_modal_header">
                     <h5 class="modal-title fw-bold" id="att_modal_title"><i class="fas fa-clock me-2"></i>تفاصيل جزاءات
                         الحضور</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -448,42 +460,525 @@
             document.body.addEventListener('click', function (e) {
                 const cell = e.target.closest('.commission-drilldown-cell');
                 if (!cell) return;
+                const userId = cell.getAttribute('data-user-id');
                 const name = cell.getAttribute('data-name');
+                const month = cell.getAttribute('data-month');
                 const gross = cell.getAttribute('data-gross');
                 const net = cell.getAttribute('data-net');
                 const sameMonthReturns = cell.getAttribute('data-same-month-returns');
                 const crossMonthReturns = cell.getAttribute('data-cross-month-returns');
                 const commission = cell.getAttribute('data-commission');
 
-                document.getElementById('att_modal_title').innerHTML =
-                    `<i class="fas fa-percentage me-2"></i>العمولة: ${name}`;
-                document.getElementById('att_modal_body').innerHTML = `
-                    <div class="p-4 text-center">
-                        <div class="mb-3">
-                            <span class="text-muted">المبيعات (الشهر الحالي)</span><br>
-                            <h4 class="text-success fw-bold">${gross} قطعة</h4>
-                        </div>
-                        <div class="mb-3">
-                            <span class="text-muted">مرتجعات من مبيعات الشهر الحالي</span><br>
-                            <h4 class="text-danger fw-bold">${sameMonthReturns} قطعة</h4>
-                        </div>
-                        <div class="mb-3">
-                            <span class="text-muted">مرتجعات من أشهر سابقة</span><br>
-                            <h4 class="text-danger fw-bold">${crossMonthReturns} قطعة</h4>
-                        </div>
-                        <div class="mb-3">
-                            <span class="text-muted">صافي المبيعات (بعد المرتجعات)</span><br>
-                            <h4 class="text-primary fw-bold">${net} قطعة</h4>
-                        </div>
-                        <hr>
-                        <div>
-                            <span class="text-muted">قيمة العمولة</span><br>
-                            <h3 class="text-success fw-bold">${commission} ج.م</h3>
-                        </div>
-                    </div>`;
+                currentCommissionContext = {
+                    userId, name, month, gross, net, sameMonthReturns, crossMonthReturns, commission
+                };
+
+                showCommissionSummary();
                 new bootstrap.Modal(document.getElementById('attDetailsModal')).show();
             });
         });
+
+        // Commission Drilldown Logic
+        let commissionCache = {};
+        let currentCommissionContext = null;
+
+        function showCommissionSummary() {
+            const ctx = currentCommissionContext;
+            if (!ctx) return;
+            const title = document.getElementById('att_modal_title');
+            const body = document.getElementById('att_modal_body');
+            const header = document.getElementById('att_modal_header');
+            if (header) {
+                header.className = 'modal-header bg-danger text-white';
+            }
+            title.innerHTML = `<i class="fas fa-percentage me-2"></i>العمولة: ${ctx.name}`;
+
+            body.innerHTML = `
+                <div class="p-4" style="max-width: 720px; margin: 0 auto;">
+                    <div class="text-center mb-4">
+                        <span class="badge bg-light text-dark border px-3 py-2 fs-6 shadow-sm">
+                            <i class="far fa-calendar-alt text-danger me-1"></i> مسير شهر: <strong>${ctx.month}</strong>
+                        </span>
+                        <p class="text-muted small mt-2 mb-0">💡 اضغط على أي خانة من الخانات التالية لعرض الفواتير والتفاصيل الكاملة</p>
+                    </div>
+
+                    <!-- Card 1: Gross Sales -->
+                    <div class="card border-2 border-success shadow-sm mb-3 commission-card-interactive" 
+                         onclick="loadAndShowCommissionDetail('sales')"
+                         style="cursor: pointer; transition: all 0.2s ease; border-radius: 12px; background: #fff;">
+                        <div class="card-body d-flex justify-content-between align-items-center py-3 px-4">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-success bg-opacity-10 text-success p-3 me-3 d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
+                                    <i class="fas fa-shopping-cart fs-4"></i>
+                                </div>
+                                <div class="text-start">
+                                    <span class="text-muted small d-block">المبيعات (الشهر الحالي)</span>
+                                    <h4 class="text-success fw-bold mb-0">${ctx.gross} قطعة</h4>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-success text-white px-2 py-1 mb-1 d-inline-block"><i class="fas fa-eye me-1"></i> عرض الفواتير</span>
+                                <div class="text-muted small"><i class="fas fa-chevron-left"></i></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Same Month Returns -->
+                    <div class="card border-2 border-danger shadow-sm mb-3 commission-card-interactive" 
+                         onclick="loadAndShowCommissionDetail('same_returns')"
+                         style="cursor: pointer; transition: all 0.2s ease; border-radius: 12px; background: #fff;">
+                        <div class="card-body d-flex justify-content-between align-items-center py-3 px-4">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-danger bg-opacity-10 text-danger p-3 me-3 d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
+                                    <i class="fas fa-undo-alt fs-4"></i>
+                                </div>
+                                <div class="text-start">
+                                    <span class="text-muted small d-block">مرتجعات من مبيعات الشهر الحالي</span>
+                                    <h4 class="text-danger fw-bold mb-0">${ctx.sameMonthReturns} قطعة</h4>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-danger text-white px-2 py-1 mb-1 d-inline-block"><i class="fas fa-eye me-1"></i> عرض المرتجعات</span>
+                                <div class="text-muted small"><i class="fas fa-chevron-left"></i></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Cross Month Returns -->
+                    <div class="card border-2 border-warning shadow-sm mb-3 commission-card-interactive" 
+                         onclick="loadAndShowCommissionDetail('cross_returns')"
+                         style="cursor: pointer; transition: all 0.2s ease; border-radius: 12px; background: #fff;">
+                        <div class="card-body d-flex justify-content-between align-items-center py-3 px-4">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-warning bg-opacity-10 text-danger p-3 me-3 d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
+                                    <i class="fas fa-calendar-times fs-4"></i>
+                                </div>
+                                <div class="text-start">
+                                    <span class="text-muted small d-block">مرتجعات من أشهر سابقة</span>
+                                    <h4 class="text-danger fw-bold mb-0">${ctx.crossMonthReturns} قطعة</h4>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-warning text-dark px-2 py-1 mb-1 d-inline-block"><i class="fas fa-eye me-1"></i> عرض المرتجعات</span>
+                                <div class="text-muted small"><i class="fas fa-chevron-left"></i></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 4: Net Sales -->
+                    <div class="card border-2 border-primary shadow-sm mb-3 commission-card-interactive" 
+                         onclick="loadAndShowCommissionDetail('net_summary')"
+                         style="cursor: pointer; transition: all 0.2s ease; border-radius: 12px; background: #fff;">
+                        <div class="card-body d-flex justify-content-between align-items-center py-3 px-4">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-primary bg-opacity-10 text-primary p-3 me-3 d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
+                                    <i class="fas fa-calculator fs-4"></i>
+                                </div>
+                                <div class="text-start">
+                                    <span class="text-muted small d-block">صافي المبيعات (بعد المرتجعات)</span>
+                                    <h4 class="text-primary fw-bold mb-0">${ctx.net} قطعة</h4>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-primary text-white px-2 py-1 mb-1 d-inline-block"><i class="fas fa-info-circle me-1"></i> تفاصيل الحسبة</span>
+                                <div class="text-muted small"><i class="fas fa-chevron-left"></i></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Card 5: Commission Total -->
+                    <div class="p-3 text-center bg-light rounded-3 border">
+                        <span class="text-muted d-block small">قيمة العمولة المستحقة</span>
+                        <h3 class="text-success fw-bold mb-0 mt-1">${ctx.commission} ج.م</h3>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadAndShowCommissionDetail(viewType) {
+            const ctx = currentCommissionContext;
+            if (!ctx) return;
+            const cacheKey = `${ctx.userId}_${ctx.month}`;
+
+            if (commissionCache[cacheKey]) {
+                renderCommissionDetailView(viewType, commissionCache[cacheKey]);
+                return;
+            }
+
+            const body = document.getElementById('att_modal_body');
+            body.innerHTML = `
+                <div class="text-center p-5">
+                    <div class="spinner-border text-danger mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+                    <h5 class="fw-bold text-secondary">جاري جلب تفاصيل الفواتير من الخادم...</h5>
+                    <p class="text-muted small">يرجى الانتظار ثوانٍ معدودة</p>
+                </div>
+            `;
+
+            fetch(`/api/payroll/commission_breakdown?user_id=${ctx.userId}&month=${ctx.month}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        commissionCache[cacheKey] = data;
+                        renderCommissionDetailView(viewType, data);
+                    } else {
+                        body.innerHTML = `
+                            <div class="p-4 text-center">
+                                <div class="alert alert-danger mb-3">${data.message || 'حدث خطأ أثناء جلب البيانات'}</div>
+                                <button class="btn btn-secondary fw-bold" onclick="showCommissionSummary()"><i class="fas fa-arrow-right me-1"></i> رجوع لملخص العمولة</button>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(err => {
+                    console.error('Commission breakdown error:', err);
+                    body.innerHTML = `
+                        <div class="p-4 text-center">
+                            <div class="alert alert-danger mb-3">حدث خطأ في الاتصال بالخادم</div>
+                            <button class="btn btn-secondary fw-bold" onclick="showCommissionSummary()"><i class="fas fa-arrow-right me-1"></i> رجوع لملخص العمولة</button>
+                        </div>
+                    `;
+                });
+        }
+
+        function renderCommissionDetailView(viewType, data) {
+            const ctx = currentCommissionContext;
+            const title = document.getElementById('att_modal_title');
+            const body = document.getElementById('att_modal_body');
+
+            if (viewType === 'sales') {
+                title.innerHTML = `<i class="fas fa-shopping-bag me-2"></i>فواتير مبيعات: ${data.user_name} (${data.month})`;
+                const list = data.sales_orders || [];
+                let rowsHtml = '';
+                list.forEach((item, idx) => {
+                    rowsHtml += `
+                        <tr>
+                            <td class="text-muted small">${idx + 1}</td>
+                            <td>
+                                <a href="/print_invoice/${item.id}" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-2 fw-bold text-decoration-none">
+                                    #${item.id} <i class="fas fa-external-link-alt small ms-1"></i>
+                                </a>
+                            </td>
+                            <td class="small fw-semibold">${item.date}</td>
+                            <td class="fw-bold">${item.customer}</td>
+                            <td>
+                                <span class="badge ${item.is_shipping ? 'bg-info text-dark' : 'bg-secondary'} px-2 py-1">
+                                    ${item.shipping_type}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-success fs-6 px-3 py-1">${item.qty} قطعة</span>
+                            </td>
+                            <td class="fw-bold text-success">${Number(item.amount).toLocaleString('ar-EG', {minimumFractionDigits: 2})} ج.م</td>
+                        </tr>
+                    `;
+                });
+
+                body.innerHTML = `
+                    <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <button class="btn btn-dark btn-sm fw-bold px-3" onclick="showCommissionSummary()">
+                            <i class="fas fa-arrow-right me-1"></i> رجوع لملخص العمولة
+                        </button>
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="badge bg-white text-dark border p-2">
+                                إجمالي الفواتير: <strong class="text-primary">${data.totals.sales_orders_count}</strong>
+                            </span>
+                            <span class="badge bg-white text-dark border p-2">
+                                إجمالي القطع: <strong class="text-success">${data.totals.sales_qty} قطعة</strong>
+                            </span>
+                            <span class="badge bg-white text-dark border p-2">
+                                إجمالي المبيعات: <strong class="text-success">${Number(data.totals.sales_amount).toLocaleString('ar-EG', {minimumFractionDigits: 2})} ج.م</strong>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="p-3">
+                        <div class="mb-3">
+                            <input type="text" class="form-control" placeholder="🔍 ابحث برقم الفاتورة، اسم العميل، طريقة التسليم..." onkeyup="filterCommissionTable(this.value)">
+                        </div>
+
+                        ${list.length === 0 ? `
+                            <div class="text-center p-5 text-muted fs-5">
+                                <i class="fas fa-info-circle me-2"></i> لا توجد فواتير مبيعات مسجلة لهذا الشهر
+                            </div>
+                        ` : `
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover text-center align-middle mb-0" id="commission_detail_table">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>رقم الفاتورة</th>
+                                            <th>تاريخ وتوقيت البيع</th>
+                                            <th>العميل</th>
+                                            <th>طريقة التسليم</th>
+                                            <th>القطع</th>
+                                            <th>إجمالي الفاتورة</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${rowsHtml}
+                                    </tbody>
+                                    <tfoot class="table-light fw-bold fs-6">
+                                        <tr>
+                                            <td colspan="5" class="text-end px-4">الإجمالي الكلي (${data.totals.sales_orders_count} فاتورة):</td>
+                                            <td class="text-success">${data.totals.sales_qty} قطعة</td>
+                                            <td class="text-success">${Number(data.totals.sales_amount).toLocaleString('ar-EG', {minimumFractionDigits: 2})} ج.م</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        `}
+                    </div>
+                `;
+            } else if (viewType === 'same_returns') {
+                title.innerHTML = `<i class="fas fa-undo-alt me-2"></i>مرتجعات من مبيعات نفس الشهر: ${data.user_name} (${data.month})`;
+                const list = data.same_month_returns || [];
+                let rowsHtml = '';
+                list.forEach((item, idx) => {
+                    rowsHtml += `
+                        <tr>
+                            <td class="text-muted small">${idx + 1}</td>
+                            <td><span class="badge bg-danger fs-6">#${item.id}</span></td>
+                            <td class="small fw-semibold">${item.date}</td>
+                            <td>
+                                <a href="/print_invoice/${item.order_id}" target="_blank" class="btn btn-sm btn-outline-secondary py-0 px-2 fw-bold text-decoration-none">
+                                    #${item.order_id} <i class="fas fa-external-link-alt small ms-1"></i>
+                                </a>
+                                <small class="text-muted d-block mt-1">${item.order_date}</small>
+                            </td>
+                            <td class="fw-bold">${item.customer}</td>
+                            <td>
+                                <span class="badge bg-danger fs-6 px-3 py-1">${item.qty} قطعة</span>
+                            </td>
+                            <td class="fw-bold text-danger">${Number(item.deduction).toLocaleString('ar-EG', {minimumFractionDigits: 2})} ج.م</td>
+                            <td class="small text-start">${item.notes || '---'}</td>
+                        </tr>
+                    `;
+                });
+
+                body.innerHTML = `
+                    <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <button class="btn btn-dark btn-sm fw-bold px-3" onclick="showCommissionSummary()">
+                            <i class="fas fa-arrow-right me-1"></i> رجوع لملخص العمولة
+                        </button>
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="badge bg-white text-dark border p-2">
+                                إجمالي الأذونات: <strong class="text-danger">${data.totals.same_returns_count}</strong>
+                            </span>
+                            <span class="badge bg-white text-dark border p-2">
+                                إجمالي المرتجع: <strong class="text-danger">${data.totals.same_returns_qty} قطعة</strong>
+                            </span>
+                            <span class="badge bg-white text-dark border p-2">
+                                إجمالي الخصم المالي: <strong class="text-danger">${Number(data.totals.same_returns_deduction).toLocaleString('ar-EG', {minimumFractionDigits: 2})} ج.م</strong>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="p-3">
+                        <div class="mb-3">
+                            <input type="text" class="form-control" placeholder="🔍 ابحث برقم إذن المرتجع، رقم الفاتورة الأصلية، اسم العميل..." onkeyup="filterCommissionTable(this.value)">
+                        </div>
+
+                        ${list.length === 0 ? `
+                            <div class="text-center p-5 text-success fs-5">
+                                <i class="fas fa-check-circle me-2"></i> لا توجد أي مرتجعات مسجلة من مبيعات هذا الشهر ✅
+                            </div>
+                        ` : `
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover text-center align-middle mb-0" id="commission_detail_table">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>إذن المرتجع</th>
+                                            <th>تاريخ المرتجع</th>
+                                            <th>فاتورة البيع الأصلية</th>
+                                            <th>العميل</th>
+                                            <th>القطع المرتجعة</th>
+                                            <th>الخصم المالي</th>
+                                            <th class="text-start">الملاحظات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${rowsHtml}
+                                    </tbody>
+                                    <tfoot class="table-light fw-bold fs-6">
+                                        <tr>
+                                            <td colspan="5" class="text-end px-4">الإجمالي (${data.totals.same_returns_count} إذن مرتجع):</td>
+                                            <td class="text-danger">${data.totals.same_returns_qty} قطعة</td>
+                                            <td class="text-danger">${Number(data.totals.same_returns_deduction).toLocaleString('ar-EG', {minimumFractionDigits: 2})} ج.م</td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        `}
+                    </div>
+                `;
+            } else if (viewType === 'cross_returns') {
+                title.innerHTML = `<i class="fas fa-calendar-times me-2"></i>مرتجعات من مبيعات أشهر سابقة: ${data.user_name} (${data.month})`;
+                const list = data.cross_month_returns || [];
+                let rowsHtml = '';
+                list.forEach((item, idx) => {
+                    rowsHtml += `
+                        <tr>
+                            <td class="text-muted small">${idx + 1}</td>
+                            <td><span class="badge bg-danger fs-6">#${item.id}</span></td>
+                            <td class="small fw-semibold">${item.date}</td>
+                            <td>
+                                <a href="/print_invoice/${item.order_id}" target="_blank" class="btn btn-sm btn-outline-secondary py-0 px-2 fw-bold text-decoration-none">
+                                    #${item.order_id} <i class="fas fa-external-link-alt small ms-1"></i>
+                                </a>
+                                <span class="badge bg-warning text-dark d-block mt-1">تاريخ البيع: ${item.order_date}</span>
+                            </td>
+                            <td class="fw-bold">${item.customer}</td>
+                            <td>
+                                <span class="badge bg-danger fs-6 px-3 py-1">${item.qty} قطعة</span>
+                            </td>
+                            <td class="fw-bold text-danger">${Number(item.deduction).toLocaleString('ar-EG', {minimumFractionDigits: 2})} ج.م</td>
+                            <td class="small text-start">${item.notes || '---'}</td>
+                        </tr>
+                    `;
+                });
+
+                body.innerHTML = `
+                    <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <button class="btn btn-dark btn-sm fw-bold px-3" onclick="showCommissionSummary()">
+                            <i class="fas fa-arrow-right me-1"></i> رجوع لملخص العمولة
+                        </button>
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="badge bg-white text-dark border p-2">
+                                إجمالي الأذونات: <strong class="text-danger">${data.totals.cross_returns_count}</strong>
+                            </span>
+                            <span class="badge bg-white text-dark border p-2">
+                                إجمالي المرتجع: <strong class="text-danger">${data.totals.cross_returns_qty} قطعة</strong>
+                            </span>
+                            <span class="badge bg-white text-dark border p-2">
+                                إجمالي الخصم المالي: <strong class="text-danger">${Number(data.totals.cross_returns_deduction).toLocaleString('ar-EG', {minimumFractionDigits: 2})} ج.م</strong>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="p-3">
+                        <div class="alert alert-warning py-2 mb-3 small d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle me-2 fs-5"></i>
+                            <div>هذه الفواتير تم بيعها في أشهر سابقة وتم إرجاعها خلال هذا الشهر (${data.month}) ويتم خصم قطعها من الحسبة وفقاً للائحة.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <input type="text" class="form-control" placeholder="🔍 ابحث برقم إذن المرتجع، رقم الفاتورة السابقة، اسم العميل..." onkeyup="filterCommissionTable(this.value)">
+                        </div>
+
+                        ${list.length === 0 ? `
+                            <div class="text-center p-5 text-success fs-5">
+                                <i class="fas fa-check-circle me-2"></i> لا توجد أي مرتجعات من أشهر سابقة مسجلة لهذا الشهر ✅
+                            </div>
+                        ` : `
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover text-center align-middle mb-0" id="commission_detail_table">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>إذن المرتجع</th>
+                                            <th>تاريخ المرتجع</th>
+                                            <th>فاتورة البيع السابقة</th>
+                                            <th>العميل</th>
+                                            <th>القطع المرتجعة</th>
+                                            <th>الخصم المالي</th>
+                                            <th class="text-start">الملاحظات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${rowsHtml}
+                                    </tbody>
+                                    <tfoot class="table-light fw-bold fs-6">
+                                        <tr>
+                                            <td colspan="5" class="text-end px-4">الإجمالي (${data.totals.cross_returns_count} إذن مرتجع):</td>
+                                            <td class="text-danger">${data.totals.cross_returns_qty} قطعة</td>
+                                            <td class="text-danger">${Number(data.totals.cross_returns_deduction).toLocaleString('ar-EG', {minimumFractionDigits: 2})} ج.م</td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        `}
+                    </div>
+                `;
+            } else if (viewType === 'net_summary') {
+                title.innerHTML = `<i class="fas fa-calculator me-2"></i>معادلة صافي المبيعات والعمولة: ${data.user_name}`;
+                body.innerHTML = `
+                    <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <button class="btn btn-dark btn-sm fw-bold px-3" onclick="showCommissionSummary()">
+                            <i class="fas fa-arrow-right me-1"></i> رجوع لملخص العمولة
+                        </button>
+                        <span class="badge bg-primary fs-6 px-3 py-2">
+                            صافي المبيعات: <strong>${data.totals.net_qty} قطعة</strong>
+                        </span>
+                    </div>
+
+                    <div class="p-4" style="max-width: 680px; margin: 0 auto;">
+                        <h5 class="fw-bold text-center text-dark mb-4">تفاصيل معادلة احتساب قطع العمولة</h5>
+
+                        <div class="list-group shadow-sm mb-4">
+                            <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                <div>
+                                    <span class="text-success fw-bold fs-5 me-2">+</span>
+                                    <span class="fw-bold">إجمالي مبيعات الشهر الحالي (${data.totals.sales_orders_count} فاتورة)</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-success fs-6">${data.totals.sales_qty} قطعة</span>
+                                    <button class="btn btn-sm btn-outline-success py-0 px-2" onclick="renderCommissionDetailView('sales', commissionCache['${ctx.userId}_${ctx.month}'])">عرض</button>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                <div>
+                                    <span class="text-danger fw-bold fs-5 me-2">-</span>
+                                    <span class="fw-bold">مرتجعات من مبيعات الشهر الحالي (${data.totals.same_returns_count} إذن)</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-danger fs-6">${data.totals.same_returns_qty} قطعة</span>
+                                    <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="renderCommissionDetailView('same_returns', commissionCache['${ctx.userId}_${ctx.month}'])">عرض</button>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                <div>
+                                    <span class="text-danger fw-bold fs-5 me-2">-</span>
+                                    <span class="fw-bold">مرتجعات من مبيعات أشهر سابقة (${data.totals.cross_returns_count} إذن)</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-danger fs-6">${data.totals.cross_returns_qty} قطعة</span>
+                                    <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="renderCommissionDetailView('cross_returns', commissionCache['${ctx.userId}_${ctx.month}'])">عرض</button>
+                                </div>
+                            </div>
+                            <div class="list-group-item list-group-item-primary d-flex justify-content-between align-items-center py-3">
+                                <span class="fw-bold fs-5">= صافي المبيعات المحتسب للشرائح</span>
+                                <span class="badge bg-primary fs-5 px-3 py-2">${data.totals.net_qty} قطعة</span>
+                            </div>
+                        </div>
+
+                        <div class="card border-0 bg-light p-3 text-center rounded-3">
+                            <span class="text-muted small">قيمة العمولة المستحقة بناءً على صافي القطع ولائحة الشرائح</span>
+                            <h3 class="text-success fw-bold mb-0 mt-1">${ctx.commission} ج.م</h3>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function filterCommissionTable(query) {
+            const q = (query || '').trim().toLowerCase();
+            const table = document.getElementById('commission_detail_table');
+            if (!table) return;
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(tr => {
+                if (!q) {
+                    tr.style.display = '';
+                    return;
+                }
+                const text = tr.innerText.toLowerCase();
+                tr.style.display = text.includes(q) ? '' : 'none';
+            });
+        }
 
         function showHRDetails(name, label, details) {
             const title = document.getElementById('att_modal_title');
