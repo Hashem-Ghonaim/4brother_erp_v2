@@ -245,6 +245,25 @@ def quick_update_product():
                     quantity_change=diff,
                     reason="تعديل سريع من الجدول"
                 ))
+        elif field == 'category':
+            category = None
+            val_str = str(value).strip() if value is not None else ''
+            if val_str.isdigit():
+                category = Category.query.get(int(val_str))
+            if not category and val_str:
+                category = Category.query.filter_by(name=val_str).first()
+            if not category and val_str:
+                # إنشاء تصنيف جديد إذا لم يكن موجوداً
+                category = Category(name=val_str)
+                db.session.add(category)
+                db.session.flush()
+
+            if category:
+                variant.model.category_id = category.id
+                db.session.commit()
+                return jsonify({'success': True, 'category_id': category.id, 'category_name': category.name})
+            else:
+                return jsonify({'success': False, 'message': 'التصنيف غير محدد أو غير صالح'}), 400
 
         db.session.commit()
         return jsonify({'success': True})

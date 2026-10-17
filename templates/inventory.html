@@ -256,8 +256,13 @@
                                 <td class="fw-bold">{{ p.model.name }}</td>
                                 {% endif %}
 
-                                <td><span class="badge bg-light text-dark border">{{ p.model.category.name }}</span>
+                                {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
+                                <td class="editable-cat" data-id="{{ p.id }}" data-cat-id="{{ p.model.category.id if p.model and p.model.category else '' }}" style="cursor: pointer;" title="اضغط مرتين لتغيير التصنيف">
+                                    <span class="badge bg-light text-dark border cat-badge-text">{{ p.model.category.name if p.model and p.model.category else 'بدون تصنيف' }}</span>
                                 </td>
+                                {% else %}
+                                <td><span class="badge bg-light text-dark border">{{ p.model.category.name if p.model and p.model.category else 'بدون تصنيف' }}</span></td>
+                                {% endif %}
 
                                 {% if user.has_perm('manage_inventory') or user.role == 'general_manager' %}
                                 <td class="editable" data-id="{{ p.id }}" data-field="season"><span class="badge bg-info text-dark border">{{ p.model.season }}</span></td>
@@ -464,6 +469,111 @@
                         else if (e.key === 'Escape') cell.innerHTML = originalHTML;
                     });
                     input.addEventListener('blur', save);
+                });
+            });
+
+            // 3. كود تعديل التصنيف السريع (اختيار من القائمة أو إضافة تصنيف جديد)
+            const availableCategories = [
+                {% for cat in categories %}
+                { id: {{ cat.id }}, name: {{ cat.name|tojson }} },
+                {% endfor %}
+            ];
+
+            const editableCatCells = document.querySelectorAll('.editable-cat');
+            editableCatCells.forEach(cell => {
+                cell.addEventListener('dblclick', function () {
+                    if (this.querySelector('select')) return;
+
+                    const originalHTML = this.innerHTML;
+                    const currentCatId = this.dataset.catId;
+                    const id = this.dataset.id;
+
+                    const select = document.createElement('select');
+                    select.className = 'form-select form-select-sm';
+                    select.style.minWidth = '130px';
+                    select.style.display = 'inline-block';
+                    select.style.fontWeight = 'bold';
+
+                    availableCategories.forEach(cat => {
+                        const opt = document.createElement('option');
+                        opt.value = cat.id;
+                        opt.textContent = cat.name;
+                        if (String(cat.id) === String(currentCatId)) {
+                            opt.selected = true;
+                        }
+                        select.appendChild(opt);
+                    });
+
+                    // خيار إضافة تصنيف جديد
+                    const newOpt = document.createElement('option');
+                    newOpt.value = '__new__';
+                    newOpt.textContent = '➕ إضافة تصنيف جديد...';
+                    newOpt.style.color = '#0d6efd';
+                    newOpt.style.fontWeight = 'bold';
+                    select.appendChild(newOpt);
+
+                    this.innerHTML = '';
+                    this.appendChild(select);
+                    select.focus();
+
+                    let isSaving = false;
+                    const saveCategory = () => {
+                        if (isSaving) return;
+                        isSaving = true;
+
+                        let chosenVal = select.value;
+                        if (chosenVal === '__new__') {
+                            const newCatName = prompt('أدخل اسم التصنيف الجديد:');
+                            if (!newCatName || !newCatName.trim()) {
+                                cell.innerHTML = originalHTML;
+                                return;
+                            }
+                            chosenVal = newCatName.trim();
+                        } else if (String(chosenVal) === String(currentCatId)) {
+                            cell.innerHTML = originalHTML;
+                            return;
+                        }
+
+                        fetch('/api/quick_update_product', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: id, field: 'category', value: chosenVal })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                cell.innerHTML = `<span class="badge bg-light text-dark border cat-badge-text">${data.category_name}</span>`;
+                                cell.dataset.catId = data.category_id;
+                                const tr = cell.closest('tr');
+                                if (tr) {
+                                    tr.setAttribute('data-category', data.category_name);
+                                }
+                                if (!availableCategories.some(c => c.id === data.category_id)) {
+                                    availableCategories.push({ id: data.category_id, name: data.category_name });
+                                }
+                                cell.style.backgroundColor = '#d1e7dd';
+                                setTimeout(() => cell.style.backgroundColor = '', 500);
+                                applyFilters();
+                            } else {
+                                alert('خطأ: ' + data.message);
+                                cell.innerHTML = originalHTML;
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            cell.innerHTML = originalHTML;
+                        });
+                    };
+
+                    select.addEventListener('change', saveCategory);
+                    select.addEventListener('blur', function () {
+                        if (select.value !== '__new__') {
+                            saveCategory();
+                        }
+                    });
+                    select.addEventListener('keydown', function (e) {
+                        if (e.key === 'Escape') cell.innerHTML = originalHTML;
+                    });
                 });
             });
         });
