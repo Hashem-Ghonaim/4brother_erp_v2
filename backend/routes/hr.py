@@ -874,7 +874,7 @@ def employee_profile(id):
     transactions = HRTransaction.query.filter(HRTransaction.user_id == emp.id, HRTransaction.date >= month_start, HRTransaction.date < month_end).order_by(HRTransaction.date.desc()).all()
 
     # جلب الحسابات لإرسالها للقالب
-    accounts = MoneyAccount.query.all()
+    accounts = MoneyAccount.get_ordered()
     all_managers = User.query.filter(User.role.in_(['manager', 'general_manager', 'sales_manager']), User.partner_group_id.is_(None)).all()
     from backend.models import PartnerGroup
     groups = PartnerGroup.query.all()
@@ -1101,7 +1101,7 @@ def payroll():
     fill_missing_attendances(month_str)
 
     # جلب جميع الخزائن المتاحة للصرف
-    accounts = MoneyAccount.query.all()
+    accounts = MoneyAccount.get_ordered()
     employees_data = []
 
     # جلب الموظفين (السيلز والعمال ومديري المبيعات) مع استبعاد الشركاء (manager)

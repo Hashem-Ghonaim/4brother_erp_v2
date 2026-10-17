@@ -173,8 +173,9 @@
                             <label class="small fw-bold">من حساب (المصدر)</label>
                             <select name="from_account" class="form-select" required>
                                 <option value="" selected disabled>اختر الحساب...</option>
+                                {% set type_labels = {'vodafone': 'فودافون كاش', 'bank': 'حسابات بنكية', 'instapay': 'إنستا باي', 'cash': 'الخزائن النقدية'} %}
                                 {% for type, accounts in grouped.items() %}
-                                <optgroup label="{{ type }}">
+                                <optgroup label="{{ type_labels.get(type, type) }}">
                                     {% for acc in accounts %}
                                     <option value="{{ acc.id }}">{{ acc.name }} ({{ '%.2f'|format(acc.balance) }})</option>
                                     {% endfor %}
@@ -190,7 +191,7 @@
                             <select name="to_account" class="form-select" required>
                                 <option value="" selected disabled>اختر الحساب...</option>
                                 {% for type, accounts in grouped.items() %}
-                                <optgroup label="{{ type }}">
+                                <optgroup label="{{ type_labels.get(type, type) }}">
                                     {% for acc in accounts %}
                                     <option value="{{ acc.id }}">{{ acc.name }}</option>
                                     {% endfor %}
@@ -234,7 +235,7 @@
                         <select name="account_id" class="form-select border-success" required>
                             <option value="" disabled selected>-- اختر الحساب --</option>
                             {% for type, accounts in grouped.items() %}
-                            <optgroup label="{{ type }}">
+                            <optgroup label="{{ type_labels.get(type, type) }}">
                                 {% for acc in accounts %}
                                 <option value="{{ acc.id }}">{{ acc.name }} (الرصيد: {{ '%.2f'|format(acc.balance) }})</option>
                                 {% endfor %}

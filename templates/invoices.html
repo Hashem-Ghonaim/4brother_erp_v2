@@ -700,9 +700,16 @@
                             <label class="form-label fw-bold">الخزينة المحصل إليها</label>
                             <select class="form-select" id="paymentAccountId" required>
                                 <option value="">-- اختر الخزينة --</option>
-                                {% for acc in money_accounts %}
-                                <option value="{{ acc.id }}">{{ acc.name }} (الرصيد: {{ acc.balance }})</option>
-                                {% endfor %}
+                                <optgroup label="فودافون كاش">
+                                    {% for acc in money_accounts if acc.type == 'vodafone' %}
+                                    <option value="{{ acc.id }}">{{ acc.name }} (الرصيد: {{ acc.balance }})</option>
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="باقي الحسابات">
+                                    {% for acc in money_accounts if acc.type != 'vodafone' %}
+                                    <option value="{{ acc.id }}">{{ acc.name }} (الرصيد: {{ acc.balance }})</option>
+                                    {% endfor %}
+                                </optgroup>
                             </select>
                         </div>
                     </form>

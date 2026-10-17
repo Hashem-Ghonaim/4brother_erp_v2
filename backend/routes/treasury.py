@@ -1,25 +1,28 @@
-﻿from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash
 from flask_login import current_user
 from sqlalchemy import or_
 
 from ..core import db, cairo_now
-from ..models import MoneyAccount, FinancialTransaction
+from ..models import MoneyAccount, FinancialTransaction, natural_sort_key
 
 
 def register_treasury_routes(app, general_manager_required):
     @app.route('/treasury')
     @general_manager_required
     def treasury_dashboard():
-        accounts = MoneyAccount.query.all()
+        accounts = MoneyAccount.get_ordered()
 
-        grouped = {'cash': [], 'vodafone': [], 'bank': [], 'instapay': []}
-        totals = {'cash': 0, 'vodafone': 0, 'bank': 0, 'instapay': 0, 'all': 0}
+        grouped = {'vodafone': [], 'bank': [], 'instapay': [], 'cash': []}
+        totals = {'vodafone': 0, 'bank': 0, 'instapay': 0, 'cash': 0, 'all': 0}
 
         for acc in accounts:
             acc_type = acc.type if acc.type in grouped else 'cash'
             grouped[acc_type].append(acc)
             totals[acc_type] += acc.balance
             totals['all'] += acc.balance
+
+        for k in grouped:
+            grouped[k] = sorted(grouped[k], key=lambda a: (natural_sort_key(a.name), a.id))
 
         return render_template('treasury.html', grouped=grouped, totals=totals)
 

@@ -85,7 +85,7 @@ def pos():
                            products=ProductVariant.query.join(ProductModel).order_by(ProductVariant.id).all(),
                            customers=customers,
                            shipping_companies=ShippingCompany.query.all(),
-                           money_accounts=MoneyAccount.query.all(),
+                           money_accounts=MoneyAccount.get_ordered(),
                            all_employees=User.query.all(),  # <--- إضافة الموظفين هنا للتعبئة
                            allowed_sellers=allowed_sellers,
                            edit_order_data=edit_order_data) # <--- ده المهم عشان الجافاسكريبت يشتغل

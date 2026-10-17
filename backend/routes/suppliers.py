@@ -76,7 +76,7 @@ def supplier_profile(id):
     current_season = session.get('season', 'شتوي 2027')
     
     supp = Supplier.query.get_or_404(id)
-    accounts = MoneyAccount.query.all()
+    accounts = MoneyAccount.get_ordered()
 
     # === الإضافة الجديدة: حساب إجمالي عدد القطع للموسم الحالي ===
     total_items = db.session.query(func.sum(PurchaseItem.quantity))\

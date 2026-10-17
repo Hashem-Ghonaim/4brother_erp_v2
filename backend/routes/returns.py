@@ -246,7 +246,7 @@ def add_return():
 
     # GET: عرض الصفحة
     orders = SaleOrder.query.filter(SaleOrder.is_proforma==False).order_by(SaleOrder.id.desc()).all()
-    accounts = MoneyAccount.query.all()
+    accounts = MoneyAccount.get_ordered()
     return render_template('return_add.html', orders=orders, accounts=accounts)
 
 @app.route('/api/get_order_details/<int:id>')

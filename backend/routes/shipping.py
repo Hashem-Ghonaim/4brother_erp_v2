@@ -56,7 +56,7 @@ def shipping_dashboard():
                          orders=orders,
                          total_pending=total_pending,
                          companies=ShippingCompany.query.all(),
-                         accounts=MoneyAccount.query.all())
+                         accounts=MoneyAccount.get_ordered())
 
 # 2. نعدل دالة التحديث عشان تسجل الفلوس
 
@@ -148,7 +148,7 @@ def bulk_collect():
     if not current_user.has_perm('manage_shipping') and current_user.emp_code != 'EMP201' and current_user.role != 'general_manager':
         return "غير مصرح لك", 403
 
-    accounts = MoneyAccount.query.all()
+    accounts = MoneyAccount.get_ordered()
 
     if request.method == 'POST':
         waybill_input = request.form.get('waybills', '')

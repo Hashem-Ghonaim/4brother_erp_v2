@@ -132,7 +132,7 @@ def customer_profile(id):
     # جلب جميع فواتير العميل
     orders = SaleOrder.query.filter_by(customer_id=id).order_by(SaleOrder.date.desc()).all()
     # جلب جميع الخزائن لعرضها في القائمة المنسدلة
-    accounts = MoneyAccount.query.all()
+    accounts = MoneyAccount.get_ordered()
     # جلب سجل المدفوعات التي دفعها العميل (عبر الـ backref المسمى payments_received)
     payments = customer.payments_received if hasattr(customer, 'payments_received') else []
 

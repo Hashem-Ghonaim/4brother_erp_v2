@@ -333,12 +333,35 @@ class ReturnInvoice(db.Model):
     notes = db.Column(db.Text)
     order = db.relationship('SaleOrder', backref=db.backref('return_invoices', lazy=True, overlaps="returns,original_order"), overlaps="original_order,returns")
     creator = db.relationship('User')
+import re
+
+def natural_sort_key(s):
+    if not s:
+        return []
+    arabic_digits = '٠١٢٣٤٥٦٧٨٩'
+    english_digits = '0123456789'
+    trans = str.maketrans(arabic_digits, english_digits)
+    s = str(s).translate(trans)
+    parts = re.split(r'(\d+)', s)
+    return [int(p) if p.isdigit() else p.lower().strip() for p in parts]
+
 class MoneyAccount(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
     type = db.Column(db.String(20), default='cash') # cash, vodafone, bank, instapay
     account_number = db.Column(db.String(50)) # رقم الموبايل أو رقم الحساب
     balance = db.Column(db.Float, default=0.0)
+
+    @classmethod
+    def get_ordered(cls):
+        accounts = cls.query.all()
+        type_priority = {'vodafone': 0, 'cash': 1, 'instapay': 2, 'bank': 3}
+        return sorted(accounts, key=lambda a: (
+            type_priority.get(a.type, 99),
+            natural_sort_key(a.name),
+            a.id
+        ))
+
 class StockMovement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     variant_id = db.Column(db.Integer, db.ForeignKey('product_variant.id'))

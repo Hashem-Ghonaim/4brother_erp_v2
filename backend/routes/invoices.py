@@ -408,7 +408,7 @@ def edit_proforma(id):
                            products=ProductVariant.query.join(ProductModel).order_by(ProductVariant.id).all(),
                            customers=customers,
                            shipping_companies=ShippingCompany.query.all(),
-                           money_accounts=MoneyAccount.query.all(),
+                           money_accounts=MoneyAccount.get_ordered(),
                            all_employees=User.query.all(),
                            allowed_sellers=allowed_sellers,
                            # المتغير الجديد المهم جداً 👇
@@ -758,7 +758,7 @@ def invoices():
                            selected_user_id=int(selected_user_id) if selected_user_id and selected_user_id.isdigit() else None,
                            start_date=start_date,
                            end_date=end_date,
-                           money_accounts=MoneyAccount.query.all())
+                           money_accounts=MoneyAccount.get_ordered())
 
 
 @app.route('/api/invoice/<int:order_id>/add_payment', methods=['POST'])

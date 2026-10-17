@@ -420,7 +420,7 @@ def partners_report():
         'deposits_period': round(sum(r['deposits_period'] for r in report_data), 2),
         'period_net_cash': round(grand_total_period, 2),
     }
-    accounts = MoneyAccount.query.all()
+    accounts = MoneyAccount.get_ordered()
     return render_template('partners_report.html',
                            report=report_data,
                            grand_total=round(grand_total_period, 2),

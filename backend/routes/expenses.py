@@ -211,7 +211,7 @@ def expenses():
     # العرض
     categories = ExpenseCategory.query.all()
     partners = User.query.filter_by(role='manager').all()
-    accounts = MoneyAccount.query.all()
+    accounts = MoneyAccount.get_ordered()
 
     # فلاتر البحث
     date_from = request.args.get('date_from', '')

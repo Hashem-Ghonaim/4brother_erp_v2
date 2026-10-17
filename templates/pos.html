@@ -470,9 +470,16 @@
                         <input type="number" id="part_pay_amount" class="form-control form-control-sm"
                             placeholder="المبلغ" style="flex: 1;">
                         <select id="part_pay_acc" class="form-select form-select-sm" style="flex: 1.5;">
-                            {% for acc in money_accounts %}
-                            <option value="{{ acc.id }}">{{ acc.name }}</option>
-                            {% endfor %}
+                            <optgroup label="فودافون كاش">
+                                {% for acc in money_accounts if acc.type == 'vodafone' %}
+                                <option value="{{ acc.id }}">{{ acc.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="باقي الحسابات">
+                                {% for acc in money_accounts if acc.type != 'vodafone' %}
+                                <option value="{{ acc.id }}">{{ acc.name }}</option>
+                                {% endfor %}
+                            </optgroup>
                         </select>
                         <button class="btn btn-success btn-sm px-3 shadow-sm" onclick="addPayment()"><i
                                 class="fas fa-plus"></i></button>
