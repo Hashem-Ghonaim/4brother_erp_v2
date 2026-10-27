@@ -79,9 +79,9 @@
 
             <div class="row g-3 mb-4 bg-light p-3 rounded">
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">اختر المورد</label>
-                    <select name="supplier_id" class="form-select" id="supplierSelect" onchange="toggleNewSupplier()">
-                        <option value="">-- بدون مورد (نقدي) --</option>
+                    <label class="form-label fw-bold">اختر المورد <span class="text-danger">*</span></label>
+                    <select name="supplier_id" class="form-select" id="supplierSelect" onchange="toggleNewSupplier()" required>
+                        <option value="">-- اختر مورد (إجباري) --</option>
                         {% for s in suppliers %}
                         <option value="{{ s.id }}" {% if s.id==order.supplier_id %}selected{% endif %}>{{ s.name }}
                         </option>
@@ -208,8 +208,38 @@
 
         function toggleNewSupplier() {
             var val = document.getElementById('supplierSelect').value;
-            document.getElementById('newSupplierInputs').style.display = (val === 'new') ? 'flex' : 'none';
+            var newInputs = document.getElementById('newSupplierInputs');
+            var nameInput = document.querySelector('input[name="new_supplier_name"]');
+            if (val === 'new') {
+                newInputs.style.display = 'flex';
+                if (nameInput) nameInput.required = true;
+            } else {
+                newInputs.style.display = 'none';
+                if (nameInput) {
+                    nameInput.required = false;
+                    nameInput.value = '';
+                }
+            }
         }
+
+        $('form').on('submit', function(e) {
+            var suppVal = $('#supplierSelect').val();
+            if (!suppVal) {
+                alert('يرجى اختيار المورد أولاً!');
+                $('#supplierSelect').focus();
+                e.preventDefault();
+                return false;
+            }
+            if (suppVal === 'new') {
+                var nameVal = $('input[name="new_supplier_name"]').val().trim();
+                if (!nameVal) {
+                    alert('يرجى إدخال اسم المورد الجديد!');
+                    $('input[name="new_supplier_name"]').focus();
+                    e.preventDefault();
+                    return false;
+                }
+            }
+        });
 
         // إضافة صف جديد
         function addRow(calculate = true) {

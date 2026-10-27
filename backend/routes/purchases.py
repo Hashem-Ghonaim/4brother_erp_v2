@@ -55,8 +55,8 @@ def new_office_purchase():
             return redirect(request.url)
 
         # 1. معالجة المورد (جديد أو موجود)
-        if supplier_id == 'new' and new_supp_name:
-            new_supp = Supplier(name=new_supp_name, phone=new_supp_phone, is_office=True)
+        if supplier_id == 'new' and new_supp_name and new_supp_name.strip():
+            new_supp = Supplier(name=new_supp_name.strip(), phone=new_supp_phone, is_office=True)
             db.session.add(new_supp)
             db.session.flush()
             supplier = new_supp
@@ -65,10 +65,13 @@ def new_office_purchase():
         else:
             supplier = None
 
+        if not supplier:
+            flash('عفواً، يجب تحديد مورد للفاتورة أو إدخال بيانات مورد جديد!', 'danger')
+            return redirect(request.url)
+
         # 2. إنشاء رأس الفاتورة
         purchase_order = PurchaseOrder(created_by=current_user.id, total_cost=0.0, status='received', is_office=True)
-        if supplier:
-            purchase_order.supplier_id = supplier.id
+        purchase_order.supplier_id = supplier.id
         db.session.add(purchase_order)
         db.session.flush()
 
@@ -190,8 +193,8 @@ def new_purchase():
             return redirect(request.url)
 
         # 1. معالجة المورد (جديد أو موجود)
-        if supplier_id == 'new' and new_supp_name:
-            new_supp = Supplier(name=new_supp_name, phone=new_supp_phone)
+        if supplier_id == 'new' and new_supp_name and new_supp_name.strip():
+            new_supp = Supplier(name=new_supp_name.strip(), phone=new_supp_phone)
             db.session.add(new_supp)
             db.session.flush()
             supplier = new_supp
@@ -200,10 +203,13 @@ def new_purchase():
         else:
             supplier = None
 
+        if not supplier:
+            flash('عفواً، يجب تحديد مورد للفاتورة أو إدخال بيانات مورد جديد!', 'danger')
+            return redirect(request.url)
+
         # 2. إنشاء رأس الفاتورة
         purchase_order = PurchaseOrder(created_by=current_user.id, total_cost=0.0, status='received')
-        if supplier:
-            purchase_order.supplier_id = supplier.id
+        purchase_order.supplier_id = supplier.id
         db.session.add(purchase_order)
         db.session.flush()
 
@@ -371,11 +377,15 @@ def edit_purchase(id):
             elif new_supplier_id == 'new':
                 new_supp_name = request.form.get('new_supplier_name')
                 new_supp_phone = request.form.get('new_supplier_phone')
-                if new_supp_name:
-                    new_supp = Supplier(name=new_supp_name, phone=new_supp_phone)
+                if new_supp_name and new_supp_name.strip():
+                    new_supp = Supplier(name=new_supp_name.strip(), phone=new_supp_phone)
                     db.session.add(new_supp)
                     db.session.flush()
                     order.supplier_id = new_supp.id
+
+            if not order.supplier_id:
+                flash('عفواً، يجب تحديد مورد للفاتورة أو إدخال بيانات مورد جديد!', 'danger')
+                return redirect(request.url)
 
             new_total_cost = 0.0
 
