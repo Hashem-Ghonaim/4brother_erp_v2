@@ -287,6 +287,11 @@
                 <div class="d-flex gap-2">
                     <a href="/dashboard"
                         class="btn btn-light rounded-pill px-4 fw-bold text-secondary shadow-sm">الرئيسية</a>
+                    {% if current_user.username == 'gm_ahmed' %}
+                    <a href="/marketing/mock_invoice" class="btn btn-warning rounded-pill px-3 fw-bold shadow-sm">
+                        <i class="fas fa-magic me-1"></i> فاتورة تسويقية
+                    </a>
+                    {% endif %}
                     <a href="/pos" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">+ فاتورة جديدة</a>
                 </div>
             </div>

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ صانع الفواتير التسويقية | 4Brothers</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            --accent-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gold-gradient: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            --bg-body: #f4f6fa;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-body);
+            color: #2c3e50;
+            padding-bottom: 60px;
+        }
+
+        .header-card {
+            background: var(--primary-gradient);
+            color: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(30, 60, 114, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .card-custom {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .card-header-custom {
+            background: #fafbfc;
+            border-bottom: 1px solid #edf2f7;
+            padding: 16px 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .table-custom th {
+            background-color: #2b3674;
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 14px;
+            padding: 12px 8px;
+        }
+
+        .table-custom td {
+            vertical-align: middle;
+            text-align: center;
+            padding: 8px;
+        }
+
+        .table-input {
+            width: 100%;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .table-input:focus {
+            outline: none;
+            border-color: #2a5298;
+            box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.15);
+            background: #fff;
+        }
+
+        /* تنسيق Select2 داخل الجدول */
+        .select2-container .select2-selection--single {
+            height: 42px !important;
+            border: 1px solid #dee2e6 !important;
+            border-radius: 8px !important;
+            text-align: right;
+            padding: 6px 12px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 28px !important;
+            font-weight: 600;
+            color: #333;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 40px !important;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f9fbfd 100%);
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .summary-value {
+            font-size: 26px;
+            font-weight: 800;
+            color: #1e3c72;
+        }
+
+        .safe-badge {
+            background: rgba(25, 135, 84, 0.12);
+            color: #198754;
+            border: 1px solid rgba(25, 135, 84, 0.3);
+            border-radius: 50px;
+            padding: 6px 18px;
+            font-size: 13px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid px-lg-5 pt-4">
+
+    <!-- Header Section -->
+    <div class="header-card">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <span class="fs-2">⚡</span>
+                    <h2 class="fw-bold m-0 text-white">صانع الفواتير التسويقية (Mock Invoice)</h2>
+                </div>
+                <p class="m-0 text-white-50 fs-6">
+                    مخصص حصرياً للإدارة (أ/ أحمد عبد الفتاح) - لتجهيز فواتير بيع بكميات كبيرة وأرقام مرتفعة لاستخدامها كإثبات تسويقي وتنشيط المبيعات، <strong>بدون تسجيل أي بيانات في قاعدة البيانات وبدون التأثير على المخزون أو الحسابات إطلاقاً.</strong>
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/invoices" class="btn btn-light rounded-pill px-4 fw-bold shadow-sm">
+                    <i class="fas fa-file-invoice me-1"></i> سجل الفواتير
+                </a>
+                <a href="/dashboard" class="btn btn-outline-light rounded-pill px-4 fw-bold">
+                    <i class="fas fa-home me-1"></i> الرئيسية
+                </a>
+            </div>
+        </div>
+
+        <div class="mt-3 pt-3 border-top border-white border-opacity-10 d-flex align-items-center gap-2">
+            <span class="safe-badge bg-white text-success">
+                <i class="fas fa-shield-alt"></i> صفر استهلاك مساحة | صفر تأثير محاسبي | في الذاكرة فقط (In-Memory Preview)
+            </span>
+        </div>
+    </div>
+
+    <!-- Main Form -->
+    <form action="/marketing/mock_invoice/preview" method="POST" target="_blank" id="mockInvoiceForm">
+
+        <div class="row g-4">
+            <!-- اليمين: بيانات الفاتورة والعميل -->
+            <div class="col-lg-4">
+                
+                <!-- كرت رقم الفاتورة والتاريخ -->
+                <div class="card-custom">
+                    <div class="card-header-custom text-primary">
+                        <i class="fas fa-sliders-h"></i> إعدادات الفاتورة الأساسية
+                    </div>
+                    <div class="p-3">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">رقم الفاتورة (Invoice #)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light fw-bold">#</span>
+                                <input type="text" name="invoice_no" class="form-control fw-bold fs-5 text-primary" 
+                                       value="{{ suggested_inv_no }}" placeholder="مثال: 8950" required>
+                            </div>
+                            <small class="text-muted">يمكنك كتابة أي رقم كبير ومميز تريده للظهور على الفاتورة.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">تاريخ الفاتورة</label>
+                            <input type="date" name="invoice_date" class="form-control fw-bold" value="{{ now_str }}">
+                        </div>
+
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label fw-bold small">كود البائع</label>
+                                <input type="text" name="sales_rep_code" class="form-control form-control-sm text-center fw-bold" value="M-01">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold small">كود التعبئة</label>
+                                <input type="text" name="packer_code" class="form-control form-control-sm text-center fw-bold" value="P-01">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- كرت بيانات العميل -->
+                <div class="card-custom">
+                    <div class="card-header-custom text-success">
+                        <i class="fas fa-user-tag"></i> بيانات العميل (المشتري)
+                    </div>
+                    <div class="p-3">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">اختر من عملاء الشركة الحاليين (أو اكتب عميل جديد):</label>
+                            <select id="quickCustomerSelect" class="form-select select2-customer">
+                                <option value="">-- اكتب أو اختر عميلاً مسجلاً --</option>
+                                {% for c in customers %}
+                                <option value="{{ c.id }}" 
+                                        data-name="{{ c.name }}" 
+                                        data-phone="{{ c.phone }}" 
+                                        data-address="{{ c.address or '' }}">
+                                    {{ c.name }} ({{ c.phone }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <hr class="my-3">
+
+                        <div class="mb-2">
+                            <label class="form-label fw-bold">اسم العميل بالكامل <span class="text-danger">*</span></label>
+                            <input type="text" name="customer_name" id="custNameInput" class="form-control fw-bold" 
+                                   placeholder="مثال: محلات النور للملابس الجاهزة" value="محلات النور للأزياء" required>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label fw-bold">رقم الهاتف</label>
+                            <input type="text" name="customer_phone" id="custPhoneInput" class="form-control" 
+                                   placeholder="010XXXXXXXX" value="01098765432">
+                        </div>
+
+                        <div class="mb-1">
+                            <label class="form-label fw-bold">العنوان / المحافظة</label>
+                            <input type="text" name="customer_address" id="custAddressInput" class="form-control" 
+                                   placeholder="مثال: العتبة - شارع الجيش - القاهرة" value="العتبة - القاهرة">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- اليسار: جدول المنتجات والإجماليات -->
+            <div class="col-lg-8">
+                <div class="card-custom">
+                    <div class="card-header-custom d-flex justify-content-between align-items-center">
+                        <span class="text-dark"><i class="fas fa-box-open text-warning me-2"></i> أصناف الفاتورة (بحث بالمخزن بالاسم أو الكود)</span>
+                        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold" onclick="addNewItemRow()">
+                            <i class="fas fa-plus me-1"></i> إضافة صنف جديد
+                        </button>
+                    </div>
+
+                    <div class="p-3">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-custom align-middle" id="mockItemsTable">
+                                <thead>
+                                    <tr>
+                                        <th width="32%">اسم المنتج / الصنف</th>
+                                        <th width="15%">التصنيف</th>
+                                        <th width="13%">الكود / الباركود</th>
+                                        <th width="13%">سعر القطعة (ج.م)</th>
+                                        <th width="13%">الكمية</th>
+                                        <th width="14%">الإجمالي</th>
+                                        <th width="5%"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsTbody">
+                                    <!-- Rows added dynamically via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mt-2 text-muted small">
+                            💡 <strong>ملاحظة للمستخدم:</strong> يمكنك البحث بالاسم أو كود الصنف أو الباركود. يتم ملء السعر والتصنيف والكود فورياً مع إمكانية تعديل الكمية (مثلاً 1000 قطعة) وتعديل السعر بحرية تامة.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- كرت الإجماليات والخصم -->
+                <div class="card-custom summary-card">
+                    <div class="row g-3 align-items-center text-center">
+                        <div class="col-md-3 border-end">
+                            <div class="text-muted fw-bold small">إجمالي عدد القطع</div>
+                            <div class="summary-value text-primary" id="dispTotalQty">0</div>
+                            <small class="text-muted">قطعة</small>
+                        </div>
+
+                        <div class="col-md-3 border-end">
+                            <div class="text-muted fw-bold small">إجمالي المبلغ</div>
+                            <div class="summary-value text-dark" id="dispTotalAmount">0.00</div>
+                            <small class="text-muted">ج.م</small>
+                        </div>
+
+                        <div class="col-md-3 border-end">
+                            <div class="text-muted fw-bold small mb-1">الخصم (إن وجد)</div>
+                            <input type="number" step="1" name="discount" id="discountInput" 
+                                   class="form-control text-center fw-bold text-danger" value="0" oninput="recalcTotals()">
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="text-muted fw-bold small">الصافي المطلوب</div>
+                            <div class="summary-value text-success" id="dispFinalTotal">0.00</div>
+                            <small class="text-muted">ج.م</small>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="paid_upfront" value="0">
+                </div>
+
+                <!-- زر الإرسال والمعاينة -->
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg py-3 fw-bold shadow-lg rounded-pill fs-5" style="background: var(--primary-gradient); border: none;">
+                        <i class="fas fa-eye me-2"></i> معاينة الفاتورة الرسمية واستخراج لقطة الشاشة / PDF
+                    </button>
+                    <div class="text-center text-muted small mt-1">
+                        سيتم فتح الفاتورة في تبويب جديد بتنسيق الطباعة الرسمي المعتمد لشركة فور برزر جاهزة للحفظ كصورة فوراً.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </form>
+
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    // قائمة المنتجات من المخزن
+    const productsInventory = [
+        {% for v in variants %}
+        {
+            id: "{{ v.id }}",
+            name: "{{ v.model.name | replace('\"', '\\\"') }}",
+            category: "{{ (v.model.category.name if v.model.category else 'عام') | replace('\"', '\\\"') }}",
+            barcode: "{{ v.barcode if v.barcode else v.id }}",
+            sell_price: {{ v.sell_price or 0.0 }},
+            stock: {{ v.stock or 0 }}
+        },
+        {% endfor %}
+    ];
+
+    // خوارزمية بحث مخصصة في Select2 تدعم البحث بالاسم أو الكود أو الباركود
+    function customProductMatcher(params, data) {
+        if ($.trim(params.term) === '') return data;
+        if (typeof data.text === 'undefined') return null;
+
+        const term = params.term.toLowerCase().trim();
+        const text = data.text.toLowerCase();
+
+        // 1. بحث بالاسم الظاهر
+        if (text.indexOf(term) > -1) return data;
+
+        // 2. بحث بالكود (ID)
+        const id = $(data.element).data('id');
+        if (id && id.toString().toLowerCase().indexOf(term) > -1) return data;
+
+        // 3. بحث بالباركود
+        const barcode = $(data.element).data('barcode');
+        if (barcode && barcode.toString().toLowerCase().indexOf(term) > -1) return data;
+
+        return null;
+    }
+
+    // إعداد سيلكت 2 للعملاء
+    $(document).ready(function() {
+        $('.select2-customer').select2({
+            dir: 'rtl',
+            width: '100%',
+            placeholder: 'ابحث عن عميل...'
+        }).on('change', function() {
+            const selected = $(this).find('option:selected');
+            const name = selected.data('name');
+            const phone = selected.data('phone');
+            const address = selected.data('address');
+            
+            if (name) {
+                $('#custNameInput').val(name);
+                $('#custPhoneInput').val(phone || '');
+                $('#custAddressInput').val(address || '');
+            }
+        });
+
+        // إضافة صف افتراضي أولي
+        addNewItemRow(true);
+    });
+
+    // دالة إضافة صف منتج
+    function addNewItemRow(isFirst = false) {
+        let optionsHtml = '<option value="">-- اختر الصنف أو ابحث بالاسم/الكود --</option>';
+        productsInventory.forEach(p => {
+            optionsHtml += `<option value="${p.name}" 
+                                   data-id="${p.id}" 
+                                   data-barcode="${p.barcode}" 
+                                   data-category="${p.category}" 
+                                   data-sell="${p.sell_price}"
+                                   data-stock="${p.stock}">
+                                ${p.name} [كود: ${p.id}] (${p.category})
+                            </option>`;
+        });
+
+        const defaultQty = isFirst ? 1000 : 500;
+
+        const rowHtml = `
+        <tr class="item-row">
+            <td>
+                <select class="product-select form-select form-select-sm" style="width: 100%;" onchange="onProductSelected(this)">
+                    ${optionsHtml}
+                </select>
+                <input type="text" name="item_name[]" class="table-input item-name-input mt-1" 
+                       placeholder="أو اكتب اسم مخصص..." required style="font-size: 13px; text-align: right;">
+            </td>
+            <td>
+                <input type="text" name="item_category[]" class="table-input item-cat-input" value="ملابس" placeholder="التصنيف">
+            </td>
+            <td>
+                <input type="text" name="item_code[]" class="table-input item-code-input" value="1001" placeholder="كود">
+            </td>
+            <td>
+                <input type="number" step="0.5" name="item_price[]" class="table-input item-price-input" 
+                       value="250" placeholder="السعر" required oninput="recalcTotals()">
+            </td>
+            <td>
+                <input type="number" step="1" name="item_qty[]" class="table-input item-qty-input" 
+                       value="${defaultQty}" placeholder="الكمية" required style="background: #eef2ff; font-weight: bold; color: #1e3c72;" 
+                       oninput="recalcTotals()">
+            </td>
+            <td>
+                <span class="row-total fw-bold text-success fs-6">0.00</span>
+            </td>
+            <td>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeRow(this)" title="حذف الصنف">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
+        </tr>
+        `;
+
+        const newRow = $(rowHtml).appendTo('#itemsTbody');
+
+        // تفعيل Select2 للصف الجديد مع ماتشر مخصص
+        newRow.find('.product-select').select2({
+            dir: 'rtl',
+            width: '100%',
+            placeholder: 'اختر أو ابحث...',
+            matcher: customProductMatcher
+        });
+
+        // إذا كان هناك منتجات، حدد أول منتج كعينة أولى
+        if (isFirst && productsInventory.length > 0) {
+            const firstP = productsInventory[0];
+            const selectEl = newRow.find('.product-select');
+            selectEl.val(firstP.name).trigger('change');
+        } else {
+            recalcTotals();
+        }
+    }
+
+    // عند اختيار منتج من Select2
+    function onProductSelected(selectEl) {
+        const row = $(selectEl).closest('tr');
+        const opt = $(selectEl).find('option:selected');
+
+        if (!opt.val()) return;
+
+        const name = opt.val();
+        const cat = opt.data('category') || 'عام';
+        const barcode = opt.data('barcode') || opt.data('id') || '---';
+        const sell = opt.data('sell') || 0;
+
+        row.find('.item-name-input').val(name);
+        row.find('.item-cat-input').val(cat);
+        row.find('.item-code-input').val(barcode);
+        row.find('.item-price-input').val(sell);
+
+        recalcTotals();
+    }
+
+    // حذف صف
+    function removeRow(btn) {
+        if ($('#itemsTbody tr').length > 1) {
+            $(btn).closest('tr').remove();
+            recalcTotals();
+        } else {
+            alert('يجب أن تحتوي الفاتورة على صنف واحد على الأقل.');
+        }
+    }
+
+    // إعادة حساب كل الإجماليات
+    function recalcTotals() {
+        let totalQty = 0;
+        let totalAmount = 0;
+
+        $('#itemsTbody tr').each(function() {
+            const qty = parseFloat($(this).find('.item-qty-input').val()) || 0;
+            const price = parseFloat($(this).find('.item-price-input').val()) || 0;
+            const lineTotal = qty * price;
+
+            $(this).find('.row-total').text(lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+            
+            totalQty += qty;
+            totalAmount += lineTotal;
+        });
+
+        const discount = parseFloat($('#discountInput').val()) || 0;
+        const finalTotal = Math.max(0, totalAmount - discount);
+
+        $('#dispTotalQty').text(totalQty.toLocaleString('en-US'));
+        $('#dispTotalAmount').text(totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        $('#dispFinalTotal').text(finalTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    }
+</script>
+
+</body>
+</html>

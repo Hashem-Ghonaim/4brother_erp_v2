@@ -10,7 +10,7 @@ import random
 import string
 from datetime import datetime, date, timedelta
 from functools import wraps
-from flask import render_template, request, redirect, url_for, flash, jsonify, session
+from flask import render_template, request, redirect, url_for, flash, jsonify, session, abort
 from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -983,4 +983,158 @@ def invoice_commission_details(order_id):
                 details['breakdown'].append({'text': f'تنبيه: الخصم ({details["discount"]} ج.م) تتحمله الشركة ولا يؤثر على عمولة البائعة.', 'color': 'info'})
     
     return jsonify(details)
+
+
+# =========================================================================
+# === الفاتورة التسويقية / الوهمية (خاصة بالأستاذ أحمد عبد الفتاح فقط) ===
+# =========================================================================
+
+class MockCategory:
+    def __init__(self, name):
+        self.name = name or 'عام'
+
+class MockModel:
+    def __init__(self, name, cat_name):
+        self.name = name or 'منتج'
+        self.category = MockCategory(cat_name)
+
+class MockVariant:
+    def __init__(self, code, name, cat_name):
+        self.id = code or '---'
+        self.barcode = code or '---'
+        self.model = MockModel(name, cat_name)
+
+class MockCustomer:
+    def __init__(self, name, phone, address):
+        self.name = name or 'عميل نقدي'
+        self.phone = phone or '---'
+        self.address = address or '---'
+
+class MockSalesRep:
+    def __init__(self, code, phone, role):
+        self.emp_code = code or 'M-01'
+        self.phone = phone or ''
+        self.role = role or 'general_manager'
+        self.manager = None
+
+class MockPacker:
+    def __init__(self, code):
+        self.emp_code = code or 'P-01'
+
+class MockItem:
+    def __init__(self, name, cat_name, code, qty, price):
+        self.variant_id = code or '---'
+        self.variant = MockVariant(code, name, cat_name)
+        self.quantity = int(qty or 0)
+        self.unit_price = float(price or 0.0)
+        self.total_price = self.quantity * self.unit_price
+
+class MockOrder:
+    def __init__(self, inv_id, cust, date_val, items, discount=0.0, paid=0.0, sales_code='M-01', packer_code='P-01'):
+        self.id = inv_id
+        self.is_proforma = False
+        self.customer = cust
+        self.customer_id = 0
+        self.date = date_val
+        self.items = items
+        self.total_amount = sum(i.total_price for i in items)
+        self.discount = float(discount or 0.0)
+        self.final_total = max(0.0, self.total_amount - self.discount)
+        self.paid_upfront = float(paid or 0.0)
+        self.is_shipping = False
+        self.return_invoices = []
+        self.sales_rep = MockSalesRep(sales_code, getattr(current_user, 'phone', '01000000000') or '', 'general_manager')
+        self.packer = MockPacker(packer_code) if packer_code else None
+
+@app.route('/marketing/mock_invoice', methods=['GET'])
+@login_required
+def mock_invoice_form():
+    # محصورة تماماً بحساب الأستاذ أحمد عبد الفتاح
+    if current_user.username != 'gm_ahmed':
+        abort(403)
+
+    variants = ProductVariant.query.join(ProductModel).order_by(ProductModel.name).all()
+    customers = Customer.query.order_by(Customer.name).all()
+    categories = Category.query.order_by(Category.name).all()
+
+    max_id = db.session.query(func.max(SaleOrder.id)).scalar() or 4000
+    suggested_inv_no = max_id + 4260  # مثل 8950
+
+    return render_template('mock_invoice_form.html',
+                           variants=variants,
+                           customers=customers,
+                           categories=categories,
+                           suggested_inv_no=suggested_inv_no,
+                           now_str=cairo_now().strftime('%Y-%m-%d'))
+
+@app.route('/marketing/mock_invoice/preview', methods=['POST'])
+@login_required
+def mock_invoice_preview():
+    # محصورة تماماً بحساب الأستاذ أحمد عبد الفتاح
+    if current_user.username != 'gm_ahmed':
+        abort(403)
+
+    inv_no = request.form.get('invoice_no', '').strip() or '8950'
+    date_str = request.form.get('invoice_date', '').strip()
+    try:
+        if date_str:
+            d = datetime.strptime(date_str, '%Y-%m-%d')
+            now = cairo_now()
+            inv_date = d.replace(hour=now.hour, minute=now.minute, second=now.second)
+        else:
+            inv_date = cairo_now()
+    except Exception:
+        inv_date = cairo_now()
+
+    cust_name = request.form.get('customer_name', '').strip() or 'عميل تجاري'
+    cust_phone = request.form.get('customer_phone', '').strip() or '01000000000'
+    cust_address = request.form.get('customer_address', '').strip() or 'القاهرة'
+
+    sales_code = request.form.get('sales_rep_code', '').strip() or 'M-01'
+    packer_code = request.form.get('packer_code', '').strip() or 'P-01'
+
+    discount = float(request.form.get('discount', 0) or 0)
+    paid_upfront = float(request.form.get('paid_upfront', 0) or 0)
+
+    names = request.form.getlist('item_name[]')
+    cats = request.form.getlist('item_category[]')
+    codes = request.form.getlist('item_code[]')
+    qtys = request.form.getlist('item_qty[]')
+    prices = request.form.getlist('item_price[]')
+
+    items = []
+    for i in range(len(names)):
+        name = names[i].strip() if i < len(names) else ''
+        if not name:
+            continue
+        cat = cats[i].strip() if i < len(cats) else 'عام'
+        code = codes[i].strip() if i < len(codes) else '---'
+        try:
+            qty = int(qtys[i]) if i < len(qtys) else 1
+        except (ValueError, TypeError):
+            qty = 1
+        try:
+            price = float(prices[i]) if i < len(prices) else 0.0
+        except (ValueError, TypeError):
+            price = 0.0
+
+        items.append(MockItem(name=name, cat_name=cat, code=code, qty=qty, price=price))
+
+    if not items:
+        items.append(MockItem(name='صنف تجاري ممتاز', cat_name='ملابس', code='1001', qty=1000, price=250.0))
+
+    mock_cust = MockCustomer(name=cust_name, phone=cust_phone, address=cust_address)
+    mock_order = MockOrder(
+        inv_id=inv_no,
+        cust=mock_cust,
+        date_val=inv_date,
+        items=items,
+        discount=discount,
+        paid=paid_upfront,
+        sales_code=sales_code,
+        packer_code=packer_code
+    )
+
+    return render_template('invoice.html', order=mock_order, return_map={}, return_stats=None, is_mock=True)
+
 

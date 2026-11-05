@@ -189,8 +189,13 @@
             <button onclick="window.print()" class="btn btn-secondary fw-bold"><i class="fas fa-print"></i>
                 طباعة</button>
             <button onclick="downloadPDF()" class="btn btn-primary fw-bold"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button onclick="downloadImage(event)" class="btn btn-info text-white fw-bold"><i class="fas fa-camera"></i> حفظ كصورة</button>
             <a href="#" onclick="sendWhatsApp()" class="btn btn-success fw-bold"><i class="fab fa-whatsapp"></i>
                 واتساب</a>
+            {% if is_mock %}
+            <span class="badge bg-warning text-dark align-self-center px-3 py-2 fw-bold"><i class="fas fa-bullhorn me-1"></i> فاتورة تسويقية</span>
+            <a href="/marketing/mock_invoice" class="btn btn-dark"><i class="fas fa-edit me-1"></i> تعديل الفاتورة</a>
+            {% else %}
             {% if order.is_proforma %}
             <div class="vr mx-2"></div>
             <a href="/invoice/convert/{{ order.id }}" class="btn btn-warning fw-bold"
@@ -203,6 +208,7 @@
                 onclick="return confirm('حذف؟')">حذف</a>
             {% endif %}
             <a href="/pos" class="btn btn-dark">عودة</a>
+            {% endif %}
         </div>
     </div>
 
@@ -240,7 +246,7 @@
 
                 <div class="info-grid">
                     <div class="info-item">
-                        <span>العميل:</span> <a href="/customers/{{ order.customer_id }}"
+                        <span>العميل:</span> <a href="{{ '/customers/' ~ order.customer_id if order.customer_id and order.customer_id != '#' else '#' }}"
                             class="text-decoration-none text-primary fw-bold">{{ order.customer.name }}</a>
                     </div>
                     <div class="info-item">
@@ -440,7 +446,48 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script>
+        function downloadImage(event) {
+            const btn = event ? event.currentTarget : null;
+            const originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+                btn.disabled = true;
+            }
+
+            const wrapper = document.querySelector('.mobile-scroll-wrapper');
+            const originalOverflow = wrapper ? wrapper.style.overflow : '';
+            if (wrapper) wrapper.style.overflow = 'visible';
+
+            const element = document.getElementById('invoiceElement');
+            
+            html2canvas(element, { 
+                scale: 3, 
+                scrollX: 0, 
+                scrollY: 0, 
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'Invoice_{{ order.id }}.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                if (wrapper) wrapper.style.overflow = originalOverflow;
+                if (btn) {
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                }
+            }).catch(err => {
+                console.error(err);
+                alert('حدث خطأ أثناء حفظ الصورة');
+                if (wrapper) wrapper.style.overflow = originalOverflow;
+                if (btn) {
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                }
+            });
+        }
         function downloadPDF() {
             const wrapper = document.querySelector('.mobile-scroll-wrapper');
             wrapper.style.overflow = 'visible'; // Prevent html2canvas cropping
