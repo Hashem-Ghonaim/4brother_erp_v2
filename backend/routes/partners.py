@@ -92,7 +92,7 @@ def partners_report():
             HRTransaction.type == 'return_reversal',
             HRTransaction.date >= start_datetime,
             HRTransaction.date <= end_datetime
-        ).all()
+        ).order_by(HRTransaction.date.desc(), HRTransaction.id.desc()).all()
         for t in hr_return_reversals:
             employee = User.query.get(t.user_id) if t.user_id else None
             user_name = employee.fullname if employee else '---'
@@ -104,6 +104,7 @@ def partners_report():
                 'date': t.date.strftime('%Y-%m-%d'), 'order_id': order_id, 'invoice_label': invoice_label
             })
             sales_rep_comm_reversed_display += abs(t.amount)
+        sales_reversed_comm_details.sort(key=lambda x: (x.get('date') or '', int(x.get('order_id') or 0)), reverse=True)
 
         # Cross month return penalty
         cross_month_return_invoices = ReturnInvoice.query.join(SaleOrder).filter(
@@ -111,7 +112,7 @@ def partners_report():
             SaleOrder.date < start_datetime,
             ReturnInvoice.date >= start_datetime,
             ReturnInvoice.date <= end_datetime
-        ).all()
+        ).order_by(ReturnInvoice.date.desc(), ReturnInvoice.id.desc()).all()
         cross_month_deduction_rate = float(group_partners[0].commission_value or 15.0)
         cross_month_13_deduction = 0
         cross_month_return_details = []
@@ -123,6 +124,7 @@ def partners_report():
                 'desc': f"مرتجع فاتورة #{ret.order_id} من شهر سابق", 'date': ret.date.strftime('%Y-%m-%d'),
                 'order_id': ret.order_id, 'invoice_label': f"فاتورة #{ret.order_id}"
             })
+        cross_month_return_details.sort(key=lambda x: (x.get('date') or '', int(x.get('order_id') or 0)), reverse=True)
 
         # Calculate gross_comm_display based on orders
         gross_comm_display = 0
@@ -189,7 +191,7 @@ def partners_report():
                 PartnerTransaction.partner_id == p.id,
                 PartnerTransaction.date >= start_datetime,
                 PartnerTransaction.date <= end_datetime
-            ).all()
+            ).order_by(PartnerTransaction.date.desc(), PartnerTransaction.id.desc()).all()
             
             def build_details(trans_list, custom_filter):
                 filtered = [t for t in trans_list if custom_filter(t)]
@@ -213,6 +215,7 @@ def partners_report():
                         'date': t.date.strftime('%Y-%m-%d'), 'order_id': t.order_id,
                         'invoice_label': f"فاتورة #{t.order_id}" if t.order_id else "---"
                     })
+                res.sort(key=lambda x: (x.get('date') or '', int(x.get('order_id') or 0)), reverse=True)
                 return res
 
             def safe_float(val):
@@ -220,7 +223,7 @@ def partners_report():
                 if isinstance(val, str): return float(val.replace(',', ''))
                 return float(val)
 
-            all_trans = PartnerTransaction.query.filter_by(partner_id=p.id).all()
+            all_trans = PartnerTransaction.query.filter_by(partner_id=p.id).order_by(PartnerTransaction.date.desc(), PartnerTransaction.id.desc()).all()
             total_earned = sum(safe_float(t.amount) for t in all_trans if t.type != 'withdrawal')
             total_withdrawn = sum(safe_float(t.amount) for t in all_trans if t.type == 'withdrawal')
 
@@ -323,6 +326,7 @@ def partners_report():
                         'returned_qty': returned_qty, 'desc': desc, 'date': t.date.strftime('%Y-%m-%d'),
                         'order_id': t.order_id, 'invoice_label': f"فاتورة #{t.order_id}" if t.order_id else "---"
                     })
+            sales_comm_details_built.sort(key=lambda x: (x.get('date') or '', int(x.get('order_id') or 0)), reverse=True)
             partner_data['sales_comm_details'] = sales_comm_details_built
 
             team_data['partners'].append(partner_data)
@@ -372,7 +376,9 @@ def partners_report():
                 else:
                     agg[k]['amount'] += d.get('amount', 0)
                     agg[k]['amount'] = round(agg[k]['amount'], 2)
-            return list(agg.values())
+            res = list(agg.values())
+            res.sort(key=lambda x: (x.get('date') or '', int(x.get('order_id') or 0)), reverse=True)
+            return res
 
         team_data['gross_comm_details'] = aggregate_details(team_data['gross_comm_details'])
         team_data['admin_bonus_earned_details'] = aggregate_details(team_data['admin_bonus_earned_details'])

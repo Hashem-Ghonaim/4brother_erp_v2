@@ -853,6 +853,14 @@
 
                 orderedKeys.forEach((userName, gi) => {
                     const items = groups[userName];
+                    items.sort((a, b) => {
+                        const dateA = a.date || '';
+                        const dateB = b.date || '';
+                        if (dateA !== dateB) return dateB.localeCompare(dateA);
+                        const idA = parseInt(a.order_id) || 0;
+                        const idB = parseInt(b.order_id) || 0;
+                        return idB - idA;
+                    });
                     let userSubtotal = 0;
 
                     items.forEach(d => {
@@ -932,6 +940,14 @@
                 const orderedKeys = Object.keys(groups);
                 orderedKeys.forEach((userName) => {
                     const items = groups[userName];
+                    items.sort((a, b) => {
+                        const dateA = a.date || '';
+                        const dateB = b.date || '';
+                        if (dateA !== dateB) return dateB.localeCompare(dateA);
+                        const idA = parseInt(a.order_id) || 0;
+                        const idB = parseInt(b.order_id) || 0;
+                        return idB - idA;
+                    });
                     let userSubtotal = 0;
                     items.forEach(d => {
                         idx++;
@@ -1013,6 +1029,14 @@
                 const orderedKeys = Object.keys(groups);
                 orderedKeys.forEach((userName) => {
                     const items = groups[userName];
+                    items.sort((a, b) => {
+                        const dateA = a.date || '';
+                        const dateB = b.date || '';
+                        if (dateA !== dateB) return dateB.localeCompare(dateA);
+                        const idA = parseInt(a.order_id) || 0;
+                        const idB = parseInt(b.order_id) || 0;
+                        return idB - idA;
+                    });
                     let userSubtotal = 0;
                     let userReturnedQty = 0;
                     items.forEach(d => {
@@ -1079,6 +1103,18 @@
             if (!details || details.length === 0) {
                 body.innerHTML = '<div class="text-center text-muted p-4 fs-5">لا توجد حركات لهذا البند في الفترة المحددة</div>';
             } else {
+                // ترتيب تنازلي حسب التاريخ ثم رقم الفاتورة (الأحدث أولاً)
+                details.sort((a, b) => {
+                    const dateA = a.date || '';
+                    const dateB = b.date || '';
+                    if (dateA !== dateB) {
+                        return dateB.localeCompare(dateA);
+                    }
+                    const idA = parseInt(a.order_id) || 0;
+                    const idB = parseInt(b.order_id) || 0;
+                    return idB - idA;
+                });
+
                 let total = 0;
                 let rows = '';
                 
