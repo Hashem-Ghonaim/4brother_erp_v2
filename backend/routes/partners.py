@@ -132,7 +132,7 @@ def partners_report():
             SaleOrder.is_proforma == False,
             SaleOrder.date >= start_datetime,
             SaleOrder.date <= end_datetime
-        ).all()
+        ).order_by(SaleOrder.date.desc(), SaleOrder.id.desc()).all()
         
         for order in period_orders:
             gross_qty = sum(item.quantity for item in order.items)
@@ -149,6 +149,8 @@ def partners_report():
                     'invoice_label': f"فاتورة #{order.id}",
                     'gross_qty': gross_qty, 'returned_qty': returned_qty
                 })
+
+        gross_comm_details_display.sort(key=lambda x: (x.get('date', ''), x.get('order_id', 0)), reverse=True)
 
         team_data = {
             'is_team': True,
