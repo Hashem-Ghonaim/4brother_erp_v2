@@ -98,7 +98,7 @@ def upload_file_to_supabase(file_obj, filename, app_config):
         # وبالتالي بنوفر الباندويث بشكل كبير جداً
         file_options = {
             "content-type": content_type,
-            "cache-control": "public, max-age=31536000, immutable"
+            "cache-control": "31536000"
         }
         
         res = supabase.storage.from_(SUPABASE_BUCKET).upload(
