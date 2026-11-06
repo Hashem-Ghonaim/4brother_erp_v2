@@ -342,6 +342,15 @@
                                                 value="manage_orders" id="p3_{{ employee.id }}" {% if
                                                 employee.has_perm('manage_orders') %}checked{% endif %}>
                                         </div>
+                                        <div class="perm-divider"></div>
+                                        <div class="perm-item">
+                                            <label class="perm-label fw-bold text-warning" for="p_mock_{{ employee.id }}">
+                                                <i class="fas fa-magic me-1"></i> فاتورة تسويقية (وهمية)
+                                            </label>
+                                            <input class="form-check-input" type="checkbox" name="perms"
+                                                value="mock_invoice" id="p_mock_{{ employee.id }}" {% if
+                                                employee.has_perm('mock_invoice') %}checked{% endif %}>
+                                        </div>
                                     </div>
                                 </div>
 

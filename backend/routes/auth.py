@@ -50,7 +50,7 @@ def register_auth_routes(app):
         system_permissions = {
             'المخزون': [('view_inventory', 'رؤية المخزون'), ('manage_inventory', 'تعديل المخزون (إضافة/حذف)'), ('print_barcode', 'طباعة باركود وتقارير المخزن')],
             'الشحن': [('view_shipping', 'رؤية الشحن'), ('manage_shipping', 'إدارة الشحن (تغيير حالة)')],
-            'المبيعات': [('view_invoices', 'سجل الفواتير'), ('manage_orders', 'حذف/تعديل الفواتير')],
+            'المبيعات': [('view_invoices', 'سجل الفواتير'), ('manage_orders', 'حذف/تعديل الفواتير'), ('mock_invoice', 'فاتورة تسويقية (وهمية)')],
             'الخزينة': [('view_treasury', 'رؤية الخزينة'), ('manage_treasury', 'إدارة الأموال')],
             'العملاء': [('view_customers', 'رؤية العملاء'), ('manage_customers', 'إضافة/تعديل عملاء')],
             'متابعة القصات': [('view_patterns', 'رؤية القصات'), ('manage_patterns', 'إضافة وتعديل القصات')],

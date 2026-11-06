@@ -1049,8 +1049,8 @@ class MockOrder:
 @app.route('/marketing/mock_invoice', methods=['GET'])
 @login_required
 def mock_invoice_form():
-    # محصورة تماماً بحساب الأستاذ أحمد عبد الفتاح
-    if current_user.username != 'gm_ahmed':
+    # مسموحة للأستاذ أحمد عبد الفتاح أو أي مدير يملك صلاحية الفاتورة التسويقية
+    if not (current_user.username == 'gm_ahmed' or current_user.has_perm('mock_invoice')):
         abort(403)
 
     variants = ProductVariant.query.join(ProductModel).order_by(ProductModel.name).all()
@@ -1070,8 +1070,8 @@ def mock_invoice_form():
 @app.route('/marketing/mock_invoice/preview', methods=['POST'])
 @login_required
 def mock_invoice_preview():
-    # محصورة تماماً بحساب الأستاذ أحمد عبد الفتاح
-    if current_user.username != 'gm_ahmed':
+    # مسموحة للأستاذ أحمد عبد الفتاح أو أي مدير يملك صلاحية الفاتورة التسويقية
+    if not (current_user.username == 'gm_ahmed' or current_user.has_perm('mock_invoice')):
         abort(403)
 
     inv_no = request.form.get('invoice_no', '').strip() or '8950'

@@ -287,7 +287,7 @@
                 <div class="d-flex gap-2">
                     <a href="/dashboard"
                         class="btn btn-light rounded-pill px-4 fw-bold text-secondary shadow-sm">الرئيسية</a>
-                    {% if current_user.username == 'gm_ahmed' %}
+                    {% if current_user.username == 'gm_ahmed' or current_user.has_perm('mock_invoice') %}
                     <a href="/marketing/mock_invoice" class="btn btn-warning rounded-pill px-3 fw-bold shadow-sm">
                         <i class="fas fa-magic me-1"></i> فاتورة تسويقية
                     </a>

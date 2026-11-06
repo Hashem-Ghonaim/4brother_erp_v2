@@ -374,7 +374,7 @@
 
                     {% if user.has_perm('view_invoices') %}
                     <a href="/invoices" class="nav-link"><i class="fas fa-file-invoice"></i> سجل الفواتير</a>
-                    {% if user.username == 'gm_ahmed' %}
+                    {% if user.username == 'gm_ahmed' or user.has_perm('mock_invoice') %}
                     <a href="/marketing/mock_invoice" class="nav-link text-warning fw-bold"><i class="fas fa-magic"></i> فاتورة تسويقية (وهمية)</a>
                     {% endif %}
                     {% endif %}
